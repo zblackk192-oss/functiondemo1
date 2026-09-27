@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AI辅助汽车系统功能补全Demo
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ================================================= -->
+    <!-- 顶部 -->
+    <!-- ================================================= -->
+
+    <header>
+
+        <div>
+
+            <h1>
+                AI辅助汽车系统功能补全
+            </h1>
+
+            <p>
+                基于RAG + BGE + FAISS + Qwen
+                的汽车系统功能点及关联关系补全
+            </p>
+
+        </div>
+
+        <div class="status">
+
+            <span
+                id="systemStatus"
+                class="status-dot"
+            ></span>
+
+            <span id="systemStatusText">
+                系统就绪
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================================================= -->
+    <!-- 当前设计 -->
+    <!-- ================================================= -->
+
+    <section class="card">
+
+        <div class="section-title">
+
+            <h2>
+                ① 当前设计输入
+            </h2>
+
+            <span
+                id="caseId"
+                class="tag"
+            >
+                CURRENT001
+            </span>
+
+        </div>
+
+
+        <div id="currentFunctions"
+             class="function-grid">
+        </div>
+
+
+        <button
+            id="runButton"
+            class="primary-button"
+            onclick="runCompletion()"
+        >
+            开始AI辅助分析
+        </button>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- 流程 -->
+    <!-- ================================================= -->
+
+    <section class="card">
+
+        <div class="section-title">
+
+            <h2>
+                ② AI分析流程
+            </h2>
+
+        </div>
+
+
+        <div class="pipeline">
+
+
+            <div
+                id="step-rag"
+                class="pipeline-step"
+            >
+
+                <div class="step-number">
+                    1
+                </div>
+
+                <div>
+                    <strong>
+                        BGE + FAISS
+                    </strong>
+
+                    <small>
+                        RAG检索
+                    </small>
+                </div>
+
+            </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div
+                id="step-prompt"
+                class="pipeline-step"
+            >
+
+                <div class="step-number">
+                    2
+                </div>
+
+                <div>
+                    <strong>
+                        Prompt
+                    </strong>
+
+                    <small>
+                        上下文构造
+                    </small>
+                </div>
+
+            </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div
+                id="step-qwen"
+                class="pipeline-step"
+            >
+
+                <div class="step-number">
+                    3
+                </div>
+
+                <div>
+                    <strong>
+                        Qwen
+                    </strong>
+
+                    <small>
+                        功能补全建议
+                    </small>
+                </div>
+
+            </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div
+                id="step-confirm"
+                class="pipeline-step"
+            >
+
+                <div class="step-number">
+                    4
+                </div>
+
+                <div>
+                    <strong>
+                        人工确认
+                    </strong>
+
+                    <small>
+                        接受 / 拒绝 / 修改
+                    </small>
+                </div>
+
+            </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div
+                id="step-result"
+                class="pipeline-step"
+            >
+
+                <div class="step-number">
+                    5
+                </div>
+
+                <div>
+                    <strong>
+                        标准化模型
+                    </strong>
+
+                    <small>
+                        功能语义图
+                    </small>
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- RAG -->
+    <!-- ================================================= -->
+
+    <section
+        id="retrievalSection"
+        class="card hidden"
+    >
+
+        <div class="section-title">
+
+            <h2>
+                ③ RAG检索结果
+            </h2>
+
+            <span class="tag">
+                Top-K
+            </span>
+
+        </div>
+
+
+        <div class="info-banner">
+
+            RAG检索结果作为Qwen补全的历史参考依据，
+            不直接写入最终功能模型。
+
+        </div>
+
+
+        <div id="retrievalResults">
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- AI补全建议 -->
+    <!-- ================================================= -->
+
+    <section
+        id="completionSection"
+        class="card hidden"
+    >
+
+        <div class="section-title">
+
+            <div>
+
+                <h2>
+                    ④ AI补全建议
+                </h2>
+
+                <p class="section-description">
+                    AI仅提供候选补全结果，最终模型由用户确认后生成。
+                </p>
+
+            </div>
+
+            <span
+                id="confirmationStatus"
+                class="status-tag pending"
+            >
+                待人工确认
+            </span>
+
+        </div>
+
+
+        <div class="summary">
+
+            <div class="summary-item">
+
+                <span>
+                    AI建议功能
+                </span>
+
+                <strong
+                    id="functionCount"
+                >
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span>
+                    AI建议关系
+                </span>
+
+                <strong
+                    id="relationCount"
+                >
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span>
+                    当前确认进度
+                </span>
+
+                <strong
+                    id="confirmCount"
+                >
+                    0 / 0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- ------------------------------------------------- -->
+        <!-- 功能补全 -->
+        <!-- ------------------------------------------------- -->
+
+        <div class="subsection-title">
+
+            <h3>
+                功能点补全建议
+            </h3>
+
+            <div class="batch-actions">
+
+                <button
+                    class="small-button accept"
+                    onclick="acceptAllFunctions()"
+                >
+                    全部接受
+                </button>
+
+                <button
+                    class="small-button reject"
+                    onclick="rejectAllFunctions()"
+                >
+                    全部拒绝
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div id="completionResults">
+        </div>
+
+
+        <!-- ------------------------------------------------- -->
+        <!-- 关系补全 -->
+        <!-- ------------------------------------------------- -->
+
+        <div class="subsection-title relation-subsection">
+
+            <h3>
+                功能关联关系补全建议
+            </h3>
+
+            <div class="batch-actions">
+
+                <button
+                    class="small-button accept"
+                    onclick="acceptAllRelations()"
+                >
+                    全部接受
+                </button>
+
+                <button
+                    class="small-button reject"
+                    onclick="rejectAllRelations()"
+                >
+                    全部拒绝
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div id="relationResults">
+        </div>
+
+
+        <!-- ------------------------------------------------- -->
+        <!-- 最终确认 -->
+        <!-- ------------------------------------------------- -->
+
+        <div class="confirmation-panel">
+
+            <div>
+
+                <strong>
+                    人工确认后生成标准化结果
+                </strong>
+
+                <p>
+                    已接受的功能和关系将进入最终模型；
+                    拒绝的AI建议不会进入最终模型。
+                    用户修改后的内容以修改结果为准。
+                </p>
+
+            </div>
+
+
+            <button
+                id="finalConfirmButton"
+                class="confirm-button"
+                onclick="confirmResult()"
+            >
+                ✓ 确认并生成标准化模型
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- 最终模型 -->
+    <!-- ================================================= -->
+
+    <section
+        id="graphSection"
+        class="card hidden"
+    >
+
+        <div class="section-title">
+
+            <div>
+
+                <h2>
+                    ⑤ 最终功能模型
+                </h2>
+
+                <p class="section-description">
+                    以下内容为人工确认并标准化后的最终模型。
+                </p>
+
+            </div>
+
+            <span
+                id="finalModelStatus"
+                class="status-tag confirmed"
+            >
+                已确认
+            </span>
+
+        </div>
+
+
+        <div id="graphResults">
+        </div>
+
+    </section>
+
+
+</div>
+
+
+<script src="/static/app.js"></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,1997 @@
+import time
+
+from service.retrieval_service import retrieve_top_k_cases
+from service.prompt_service import build_completion_prompt
+from service.llm_service import call_qwen
+from service.json_parser_service import parse_llm_json
+
+
+# ============================================================
+# 通用工具
+# ============================================================
+
+def normalize_list(value):
+    """
+    保证字段始终为list。
+    """
+
+    if value is None:
+        return []
+
+    if isinstance(value, list):
+        return value
+
+    return [value]
+
+
+def normalize_text(value):
+    """
+    用于功能点、关系去重比较。
+    """
+
+    if value is None:
+        return ""
+
+    return " ".join(
+        str(value).strip().split()
+    )
+
+
+# ============================================================
+# 功能点标准化
+# ============================================================
+
+def normalize_function(
+    function,
+    index=None
+):
+    """
+    将功能点标准化为统一结构。
+
+    注意：
+    不删除Qwen生成的扩展证据字段：
+
+        requirementEvidence
+        historyEvidence
+        evidenceType
+        reason
+        confidence
+    """
+
+    if not isinstance(
+        function,
+        dict
+    ):
+        return None
+
+    # 保留原始字段
+    result = dict(
+        function
+    )
+
+    # --------------------------------------------------------
+    # functionId
+    # --------------------------------------------------------
+
+    if (
+        not result.get("functionId")
+        and index is not None
+    ):
+        result["functionId"] = (
+            f"F{index:03d}"
+        )
+
+    # --------------------------------------------------------
+    # name
+    # --------------------------------------------------------
+
+    if not result.get("name"):
+        result["name"] = result.get(
+            "functionName",
+            ""
+        )
+
+    # --------------------------------------------------------
+    # input / output兼容
+    # --------------------------------------------------------
+
+    if "inputs" not in result:
+        result["inputs"] = result.get(
+            "input",
+            []
+        )
+
+    if "outputs" not in result:
+        result["outputs"] = result.get(
+            "output",
+            []
+        )
+
+    result["inputs"] = normalize_list(
+        result.get(
+            "inputs",
+            []
+        )
+    )
+
+    result["outputs"] = normalize_list(
+        result.get(
+            "outputs",
+            []
+        )
+    )
+
+    # --------------------------------------------------------
+    # 基础字符串字段
+    # --------------------------------------------------------
+
+    for field in [
+        "name",
+        "action",
+        "object",
+        "effect",
+        "trigger",
+        "condition",
+        "scenario",
+        "constraint"
+    ]:
+        value = result.get(
+            field,
+            ""
+        )
+
+        if value is None:
+            value = ""
+
+        result[field] = str(
+            value
+        )
+
+    # --------------------------------------------------------
+    # 数组字段
+    # --------------------------------------------------------
+
+    for field in [
+        "preconditions",
+        "postconditions"
+    ]:
+        result[field] = normalize_list(
+            result.get(
+                field,
+                []
+            )
+        )
+
+    # --------------------------------------------------------
+    # RAG证据字段
+    # --------------------------------------------------------
+
+    result.setdefault(
+        "requirementEvidence",
+        ""
+    )
+
+    result["historyEvidence"] = (
+        normalize_list(
+            result.get(
+                "historyEvidence",
+                []
+            )
+        )
+    )
+
+    result.setdefault(
+        "evidenceType",
+        ""
+    )
+
+    result.setdefault(
+        "reason",
+        ""
+    )
+
+    # confidence允许为空
+    confidence = result.get(
+        "confidence",
+        0.0
+    )
+
+    try:
+        confidence = float(
+            confidence
+        )
+    except (
+        TypeError,
+        ValueError
+    ):
+        confidence = 0.0
+
+    # 限制0~1
+    confidence = max(
+        0.0,
+        min(
+            1.0,
+            confidence
+        )
+    )
+
+    result["confidence"] = (
+        confidence
+    )
+
+    return result
+
+
+# ============================================================
+# 关系标准化
+# ============================================================
+
+def normalize_relation(
+    relation
+):
+    """
+    统一关系结构。
+
+    与旧版本不同：
+    保留Qwen输出的历史证据字段。
+    """
+
+    if not isinstance(
+        relation,
+        dict
+    ):
+        return None
+
+    source = relation.get(
+        "source",
+        relation.get(
+            "from",
+            ""
+        )
+    )
+
+    target = relation.get(
+        "target",
+        relation.get(
+            "to",
+            ""
+        )
+    )
+
+    source = normalize_text(
+        source
+    )
+
+    target = normalize_text(
+        target
+    )
+
+    if not source or not target:
+        return None
+
+    # 先复制，避免丢失证据字段
+    result = dict(
+        relation
+    )
+
+    result["source"] = source
+    result["target"] = target
+
+    result["type"] = normalize_text(
+        relation.get(
+            "type",
+            "dependency"
+        )
+    )
+
+    if not result["type"]:
+        result["type"] = (
+            "dependency"
+        )
+
+    result["flowObject"] = (
+        relation.get(
+            "flowObject",
+            relation.get(
+                "object",
+                ""
+            )
+        )
+        or ""
+    )
+
+    # --------------------------------------------------------
+    # RAG证据字段
+    # --------------------------------------------------------
+
+    result["historyEvidence"] = (
+        normalize_list(
+            result.get(
+                "historyEvidence",
+                []
+            )
+        )
+    )
+
+    result.setdefault(
+        "evidenceType",
+        ""
+    )
+
+    result.setdefault(
+        "reason",
+        ""
+    )
+
+    confidence = result.get(
+        "confidence",
+        0.0
+    )
+
+    try:
+        confidence = float(
+            confidence
+        )
+    except (
+        TypeError,
+        ValueError
+    ):
+        confidence = 0.0
+
+    result["confidence"] = max(
+        0.0,
+        min(
+            1.0,
+            confidence
+        )
+    )
+
+    return result
+
+
+# ============================================================
+# 当前案例标准化
+# ============================================================
+
+def normalize_current_case(
+    current_case
+):
+    """
+    当前案例标准化。
+
+    当前需求语义：
+        raw_text
+        function_points
+        events
+
+    当前设计基线：
+        functions
+        relations
+    """
+
+    if not isinstance(
+        current_case,
+        dict
+    ):
+        return {
+            "caseId": "CURRENT001",
+            "projectName": "",
+            "raw_text": "",
+            "function_points": [],
+            "events": [],
+            "functions": [],
+            "relations": []
+        }
+
+    normalized_case = dict(
+        current_case
+    )
+
+    # --------------------------------------------------------
+    # functions
+    # --------------------------------------------------------
+
+    raw_functions = current_case.get(
+        "functions",
+        []
+    )
+
+    if not isinstance(
+        raw_functions,
+        list
+    ):
+        raw_functions = []
+
+    functions = []
+
+    for index, function in enumerate(
+        raw_functions,
+        start=1
+    ):
+        normalized = (
+            normalize_function(
+                function,
+                index
+            )
+        )
+
+        if normalized:
+            functions.append(
+                normalized
+            )
+
+    normalized_case[
+        "functions"
+    ] = functions
+
+    # --------------------------------------------------------
+    # relations
+    # --------------------------------------------------------
+
+    raw_relations = current_case.get(
+        "relations",
+        []
+    )
+
+    if not isinstance(
+        raw_relations,
+        list
+    ):
+        raw_relations = []
+
+    relations = []
+
+    for relation in raw_relations:
+        normalized = (
+            normalize_relation(
+                relation
+            )
+        )
+
+        if normalized:
+            relations.append(
+                normalized
+            )
+
+    normalized_case[
+        "relations"
+    ] = relations
+
+    # --------------------------------------------------------
+    # raw_text
+    # --------------------------------------------------------
+
+    raw_text = normalized_case.get(
+        "raw_text",
+        ""
+    )
+
+    if raw_text is None:
+        raw_text = ""
+
+    normalized_case[
+        "raw_text"
+    ] = str(
+        raw_text
+    )
+
+    # --------------------------------------------------------
+    # function_points
+    # --------------------------------------------------------
+
+    normalized_case[
+        "function_points"
+    ] = normalize_list(
+        normalized_case.get(
+            "function_points",
+            []
+        )
+    )
+
+    # --------------------------------------------------------
+    # events
+    # --------------------------------------------------------
+
+    normalized_case[
+        "events"
+    ] = normalize_list(
+        normalized_case.get(
+            "events",
+            []
+        )
+    )
+
+    return normalized_case
+
+
+# ============================================================
+# 功能语义签名
+# ============================================================
+
+def function_signature(
+    function
+):
+    """
+    用于判断两个功能是否已经存在。
+
+    action + object + effect
+    """
+
+    if not isinstance(
+        function,
+        dict
+    ):
+        return (
+            "",
+            "",
+            ""
+        )
+
+    return (
+        normalize_text(
+            function.get(
+                "action",
+                ""
+            )
+        ),
+
+        normalize_text(
+            function.get(
+                "object",
+                ""
+            )
+        ),
+
+        normalize_text(
+            function.get(
+                "effect",
+                ""
+            )
+        )
+    )
+
+
+# ============================================================
+# 关系唯一Key
+# ============================================================
+
+def relation_key(
+    relation
+):
+    """
+    source + target + type
+
+    flowObject不参与核心重复判断。
+    """
+
+    if not isinstance(
+        relation,
+        dict
+    ):
+        return (
+            "",
+            "",
+            ""
+        )
+
+    return (
+        normalize_text(
+            relation.get(
+                "source",
+                ""
+            )
+        ),
+
+        normalize_text(
+            relation.get(
+                "target",
+                ""
+            )
+        ),
+
+        normalize_text(
+            relation.get(
+                "type",
+                ""
+            )
+        )
+    )
+
+
+# ============================================================
+# 判断功能是否已经存在
+# ============================================================
+
+def function_already_exists(
+    candidate,
+    current_functions
+):
+    """
+    判断规则：
+
+    1. functionId相同
+    2. action + object + effect完全相同
+    """
+
+    if not isinstance(
+        candidate,
+        dict
+    ):
+        return False
+
+    candidate_id = normalize_text(
+        candidate.get(
+            "functionId",
+            ""
+        )
+    )
+
+    candidate_signature = (
+        function_signature(
+            candidate
+        )
+    )
+
+    for current in current_functions:
+
+        if not isinstance(
+            current,
+            dict
+        ):
+            continue
+
+        current_id = normalize_text(
+            current.get(
+                "functionId",
+                ""
+            )
+        )
+
+        # ----------------------------------------------------
+        # ID相同
+        # ----------------------------------------------------
+
+        if (
+            candidate_id
+            and current_id
+            and candidate_id
+            == current_id
+        ):
+            return True
+
+        # ----------------------------------------------------
+        # 语义签名相同
+        # ----------------------------------------------------
+
+        current_signature = (
+            function_signature(
+                current
+            )
+        )
+
+        if (
+            candidate_signature
+            == current_signature
+            and all(
+                candidate_signature
+            )
+        ):
+            return True
+
+    return False
+
+
+# ============================================================
+# 为Qwen缺失功能分配合法ID
+# ============================================================
+
+def assign_missing_function_ids(
+    current_functions,
+    missing_functions
+):
+    """
+    确保Qwen生成的新功能拥有合法且不冲突的functionId。
+
+    非常重要：
+
+    missingRelations可能引用这些新功能。
+
+    因此必须在关系过滤之前完成ID处理。
+    """
+
+    existing_ids = {
+        normalize_text(
+            function.get(
+                "functionId",
+                ""
+            )
+        )
+        for function
+        in current_functions
+        if isinstance(
+            function,
+            dict
+        )
+        and function.get(
+            "functionId"
+        )
+    }
+
+    assigned_functions = []
+
+    next_number = 1
+
+    for function in missing_functions:
+
+        normalized = (
+            normalize_function(
+                function
+            )
+        )
+
+        if not normalized:
+            continue
+
+        function_id = normalize_text(
+            normalized.get(
+                "functionId",
+                ""
+            )
+        )
+
+        # ----------------------------------------------------
+        # ID为空或与当前设计冲突
+        # ----------------------------------------------------
+
+        if (
+            not function_id
+            or function_id
+            in existing_ids
+        ):
+
+            while (
+                f"F{next_number:03d}"
+                in existing_ids
+            ):
+                next_number += 1
+
+            function_id = (
+                f"F{next_number:03d}"
+            )
+
+            next_number += 1
+
+            normalized[
+                "functionId"
+            ] = function_id
+
+        existing_ids.add(
+            function_id
+        )
+
+        assigned_functions.append(
+            normalized
+        )
+
+    return assigned_functions
+
+
+# ============================================================
+# Qwen候选过滤
+# ============================================================
+
+def filter_llm_result(
+    current_case,
+    llm_result
+):
+    """
+    对Qwen候选补全进行一致性校验。
+
+    关键规则：
+
+    1. 已有功能不重复补。
+    2. 已有关系不重复补。
+    3. 新补功能可以作为新关系端点。
+    4. 保留RAG证据字段。
+    """
+
+    if not isinstance(
+        llm_result,
+        dict
+    ):
+        llm_result = {}
+
+    current_functions = (
+        current_case.get(
+            "functions",
+            []
+        )
+    )
+
+    current_relations = (
+        current_case.get(
+            "relations",
+            []
+        )
+    )
+
+    if not isinstance(
+        current_functions,
+        list
+    ):
+        current_functions = []
+
+    if not isinstance(
+        current_relations,
+        list
+    ):
+        current_relations = []
+
+    # ========================================================
+    # 1. 当前功能标准化
+    # ========================================================
+
+    normalized_current_functions = []
+
+    for index, function in enumerate(
+        current_functions,
+        start=1
+    ):
+        normalized = (
+            normalize_function(
+                function,
+                index
+            )
+        )
+
+        if normalized:
+            normalized_current_functions.append(
+                normalized
+            )
+
+    # ========================================================
+    # 2. 当前关系Key
+    # ========================================================
+
+    existing_relation_keys = set()
+
+    for relation in current_relations:
+
+        normalized = (
+            normalize_relation(
+                relation
+            )
+        )
+
+        if normalized:
+            existing_relation_keys.add(
+                relation_key(
+                    normalized
+                )
+            )
+
+    # ========================================================
+    # 3. Qwen候选功能
+    # ========================================================
+
+    raw_missing_functions = (
+        llm_result.get(
+            "missingFunctions",
+            []
+        )
+    )
+
+    if not isinstance(
+        raw_missing_functions,
+        list
+    ):
+        raw_missing_functions = []
+
+    filtered_functions = []
+
+    for function in raw_missing_functions:
+
+        normalized = (
+            normalize_function(
+                function
+            )
+        )
+
+        if not normalized:
+            continue
+
+        # ----------------------------------------------------
+        # 已存在于当前设计
+        # ----------------------------------------------------
+
+        if function_already_exists(
+            normalized,
+            normalized_current_functions
+        ):
+            print(
+                "[过滤] Qwen功能点已经存在："
+                f"{normalized.get('functionId', '')} "
+                f"{normalized.get('name', '')}"
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # Qwen自己重复
+        # ----------------------------------------------------
+
+        if function_already_exists(
+            normalized,
+            filtered_functions
+        ):
+            print(
+                "[过滤] Qwen重复功能点："
+                f"{normalized.get('name', '')}"
+            )
+
+            continue
+
+        filtered_functions.append(
+            normalized
+        )
+
+    # ========================================================
+    # 4. 为缺失功能处理ID
+    # ========================================================
+
+    filtered_functions = (
+        assign_missing_function_ids(
+            normalized_current_functions,
+            filtered_functions
+        )
+    )
+
+    # ========================================================
+    # 5. 构造合法关系端点集合
+    # ========================================================
+
+    current_function_ids = {
+        normalize_text(
+            function.get(
+                "functionId",
+                ""
+            )
+        )
+        for function
+        in normalized_current_functions
+        if function.get(
+            "functionId"
+        )
+    }
+
+    missing_function_ids = {
+        normalize_text(
+            function.get(
+                "functionId",
+                ""
+            )
+        )
+        for function
+        in filtered_functions
+        if function.get(
+            "functionId"
+        )
+    }
+
+    # --------------------------------------------------------
+    # 关键：
+    #
+    # 当前已有功能
+    # +
+    # 本轮新增功能
+    #
+    # 都可以成为relation端点
+    # --------------------------------------------------------
+
+    valid_function_ids = (
+        current_function_ids
+        |
+        missing_function_ids
+    )
+
+    print(
+        "[过滤] 当前功能ID："
+        f"{sorted(current_function_ids)}"
+    )
+
+    print(
+        "[过滤] 新增功能ID："
+        f"{sorted(missing_function_ids)}"
+    )
+
+    # ========================================================
+    # 6. Qwen候选关系
+    # ========================================================
+
+    raw_missing_relations = (
+        llm_result.get(
+            "missingRelations",
+            []
+        )
+    )
+
+    if not isinstance(
+        raw_missing_relations,
+        list
+    ):
+        raw_missing_relations = []
+
+    filtered_relations = []
+
+    for relation in raw_missing_relations:
+
+        normalized = (
+            normalize_relation(
+                relation
+            )
+        )
+
+        if not normalized:
+            continue
+
+        source = normalize_text(
+            normalized.get(
+                "source",
+                ""
+            )
+        )
+
+        target = normalize_text(
+            normalized.get(
+                "target",
+                ""
+            )
+        )
+
+        # ----------------------------------------------------
+        # 禁止自环
+        # ----------------------------------------------------
+
+        if source == target:
+
+            print(
+                "[过滤] 忽略自环关系："
+                f"{source} -> {target}"
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # 端点检查
+        # ----------------------------------------------------
+
+        if (
+            source not in valid_function_ids
+            or target
+            not in valid_function_ids
+        ):
+            print(
+                "[过滤] 关系端点不存在："
+                f"{source} -> {target}"
+            )
+
+            continue
+
+        key = relation_key(
+            normalized
+        )
+
+        # ----------------------------------------------------
+        # 当前已经存在
+        # ----------------------------------------------------
+
+        if key in existing_relation_keys:
+
+            print(
+                "[过滤] Qwen关系已经存在："
+                f"{source} -> {target} "
+                f"({normalized.get('type', '')})"
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # Qwen自己重复
+        # ----------------------------------------------------
+
+        if any(
+            relation_key(
+                item
+            ) == key
+            for item
+            in filtered_relations
+        ):
+            print(
+                "[过滤] Qwen重复关系："
+                f"{source} -> {target}"
+            )
+
+            continue
+
+        filtered_relations.append(
+            normalized
+        )
+
+    # ========================================================
+    # 7. 最终过滤结果
+    # ========================================================
+
+    filtered_result = dict(
+        llm_result
+    )
+
+    filtered_result[
+        "missingFunctions"
+    ] = filtered_functions
+
+    filtered_result[
+        "missingRelations"
+    ] = filtered_relations
+
+    return filtered_result
+
+
+# ============================================================
+# 构建AI初步补全模型
+# ============================================================
+
+def build_completion_result(
+    current_case,
+    llm_result
+):
+    """
+    当前设计
+        +
+    AI真正缺失功能
+        +
+    AI真正缺失关系
+    """
+
+    current_functions = (
+        current_case.get(
+            "functions",
+            []
+        )
+    )
+
+    current_relations = (
+        current_case.get(
+            "relations",
+            []
+        )
+    )
+
+    missing_functions = (
+        llm_result.get(
+            "missingFunctions",
+            []
+        )
+    )
+
+    missing_relations = (
+        llm_result.get(
+            "missingRelations",
+            []
+        )
+    )
+
+    # ========================================================
+    # 功能
+    # ========================================================
+
+    functions = []
+
+    for index, function in enumerate(
+        current_functions,
+        start=1
+    ):
+        normalized = (
+            normalize_function(
+                function,
+                index
+            )
+        )
+
+        if normalized:
+            functions.append(
+                normalized
+            )
+
+    existing_ids = {
+        function.get(
+            "functionId"
+        )
+        for function
+        in functions
+        if function.get(
+            "functionId"
+        )
+    }
+
+    for function in missing_functions:
+
+        normalized = (
+            normalize_function(
+                function
+            )
+        )
+
+        if not normalized:
+            continue
+
+        function_id = (
+            normalized.get(
+                "functionId"
+            )
+        )
+
+        if (
+            not function_id
+            or function_id
+            in existing_ids
+        ):
+            number = 1
+
+            while (
+                f"F{number:03d}"
+                in existing_ids
+            ):
+                number += 1
+
+            function_id = (
+                f"F{number:03d}"
+            )
+
+            normalized[
+                "functionId"
+            ] = function_id
+
+        functions.append(
+            normalized
+        )
+
+        existing_ids.add(
+            function_id
+        )
+
+    # ========================================================
+    # 关系
+    # ========================================================
+
+    relations = []
+
+    for relation in current_relations:
+
+        normalized = (
+            normalize_relation(
+                relation
+            )
+        )
+
+        if normalized:
+            relations.append(
+                normalized
+            )
+
+    existing_relation_keys = {
+        relation_key(
+            relation
+        )
+        for relation
+        in relations
+    }
+
+    final_function_ids = {
+        function.get(
+            "functionId"
+        )
+        for function
+        in functions
+        if function.get(
+            "functionId"
+        )
+    }
+
+    for relation in missing_relations:
+
+        normalized = (
+            normalize_relation(
+                relation
+            )
+        )
+
+        if not normalized:
+            continue
+
+        source = normalized[
+            "source"
+        ]
+
+        target = normalized[
+            "target"
+        ]
+
+        if (
+            source
+            not in final_function_ids
+        ):
+            continue
+
+        if (
+            target
+            not in final_function_ids
+        ):
+            continue
+
+        key = relation_key(
+            normalized
+        )
+
+        if key in existing_relation_keys:
+            continue
+
+        relations.append(
+            normalized
+        )
+
+        existing_relation_keys.add(
+            key
+        )
+
+    return {
+        "functions": functions,
+        "relations": relations
+    }
+
+
+# ============================================================
+# 人工确认后的最终结果
+# ============================================================
+
+def build_confirmed_completion_result(
+    current_case,
+    accepted_functions,
+    accepted_relations
+):
+    """
+    根据人工确认结果生成最终模型。
+
+    当前原始设计始终保留。
+    """
+
+    normalized_case = (
+        normalize_current_case(
+            current_case
+        )
+    )
+
+    current_functions = (
+        normalized_case.get(
+            "functions",
+            []
+        )
+    )
+
+    current_relations = (
+        normalized_case.get(
+            "relations",
+            []
+        )
+    )
+
+    if not isinstance(
+        accepted_functions,
+        list
+    ):
+        accepted_functions = []
+
+    if not isinstance(
+        accepted_relations,
+        list
+    ):
+        accepted_relations = []
+
+    # ========================================================
+    # 功能
+    # ========================================================
+
+    functions = []
+
+    for index, function in enumerate(
+        current_functions,
+        start=1
+    ):
+        normalized = (
+            normalize_function(
+                function,
+                index
+            )
+        )
+
+        if normalized:
+            functions.append(
+                normalized
+            )
+
+    function_map = {
+        function.get(
+            "functionId"
+        ): function
+        for function
+        in functions
+        if function.get(
+            "functionId"
+        )
+    }
+
+    for function in accepted_functions:
+
+        normalized = (
+            normalize_function(
+                function
+            )
+        )
+
+        if not normalized:
+            continue
+
+        function_id = (
+            normalized.get(
+                "functionId"
+            )
+        )
+
+        if not function_id:
+
+            number = 1
+
+            while (
+                f"F{number:03d}"
+                in function_map
+            ):
+                number += 1
+
+            function_id = (
+                f"F{number:03d}"
+            )
+
+            normalized[
+                "functionId"
+            ] = function_id
+
+        function_map[
+            function_id
+        ] = normalized
+
+    functions = list(
+        function_map.values()
+    )
+
+    final_function_ids = {
+        function.get(
+            "functionId"
+        )
+        for function
+        in functions
+        if function.get(
+            "functionId"
+        )
+    }
+
+    # ========================================================
+    # 关系
+    # ========================================================
+
+    relations = []
+
+    for relation in current_relations:
+
+        normalized = (
+            normalize_relation(
+                relation
+            )
+        )
+
+        if normalized:
+            relations.append(
+                normalized
+            )
+
+    relation_keys = {
+        relation_key(
+            relation
+        )
+        for relation
+        in relations
+    }
+
+    for relation in accepted_relations:
+
+        normalized = (
+            normalize_relation(
+                relation
+            )
+        )
+
+        if not normalized:
+            continue
+
+        source = normalized[
+            "source"
+        ]
+
+        target = normalized[
+            "target"
+        ]
+
+        if (
+            source
+            not in final_function_ids
+        ):
+            continue
+
+        if (
+            target
+            not in final_function_ids
+        ):
+            continue
+
+        key = relation_key(
+            normalized
+        )
+
+        if key in relation_keys:
+            continue
+
+        relations.append(
+            normalized
+        )
+
+        relation_keys.add(
+            key
+        )
+
+    return {
+        "functions": functions,
+        "relations": relations
+    }
+
+
+# ============================================================
+# RAG统计
+# ============================================================
+
+def print_rag_structure_statistics(
+    retrieved
+):
+    """
+    检查新版RAG是否真的携带历史关系。
+
+    如果这里一直显示：
+        邻居=0
+        关系=0
+
+    则说明：
+        1. 没重新建库；
+        或
+        2. 历史案例本身没有relations。
+    """
+
+    total_neighbors = 0
+    total_relations = 0
+
+    for index, item in enumerate(
+        retrieved,
+        start=1
+    ):
+
+        if not isinstance(
+            item,
+            dict
+        ):
+            continue
+
+        data = item.get(
+            "data",
+            {}
+        )
+
+        if not isinstance(
+            data,
+            dict
+        ):
+            continue
+
+        function = data.get(
+            "function",
+            {}
+        )
+
+        neighbors = data.get(
+            "neighborFunctions",
+            []
+        )
+
+        relations = data.get(
+            "relatedRelations",
+            []
+        )
+
+        if not isinstance(
+            neighbors,
+            list
+        ):
+            neighbors = []
+
+        if not isinstance(
+            relations,
+            list
+        ):
+            relations = []
+
+        total_neighbors += len(
+            neighbors
+        )
+
+        total_relations += len(
+            relations
+        )
+
+        print(
+            f"[RAG结构-{index}] "
+            f"{data.get('caseId', '')} | "
+            f"{function.get('functionId', '')} "
+            f"{function.get('name', '')} | "
+            f"score={item.get('score', 0):.4f} | "
+            f"邻居={len(neighbors)} | "
+            f"关系={len(relations)}"
+        )
+
+    print(
+        "[RAG结构统计] "
+        f"历史邻居功能：{total_neighbors}，"
+        f"历史关系：{total_relations}"
+    )
+
+
+# ============================================================
+# 主补全流程
+# ============================================================
+
+def completion(
+    current_case,
+    db,
+    k=3
+):
+    """
+    RAG + Qwen功能点及关联关系补全。
+
+    新流程：
+
+        当前需求
+            +
+        当前设计
+            ↓
+        BGE + FAISS Top-K
+            ↓
+        历史命中功能
+            +
+        历史邻居功能
+            +
+        历史关联关系
+            ↓
+        证据化Prompt
+            ↓
+        Qwen候选
+            ↓
+        一致性过滤
+            ↓
+        AI补全结果
+    """
+
+    total_start_time = (
+        time.perf_counter()
+    )
+
+    # ========================================================
+    # 1. 当前案例标准化
+    # ========================================================
+
+    start = time.perf_counter()
+
+    normalized_case = (
+        normalize_current_case(
+            current_case
+        )
+    )
+
+    print(
+        f"[耗时] 当前设计输入标准化："
+        f"{time.perf_counter() - start:.3f}秒"
+    )
+
+    print(
+        f"[当前设计] "
+        f"{normalized_case.get('caseId', '')}"
+    )
+
+    print(
+        f"[当前设计] 功能点数量："
+        f"{len(normalized_case.get('functions', []))}"
+    )
+
+    print(
+        f"[当前设计] 关系数量："
+        f"{len(normalized_case.get('relations', []))}"
+    )
+
+    print(
+        f"[当前需求] raw_text长度："
+        f"{len(normalized_case.get('raw_text', ''))}"
+    )
+
+    for function in normalized_case.get(
+        "functions",
+        []
+    ):
+        print(
+            f"  - "
+            f"{function.get('functionId', '')} "
+            f"{function.get('name', '')}"
+        )
+
+    # ========================================================
+    # 2. RAG检索
+    # ========================================================
+
+    start = time.perf_counter()
+
+    retrieved = retrieve_top_k_cases(
+        normalized_case,
+        db,
+        k=k
+    )
+
+    print(
+        f"[耗时] RAG检索阶段："
+        f"{time.perf_counter() - start:.3f}秒"
+    )
+
+    print(
+        f"[RAG] 检索结果数量："
+        f"{len(retrieved)}"
+    )
+
+    # --------------------------------------------------------
+    # 非常重要：
+    # 检查历史局部子图是否真的进入retrieval
+    # --------------------------------------------------------
+
+    print_rag_structure_statistics(
+        retrieved
+    )
+
+    # ========================================================
+    # 3. 构建Prompt
+    # ========================================================
+
+    start = time.perf_counter()
+
+    # --------------------------------------------------------
+    # 关键修改：
+    #
+    # 不再提取孤立function。
+    #
+    # 直接把完整retrieved交给prompt_service。
+    #
+    # 每一个item内部应包含：
+    #
+    # function
+    # neighborFunctions
+    # relatedRelations
+    # --------------------------------------------------------
+
+    prompt = build_completion_prompt(
+        raw_text=normalized_case.get(
+            "raw_text",
+            ""
+        ),
+
+        current_functions=normalized_case.get(
+            "functions",
+            []
+        ),
+
+        current_relations=normalized_case.get(
+            "relations",
+            []
+        ),
+
+        history_functions=retrieved,
+
+        function_points=normalized_case.get(
+            "function_points",
+            []
+        ),
+
+        events=normalized_case.get(
+            "events",
+            []
+        )
+    )
+
+    print(
+        f"[耗时] Prompt阶段："
+        f"{time.perf_counter() - start:.3f}秒"
+    )
+
+    print(
+        f"[RAG] Prompt历史参考案例数量："
+        f"{len(retrieved)}"
+    )
+
+    # ========================================================
+    # 4. Qwen
+    # ========================================================
+
+    start = time.perf_counter()
+
+    try:
+
+        llm_response = call_qwen(
+            prompt
+        )
+
+        raw_llm_result = (
+            parse_llm_json(
+                llm_response
+            )
+        )
+
+        if not isinstance(
+            raw_llm_result,
+            dict
+        ):
+            raw_llm_result = {}
+
+        raw_llm_result.setdefault(
+            "missingFunctions",
+            []
+        )
+
+        raw_llm_result.setdefault(
+            "missingRelations",
+            []
+        )
+
+    except Exception as e:
+
+        print(
+            "[错误] Qwen调用失败"
+        )
+
+        print(
+            f"[错误信息] {e}"
+        )
+
+        raw_llm_result = {
+            "missingFunctions": [],
+            "missingRelations": []
+        }
+
+    print(
+        f"[耗时] Qwen阶段："
+        f"{time.perf_counter() - start:.3f}秒"
+    )
+
+    print(
+        "[Qwen原始结果] "
+        f"功能："
+        f"{len(raw_llm_result.get('missingFunctions', []))}"
+        f"，关系："
+        f"{len(raw_llm_result.get('missingRelations', []))}"
+    )
+
+    # ========================================================
+    # 5. 一致性过滤
+    # ========================================================
+
+    start = time.perf_counter()
+
+    llm_result = filter_llm_result(
+        normalized_case,
+        raw_llm_result
+    )
+
+    print(
+        f"[耗时] 补全候选一致性过滤："
+        f"{time.perf_counter() - start:.3f}秒"
+    )
+
+    print(
+        "[过滤后真实缺失] "
+        f"功能："
+        f"{len(llm_result.get('missingFunctions', []))}"
+        f"，关系："
+        f"{len(llm_result.get('missingRelations', []))}"
+    )
+
+    # ========================================================
+    # 6. 输出证据来源
+    # ========================================================
+
+    for function in llm_result.get(
+        "missingFunctions",
+        []
+    ):
+        print(
+            "[补全功能] "
+            f"{function.get('functionId', '')} "
+            f"{function.get('name', '')} | "
+            f"来源={function.get('evidenceType', '')} | "
+            f"confidence={function.get('confidence', 0)}"
+        )
+
+    for relation in llm_result.get(
+        "missingRelations",
+        []
+    ):
+        print(
+            "[补全关系] "
+            f"{relation.get('source', '')}"
+            f" -> "
+            f"{relation.get('target', '')} | "
+            f"type={relation.get('type', '')} | "
+            f"来源={relation.get('evidenceType', '')} | "
+            f"confidence={relation.get('confidence', 0)}"
+        )
+
+    # ========================================================
+    # 7. AI初步补全模型
+    # ========================================================
+
+    completion_result = (
+        build_completion_result(
+            normalized_case,
+            llm_result
+        )
+    )
+
+    total_time = (
+        time.perf_counter()
+        - total_start_time
+    )
+
+    print(
+        f"[耗时] 功能补全总耗时："
+        f"{total_time:.3f}秒"
+    )
+
+    print(
+        f"[结果] AI补全后功能数量："
+        f"{len(completion_result.get('functions', []))}"
+    )
+
+    print(
+        f"[结果] AI补全后关系数量："
+        f"{len(completion_result.get('relations', []))}"
+    )
+
+    return {
+        # RAG历史证据
+        "retrieval": retrieved,
+
+        # 过滤后的真正缺失
+        "llm_result": llm_result,
+
+        # Qwen未经一致性过滤的原始候选
+        "raw_llm_result": raw_llm_result,
+
+        # 当前设计 + AI缺失项
+        "completion_result": completion_result
+    }

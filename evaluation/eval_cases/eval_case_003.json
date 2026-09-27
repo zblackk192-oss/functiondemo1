@@ -1,0 +1,3032 @@
+{
+  "evalId": "EVAL003",
+  "input": {
+    "caseId": "CASE003_EVAL",
+    "projectName": "Towards a Functional System Architecture for Automated Vehicles.pdf",
+    "functions": [
+      {
+        "functionId": "F001",
+        "name": "环境感知",
+        "action": "感知",
+        "object": "车辆外部环境",
+        "effect": "获取车辆周围环境信息",
+        "trigger": "系统启动或周期性触发",
+        "condition": "传感器正常工作",
+        "inputs": [
+          "转向角数据",
+          "激光雷达数据",
+          "加速度数据",
+          "轮速传感器数据",
+          "毫米波雷达数据",
+          "摄像头数据",
+          "电池电量数据",
+          "雨量传感器数据",
+          "陀螺仪数据",
+          "温度传感器数据",
+          "燃油量数据"
+        ],
+        "outputs": [
+          "交通灯状态",
+          "车辆姿态信息",
+          "交通标志状态",
+          "能源状态信息",
+          "车辆运动状态",
+          "动态目标数据",
+          "环境特征数据"
+        ],
+        "preconditions": [
+          "传感器已校准",
+          "传感器数据可用"
+        ],
+        "postconditions": [
+          "环境模型已更新"
+        ],
+        "scenario": "自动驾驶车辆在行驶过程中持续感知周围环境",
+        "constraint": "传感器精度和范围限制"
+      }
+    ],
+    "relations": []
+  },
+  "groundTruth": {
+    "sourceCaseId": "CASE003",
+    "missingFunctions": [
+      {
+        "functionId": "F002",
+        "name": "特征提取",
+        "action": "提取",
+        "object": "传感器数据特征",
+        "effect": "从原始传感器数据中提取有用特征",
+        "trigger": "接收到原始传感器数据",
+        "condition": "传感器数据有效",
+        "inputs": [
+          "原始传感器数据",
+          "特征级地图数据"
+        ],
+        "outputs": [
+          "动态目标特征",
+          "提取的特征数据",
+          "占据栅格特征",
+          "交通灯特征",
+          "车道线特征",
+          "交通标志特征"
+        ],
+        "preconditions": [
+          "传感器数据已预处理"
+        ],
+        "postconditions": [
+          "特征数据已生成"
+        ],
+        "scenario": "系统从摄像头、雷达等传感器数据中提取车道线、车辆、行人等特征",
+        "constraint": "计算资源和实时性要求"
+      },
+      {
+        "functionId": "F003",
+        "name": "模型滤波",
+        "action": "滤波",
+        "object": "特征数据",
+        "effect": "对提取的特征进行模型滤波和跟踪",
+        "trigger": "特征提取完成",
+        "condition": "特征数据有效",
+        "inputs": [
+          "传感器数据",
+          "先验状态",
+          "预测模型",
+          "实体模型",
+          "提取的特征数据",
+          "历史跟踪数据"
+        ],
+        "outputs": [
+          "滤波后的状态估计",
+          "滤波后的特征数据",
+          "实体跟踪结果",
+          "实体属性估计"
+        ],
+        "preconditions": [
+          "特征提取已完成",
+          "实体模型已建立"
+        ],
+        "postconditions": [
+          "实体状态已更新",
+          "跟踪轨迹已维护"
+        ],
+        "scenario": "系统对检测到的车辆、行人等动态目标进行跟踪和状态估计",
+        "constraint": "计算复杂度和实时性平衡"
+      },
+      {
+        "functionId": "F004",
+        "name": "车道检测与跟踪",
+        "action": "检测与跟踪",
+        "object": "车道线",
+        "effect": "识别并跟踪车辆行驶车道",
+        "trigger": "接收到传感器数据",
+        "condition": "车道线可见",
+        "inputs": [
+          "摄像头数据",
+          "激光雷达数据",
+          "特征级地图数据"
+        ],
+        "outputs": [
+          "车道线位置",
+          "车道线类型",
+          "车道跟踪结果"
+        ],
+        "preconditions": [
+          "传感器数据可用",
+          "车道检测算法已加载"
+        ],
+        "postconditions": [
+          "车道模型已更新"
+        ],
+        "scenario": "自动驾驶车辆在道路上行驶时持续检测和跟踪车道线",
+        "constraint": "天气和光照条件影响"
+      },
+      {
+        "functionId": "F005",
+        "name": "动态目标跟踪",
+        "action": "跟踪",
+        "object": "动态环境元素",
+        "effect": "跟踪周围动态目标的运动状态",
+        "trigger": "检测到动态目标",
+        "condition": "动态目标在传感器范围内",
+        "inputs": [
+          "传感器特征数据",
+          "历史跟踪数据",
+          "动态目标模型"
+        ],
+        "outputs": [
+          "目标位置",
+          "目标速度",
+          "目标加速度",
+          "目标轨迹预测"
+        ],
+        "preconditions": [
+          "动态目标已检测",
+          "跟踪算法已初始化"
+        ],
+        "postconditions": [
+          "动态目标状态已更新",
+          "跟踪轨迹已维护"
+        ],
+        "scenario": "自动驾驶车辆跟踪周围车辆、行人、自行车等动态目标",
+        "constraint": "目标遮挡和复杂场景处理"
+      },
+      {
+        "functionId": "F006",
+        "name": "占据栅格建模",
+        "action": "建模",
+        "object": "环境占据状态",
+        "effect": "构建道路和周围静态环境的模型",
+        "trigger": "接收到传感器数据",
+        "condition": "传感器数据有效",
+        "inputs": [
+          "目标分类结果",
+          "传感器数据",
+          "激光雷达数据",
+          "道路边界数据",
+          "先验地图数据",
+          "位姿信息",
+          "动态目标跟踪数据",
+          "毫米波雷达数据",
+          "超声波数据",
+          "占据栅格数据",
+          "目标行为预测",
+          "车道线数据"
+        ],
+        "outputs": [
+          "栅格占据概率",
+          "道路模型",
+          "静态环境特征",
+          "交互关系模型",
+          "占据栅格地图",
+          "道路拓扑",
+          "静态障碍物模型",
+          "动态环境模型",
+          "目标行为预测",
+          "路沿模型"
+        ],
+        "preconditions": [
+          "传感器数据已同步",
+          "栅格参数已配置"
+        ],
+        "postconditions": [
+          "占据栅格已更新"
+        ],
+        "scenario": "自动驾驶车辆使用占据栅格表示周围静态环境",
+        "constraint": "计算资源和内存限制"
+      },
+      {
+        "functionId": "F007",
+        "name": "交通标志识别与状态估计",
+        "action": "识别与估计",
+        "object": "交通标志",
+        "effect": "识别交通灯并估计其当前状态",
+        "trigger": "检测到交通标志",
+        "condition": "交通标志在视野内",
+        "inputs": [
+          "V2X交通信息",
+          "交通灯图像数据",
+          "道路网络数据",
+          "先验地图数据",
+          "红外传感器数据",
+          "摄像头数据",
+          "V2X数据",
+          "识别到的标志信息",
+          "车辆检测数据",
+          "检测到的标志区域",
+          "交通传感器数据",
+          "图像数据"
+        ],
+        "outputs": [
+          "交通标志置信度",
+          "车道使用状态",
+          "标志状态估计结果",
+          "交通流识别结果",
+          "交通灯位置",
+          "交通标志状态",
+          "交通标志位置",
+          "道路拥堵等级",
+          "标志类型和位置信息",
+          "交通灯状态估计结果",
+          "交通流密度",
+          "交通流速度",
+          "交通灯倒计时",
+          "交通标志检测结果",
+          "交通标志类型",
+          "交通灯相位",
+          "交通灯颜色状态"
+        ],
+        "preconditions": [
+          "交通标志检测算法已加载",
+          "标志数据库可用"
+        ],
+        "postconditions": [
+          "交通标志信息已更新"
+        ],
+        "scenario": "自动驾驶车辆识别限速、禁止超车等交通标志",
+        "constraint": "标志遮挡、污损和光照变化"
+      },
+      {
+        "functionId": "F008",
+        "name": "自身运动估计",
+        "action": "估计",
+        "object": "车辆自身运动",
+        "effect": "估计车辆的运动状态和位姿变化",
+        "trigger": "接收到车辆传感器数据",
+        "condition": "车辆运动传感器正常",
+        "inputs": [
+          "转向角数据",
+          "加速度计数据",
+          "传感器数据",
+          "陀螺仪数据",
+          "轮速数据"
+        ],
+        "outputs": [
+          "车辆位姿变化",
+          "运动状态估计结果",
+          "车辆速度",
+          "车辆加速度",
+          "车辆横摆角速度"
+        ],
+        "preconditions": [
+          "传感器数据已同步",
+          "传感器外参已标定"
+        ],
+        "postconditions": [
+          "自身运动状态已更新"
+        ],
+        "scenario": "自动驾驶车辆估计自身的运动状态用于坐标变换",
+        "constraint": "传感器噪声和漂移"
+      },
+      {
+        "functionId": "F009",
+        "name": "自身监控",
+        "action": "监控",
+        "object": "车辆自身系统",
+        "effect": "检测系统各模块的运行状态和健康状况",
+        "trigger": "系统启动或周期性触发",
+        "condition": "监控系统正常",
+        "inputs": [
+          "性能指标数据",
+          "各模块状态信息",
+          "系统健康指标",
+          "故障码数据",
+          "各子系统状态数据"
+        ],
+        "outputs": [
+          "系统状态报告",
+          "系统健康状态",
+          "性能评估结果",
+          "故障诊断结果"
+        ],
+        "preconditions": [
+          "监控系统已初始化",
+          "诊断规则已配置"
+        ],
+        "postconditions": [
+          "系统状态报告已生成"
+        ],
+        "scenario": "自动驾驶车辆持续监控各子系统的运行状态",
+        "constraint": "故障检测的准确性和及时性"
+      },
+      {
+        "functionId": "F010",
+        "name": "场景建模",
+        "action": "建模",
+        "object": "驾驶场景",
+        "effect": "生成当前驾驶场景的结构化表示",
+        "trigger": "感知数据处理完成",
+        "condition": "感知数据有效",
+        "inputs": [
+          "上下文信息",
+          "自车状态",
+          "V2X数据",
+          "感知数据",
+          "动态目标数据",
+          "环境特征数据",
+          "地图数据",
+          "自身状态数据"
+        ],
+        "outputs": [
+          "场景关系图",
+          "场景语义描述",
+          "场景表示",
+          "场景模型"
+        ],
+        "preconditions": [
+          "感知模块已输出数据",
+          "地图数据可用"
+        ],
+        "postconditions": [
+          "场景模型已生成并传递给规划模块"
+        ],
+        "scenario": "自动驾驶车辆整合所有感知信息构建当前驾驶场景",
+        "constraint": "场景复杂度和实时性要求"
+      },
+      {
+        "functionId": "F011",
+        "name": "自身表示建模",
+        "action": "建模",
+        "object": "车辆自身表示",
+        "effect": "构建包含目标和价值信息的自车模型",
+        "trigger": "自身状态感知完成",
+        "condition": "自身状态数据有效",
+        "inputs": [
+          "目标和价值信息",
+          "车辆参数数据",
+          "自车状态表征",
+          "自身监控数据",
+          "执行监控结果",
+          "自身运动状态"
+        ],
+        "outputs": [
+          "自身语义模型",
+          "自身能力评估",
+          "自身状态描述",
+          "自车模型"
+        ],
+        "preconditions": [
+          "自身状态感知已完成",
+          "车辆参数已配置"
+        ],
+        "postconditions": [
+          "自身表示模型已更新"
+        ],
+        "scenario": "自动驾驶车辆构建自身的完整语义表示",
+        "constraint": "车辆参数的准确性和完整性"
+      },
+      {
+        "functionId": "F012",
+        "name": "道路级环境建模",
+        "action": "建模",
+        "object": "道路网络环境",
+        "effect": "构建道路网络级别的交通环境模型",
+        "trigger": "接收到地图和交通流数据",
+        "condition": "地图和交通数据可用",
+        "inputs": [
+          "V2X交通信息",
+          "道路拓扑数据",
+          "交通流数据",
+          "动态目标检测数据",
+          "先验道路网络地图"
+        ],
+        "outputs": [
+          "道路封闭信息",
+          "交通流状态",
+          "道路拓扑模型",
+          "道路拥堵状态",
+          "道路级环境模型",
+          "动态环境模型"
+        ],
+        "preconditions": [
+          "道路网络地图可用",
+          "交通数据源可用"
+        ],
+        "postconditions": [
+          "道路级环境模型已更新"
+        ],
+        "scenario": "自动驾驶车辆获取道路网络级别的交通状况信息",
+        "constraint": "交通数据的实时性和准确性"
+      },
+      {
+        "functionId": "F013",
+        "name": "地图信息增强",
+        "action": "增强",
+        "object": "感知信息",
+        "effect": "使用先验地图信息增强感知结果",
+        "trigger": "感知和定位数据可用",
+        "condition": "地图数据与感知数据匹配",
+        "inputs": [
+          "选择的场景信息",
+          "车辆定位数据",
+          "感知特征数据",
+          "先验地图数据",
+          "附加信息源"
+        ],
+        "outputs": [
+          "增强后的场景信息",
+          "地图匹配结果",
+          "置信度评估",
+          "增强后的感知数据"
+        ],
+        "preconditions": [
+          "车辆定位已完成",
+          "地图数据可用"
+        ],
+        "postconditions": [
+          "感知信息已增强"
+        ],
+        "scenario": "自动驾驶车辆使用高精地图信息增强传感器感知结果",
+        "constraint": "地图精度和定位误差"
+      },
+      {
+        "functionId": "F014",
+        "name": "V2X信息处理",
+        "action": "处理",
+        "object": "V2X通信信息",
+        "effect": "接收来自其他交通参与者或基础设施的信息",
+        "trigger": "接收到V2X消息",
+        "condition": "V2X通信链路正常",
+        "inputs": [
+          "通信协议",
+          "V2X消息",
+          "硬件状态",
+          "V2X接收数据",
+          "态势数据",
+          "消息时间戳",
+          "规划与控制信息",
+          "消息来源信息",
+          "规划轨迹",
+          "感知信息",
+          "选定路线",
+          "选定机动",
+          "通信需求",
+          "V2X消息数据"
+        ],
+        "outputs": [
+          "V2X通信数据",
+          "信息可信度评估",
+          "处理后的V2X信息",
+          "基础设施信息",
+          "通信连接状态",
+          "信息融合结果",
+          "V2X广播消息",
+          "V2X信息",
+          "外部交通参与者信息"
+        ],
+        "preconditions": [
+          "V2X通信模块正常工作",
+          "消息解析规则已配置"
+        ],
+        "postconditions": [
+          "V2X信息已处理并融合"
+        ],
+        "scenario": "自动驾驶车辆接收并处理来自其他车辆和基础设施的V2X信息",
+        "constraint": "V2X信息的不确定性和潜在误导"
+      },
+      {
+        "functionId": "F015",
+        "name": "传感器数据融合",
+        "action": "融合",
+        "object": "多传感器数据",
+        "effect": "融合来自多个传感器的数据",
+        "trigger": "多传感器数据可用",
+        "condition": "传感器数据已同步",
+        "inputs": [
+          "传感器数据",
+          "激光雷达数据",
+          "毫米波雷达数据",
+          "传感器外参",
+          "摄像头数据",
+          "超声波数据"
+        ],
+        "outputs": [
+          "融合后的环境表示",
+          "目标检测结果",
+          "融合置信度",
+          "交换的传感器数据"
+        ],
+        "preconditions": [
+          "传感器已标定",
+          "数据已时间同步"
+        ],
+        "postconditions": [
+          "融合结果已生成"
+        ],
+        "scenario": "自动驾驶车辆融合多种传感器数据提高感知准确性",
+        "constraint": "传感器异构性和计算复杂度"
+      },
+      {
+        "functionId": "F016",
+        "name": "摩擦系数估计",
+        "action": "估计",
+        "object": "路面摩擦系数",
+        "effect": "获取路面附着特性",
+        "trigger": "车辆行驶状态变化",
+        "condition": "车辆运动数据可用",
+        "inputs": [
+          "车辆运动数据",
+          "传感器数据"
+        ],
+        "outputs": [
+          "摩擦系数估计值"
+        ],
+        "preconditions": [
+          "车辆处于运动状态"
+        ],
+        "postconditions": [
+          "摩擦系数可用于控制决策"
+        ],
+        "scenario": "自感知模块评估路面条件时",
+        "constraint": "估计精度要求"
+      },
+      {
+        "functionId": "F017",
+        "name": "部件磨损估计",
+        "action": "估计",
+        "object": "车辆部件磨损程度",
+        "effect": "评估部件健康状态",
+        "trigger": "车辆运行时间累积",
+        "condition": "部件使用数据可用",
+        "inputs": [
+          "部件使用数据",
+          "传感器数据"
+        ],
+        "outputs": [
+          "磨损程度估计值"
+        ],
+        "preconditions": [
+          "部件已安装传感器"
+        ],
+        "postconditions": [
+          "磨损信息可用于维护决策"
+        ],
+        "scenario": "自感知模块监控车辆状态时",
+        "constraint": "估计模型准确性"
+      },
+      {
+        "functionId": "F018",
+        "name": "部件诊断",
+        "action": "诊断",
+        "object": "车辆部件状态",
+        "effect": "识别部件故障或异常",
+        "trigger": "部件状态异常或定期检测",
+        "condition": "部件监控数据可用",
+        "inputs": [
+          "部件监控数据"
+        ],
+        "outputs": [
+          "诊断结果"
+        ],
+        "preconditions": [
+          "诊断算法已部署"
+        ],
+        "postconditions": [
+          "故障信息可用于维护"
+        ],
+        "scenario": "自感知模块进行健康检查时",
+        "constraint": "诊断准确性要求"
+      },
+      {
+        "functionId": "F019",
+        "name": "能量水平估计",
+        "action": "估计",
+        "object": "车辆能量水平",
+        "effect": "获取剩余能量信息",
+        "trigger": "能量消耗或补充",
+        "condition": "能量传感器可用",
+        "inputs": [
+          "能量传感器数据"
+        ],
+        "outputs": [
+          "能量水平估计值"
+        ],
+        "preconditions": [
+          "能量传感器已校准"
+        ],
+        "postconditions": [
+          "能量信息可用于任务规划"
+        ],
+        "scenario": "自感知模块监控能量状态时",
+        "constraint": "估计精度要求"
+      },
+      {
+        "functionId": "F020",
+        "name": "自车运动补偿",
+        "action": "补偿",
+        "object": "自车运动对感知的影响",
+        "effect": "消除自车运动带来的感知误差",
+        "trigger": "自车运动状态变化",
+        "condition": "运动估计数据可用",
+        "inputs": [
+          "自车运动估计数据",
+          "传感器数据"
+        ],
+        "outputs": [
+          "补偿后的感知数据"
+        ],
+        "preconditions": [
+          "运动估计准确"
+        ],
+        "postconditions": [
+          "感知数据更准确"
+        ],
+        "scenario": "感知系统处理动态场景时",
+        "constraint": "补偿算法实时性"
+      },
+      {
+        "functionId": "F021",
+        "name": "轨迹验证",
+        "action": "验证",
+        "object": "动态元素轨迹",
+        "effect": "确认轨迹一致性和正确性",
+        "trigger": "多轨迹数据输入",
+        "condition": "轨迹数据可用",
+        "inputs": [
+          "多个动态元素轨迹"
+        ],
+        "outputs": [
+          "轨迹验证结果"
+        ],
+        "preconditions": [
+          "验证算法可用"
+        ],
+        "postconditions": [
+          "验证结果可用于跟踪优化"
+        ],
+        "scenario": "动态环境建模时处理重叠轨迹",
+        "constraint": "验证准确性要求"
+      },
+      {
+        "functionId": "F022",
+        "name": "自车状态表示",
+        "action": "表示",
+        "object": "自车状态信息",
+        "effect": "构建车辆自身状态的完整表示",
+        "trigger": "自车状态数据更新",
+        "condition": "状态数据有效",
+        "inputs": [
+          "执行器状态",
+          "自车传感器数据",
+          "车辆传感器数据",
+          "车辆状态数据",
+          "车辆参数"
+        ],
+        "outputs": [
+          "自车状态表示",
+          "自车状态表征"
+        ],
+        "preconditions": [
+          "状态融合算法可用"
+        ],
+        "postconditions": [
+          "状态信息可用于决策"
+        ],
+        "scenario": "上下文建模模块更新自车状态时",
+        "constraint": "状态表示准确性"
+      },
+      {
+        "functionId": "F023",
+        "name": "上下文场景建模",
+        "action": "建模",
+        "object": "上下文和场景信息",
+        "effect": "构建包含上下文的场景表示",
+        "trigger": "场景和上下文数据输入",
+        "condition": "数据源有效",
+        "inputs": [
+          "场景数据",
+          "上下文信息"
+        ],
+        "outputs": [
+          "上下文场景模型"
+        ],
+        "preconditions": [
+          "建模算法可用"
+        ],
+        "postconditions": [
+          "模型可用于高层决策"
+        ],
+        "scenario": "上下文建模模块综合处理时",
+        "constraint": "建模完整性要求"
+      },
+      {
+        "functionId": "F024",
+        "name": "道路拓扑识别",
+        "action": "识别",
+        "object": "道路拓扑结构",
+        "effect": "获取道路网络拓扑信息",
+        "trigger": "地图数据或感知数据输入",
+        "condition": "数据源有效",
+        "inputs": [
+          "感知数据",
+          "地图数据",
+          "道路拓扑识别结果"
+        ],
+        "outputs": [
+          "道路拓扑识别结果",
+          "道路拓扑模型"
+        ],
+        "preconditions": [
+          "识别算法可用"
+        ],
+        "postconditions": [
+          "拓扑信息可用于路径规划"
+        ],
+        "scenario": "道路级环境建模时",
+        "constraint": "识别准确性要求"
+      },
+      {
+        "functionId": "F025",
+        "name": "任务规划",
+        "action": "规划",
+        "object": "驾驶任务",
+        "effect": "规划任务中的具体元素",
+        "trigger": "任务指令输入",
+        "condition": "任务信息有效",
+        "inputs": [
+          "态势评估结果",
+          "任务指令",
+          "行为规则",
+          "道路网络数据",
+          "交通流信息",
+          "任务元素类型"
+        ],
+        "outputs": [
+          "任务元素计划",
+          "行为计划",
+          "任务计划"
+        ],
+        "preconditions": [
+          "规划算法可用"
+        ],
+        "postconditions": [
+          "计划可用于路径规划"
+        ],
+        "scenario": "战略级导航规划时",
+        "constraint": "规划合理性要求"
+      },
+      {
+        "functionId": "F026",
+        "name": "路径规划",
+        "action": "规划",
+        "object": "行驶路径",
+        "effect": "根据位置变化更新路径",
+        "trigger": "任务规划完成",
+        "condition": "任务计划有效",
+        "inputs": [
+          "道路网络数据",
+          "当前自车位置",
+          "任务计划",
+          "道路网络",
+          "目标位置",
+          "优化准则"
+        ],
+        "outputs": [
+          "更新后的路径",
+          "最优路径",
+          "备选路径"
+        ],
+        "preconditions": [
+          "路径规划算法可用"
+        ],
+        "postconditions": [
+          "路径可用于导航执行"
+        ],
+        "scenario": "战略级导航规划时",
+        "constraint": "路径最优性要求"
+      },
+      {
+        "functionId": "F027",
+        "name": "备选路径计算",
+        "action": "计算",
+        "object": "备选行驶路径",
+        "effect": "向操作员提供路径选择",
+        "trigger": "事件触发或战术层请求",
+        "condition": "路径规划数据可用",
+        "inputs": [
+          "当前路径信息",
+          "道路网络数据",
+          "路径规划结果",
+          "路径备选方案"
+        ],
+        "outputs": [
+          "备选方案信息",
+          "多个路径备选方案",
+          "备选路径集合"
+        ],
+        "preconditions": [
+          "计算算法可用"
+        ],
+        "postconditions": [
+          "备选路径可用于决策"
+        ],
+        "scenario": "路径规划需要替代方案时",
+        "constraint": "计算实时性要求"
+      },
+      {
+        "functionId": "F028",
+        "name": "技能限制评估",
+        "action": "评估",
+        "object": "系统技能限制",
+        "effect": "确定系统执行能力边界",
+        "trigger": "路径规划或任务执行",
+        "condition": "系统状态数据可用",
+        "inputs": [
+          "系统状态数据",
+          "任务要求"
+        ],
+        "outputs": [
+          "技能限制评估结果"
+        ],
+        "preconditions": [
+          "评估模型可用"
+        ],
+        "postconditions": [
+          "限制信息可用于决策调整"
+        ],
+        "scenario": "导航规划考虑系统能力时",
+        "constraint": "评估准确性要求"
+      },
+      {
+        "functionId": "F029",
+        "name": "场景选择",
+        "action": "选择",
+        "object": "场景相关信息",
+        "effect": "提取与目标相关的场景信息",
+        "trigger": "场景数据输入",
+        "condition": "场景数据有效",
+        "inputs": [
+          "完整场景数据",
+          "目标信息"
+        ],
+        "outputs": [
+          "选择的场景信息"
+        ],
+        "preconditions": [
+          "选择算法可用"
+        ],
+        "postconditions": [
+          "信息可用于态势评估"
+        ],
+        "scenario": "战术级引导处理场景时",
+        "constraint": "选择准确性要求"
+      },
+      {
+        "functionId": "F030",
+        "name": "态势表示生成",
+        "action": "生成",
+        "object": "态势表示",
+        "effect": "构建态势数据结构",
+        "trigger": "场景增强完成",
+        "condition": "增强数据有效",
+        "inputs": [
+          "增强后的场景信息"
+        ],
+        "outputs": [
+          "态势表示数据"
+        ],
+        "preconditions": [
+          "生成算法可用"
+        ],
+        "postconditions": [
+          "态势可用于评估和规划"
+        ],
+        "scenario": "战术级引导构建态势时",
+        "constraint": "表示完整性要求"
+      },
+      {
+        "functionId": "F031",
+        "name": "态势评估",
+        "action": "评估",
+        "object": "驾驶态势",
+        "effect": "将态势信息可视化展示",
+        "trigger": "态势表示生成",
+        "condition": "态势数据有效",
+        "inputs": [
+          "态势表示数据",
+          "当前态势",
+          "态势数据",
+          "环境信息",
+          "交通参与者状态"
+        ],
+        "outputs": [
+          "态势评估结果",
+          "未来态势预测",
+          "可视化界面"
+        ],
+        "preconditions": [
+          "评估算法可用"
+        ],
+        "postconditions": [
+          "评估结果可用于行为规划"
+        ],
+        "scenario": "战术级引导评估态势时",
+        "constraint": "评估准确性要求"
+      },
+      {
+        "functionId": "F032",
+        "name": "技能能力监控",
+        "action": "监控",
+        "object": "系统技能和能力",
+        "effect": "评估系统执行特定任务的能力",
+        "trigger": "态势评估完成",
+        "condition": "系统状态数据可用",
+        "inputs": [
+          "系统状态数据",
+          "态势评估结果"
+        ],
+        "outputs": [
+          "能力监控结果"
+        ],
+        "preconditions": [
+          "监控算法可用"
+        ],
+        "postconditions": [
+          "能力信息可用于行为决策"
+        ],
+        "scenario": "战术级引导评估执行能力时",
+        "constraint": "监控实时性要求"
+      },
+      {
+        "functionId": "F033",
+        "name": "机动选择",
+        "action": "选择",
+        "object": "驾驶机动",
+        "effect": "确定执行的机动类型",
+        "trigger": "行为规划完成",
+        "condition": "行为计划有效",
+        "inputs": [
+          "行为计划",
+          "可用机动集合"
+        ],
+        "outputs": [
+          "选择的机动类型"
+        ],
+        "preconditions": [
+          "选择算法可用"
+        ],
+        "postconditions": [
+          "机动信息可用于执行规划"
+        ],
+        "scenario": "战术级引导选择机动时",
+        "constraint": "选择合理性要求"
+      },
+      {
+        "functionId": "F034",
+        "name": "机动执行规划",
+        "action": "规划",
+        "object": "机动执行方式",
+        "effect": "确定机动执行细节",
+        "trigger": "机动选择完成",
+        "condition": "机动信息有效",
+        "inputs": [
+          "选择的机动类型",
+          "态势信息"
+        ],
+        "outputs": [
+          "机动执行计划"
+        ],
+        "preconditions": [
+          "规划算法可用"
+        ],
+        "postconditions": [
+          "执行计划可用于稳定控制"
+        ],
+        "scenario": "战术级引导规划机动执行时",
+        "constraint": "规划可行性要求"
+      },
+      {
+        "functionId": "F035",
+        "name": "执行监控",
+        "action": "监控",
+        "object": "系统执行状态",
+        "effect": "检测车辆执行偏差和能力限制",
+        "trigger": "系统运行",
+        "condition": "系统状态数据可用",
+        "inputs": [
+          "执行器状态",
+          "系统状态数据",
+          "执行指令",
+          "实际轨迹",
+          "规划轨迹"
+        ],
+        "outputs": [
+          "监控结果",
+          "能力限制信息",
+          "执行偏差信息"
+        ],
+        "preconditions": [
+          "监控算法可用"
+        ],
+        "postconditions": [
+          "监控结果可用于系统控制"
+        ],
+        "scenario": "各层级执行监控时",
+        "constraint": "监控实时性要求"
+      },
+      {
+        "functionId": "F036",
+        "name": "系统停用控制",
+        "action": "控制",
+        "object": "系统或模块停用",
+        "effect": "安全停用系统或模块",
+        "trigger": "执行监控发现严重问题",
+        "condition": "监控结果异常",
+        "inputs": [
+          "监控结果",
+          "系统状态"
+        ],
+        "outputs": [
+          "停用指令"
+        ],
+        "preconditions": [
+          "停用逻辑可用"
+        ],
+        "postconditions": [
+          "系统安全停用"
+        ],
+        "scenario": "执行监控发现不可恢复错误时",
+        "constraint": "停用安全性要求"
+      },
+      {
+        "functionId": "F037",
+        "name": "目标位姿生成",
+        "action": "生成",
+        "object": "机动目标位姿",
+        "effect": "将目标位姿与动态元素关联",
+        "trigger": "机动执行规划完成",
+        "condition": "执行计划有效",
+        "inputs": [
+          "目标位姿",
+          "动态元素状态",
+          "机动执行计划",
+          "选择规则",
+          "态势信息",
+          "多个目标位姿"
+        ],
+        "outputs": [
+          "选择的目标位姿",
+          "目标位姿集合",
+          "关联结果"
+        ],
+        "preconditions": [
+          "生成算法可用"
+        ],
+        "postconditions": [
+          "位姿可用于稳定层控制"
+        ],
+        "scenario": "战术级引导输出目标时",
+        "constraint": "位姿准确性要求"
+      },
+      {
+        "functionId": "F038",
+        "name": "轨迹约束生成",
+        "action": "生成",
+        "object": "轨迹规划约束",
+        "effect": "定义轨迹规划限制条件",
+        "trigger": "目标位姿生成",
+        "condition": "位姿信息有效",
+        "inputs": [
+          "目标位姿",
+          "环境信息"
+        ],
+        "outputs": [
+          "轨迹约束条件"
+        ],
+        "preconditions": [
+          "生成算法可用"
+        ],
+        "postconditions": [
+          "约束可用于轨迹规划"
+        ],
+        "scenario": "战术级引导定义约束时",
+        "constraint": "约束合理性要求"
+      },
+      {
+        "functionId": "F039",
+        "name": "算法切换",
+        "action": "切换",
+        "object": "控制算法",
+        "effect": "根据机动类型选择算法",
+        "trigger": "机动信息输入",
+        "condition": "机动信息有效",
+        "inputs": [
+          "机动类型信息",
+          "可用算法集合"
+        ],
+        "outputs": [
+          "选择的算法"
+        ],
+        "preconditions": [
+          "切换逻辑可用"
+        ],
+        "postconditions": [
+          "算法适用于当前机动"
+        ],
+        "scenario": "稳定层根据机动选择算法时",
+        "constraint": "切换实时性要求"
+      },
+      {
+        "functionId": "F040",
+        "name": "轨迹候选生成",
+        "action": "生成",
+        "object": "轨迹候选",
+        "effect": "生成多个轨迹候选方案",
+        "trigger": "目标位姿输入",
+        "condition": "位姿信息有效",
+        "inputs": [
+          "目标位姿",
+          "评估准则",
+          "轨迹候选集合",
+          "轨迹评估结果",
+          "约束条件",
+          "选择准则"
+        ],
+        "outputs": [
+          "轨迹评估结果",
+          "选择的最优轨迹",
+          "轨迹候选集合"
+        ],
+        "preconditions": [
+          "生成算法可用"
+        ],
+        "postconditions": [
+          "候选可用于评估选择"
+        ],
+        "scenario": "稳定层轨迹规划时",
+        "constraint": "生成实时性要求"
+      },
+      {
+        "functionId": "F041",
+        "name": "轨迹坐标变换",
+        "action": "变换",
+        "object": "轨迹坐标系",
+        "effect": "将轨迹转换到车辆坐标系",
+        "trigger": "轨迹选择完成",
+        "condition": "轨迹数据有效",
+        "inputs": [
+          "选择的轨迹",
+          "坐标系参数"
+        ],
+        "outputs": [
+          "车辆坐标系下的轨迹"
+        ],
+        "preconditions": [
+          "变换算法可用"
+        ],
+        "postconditions": [
+          "轨迹可用于底层控制"
+        ],
+        "scenario": "稳定层处理轨迹坐标时",
+        "constraint": "变换准确性要求"
+      },
+      {
+        "functionId": "F042",
+        "name": "底层控制",
+        "action": "控制",
+        "object": "执行器",
+        "effect": "控制执行器执行轨迹",
+        "trigger": "轨迹数据输入",
+        "condition": "轨迹数据有效",
+        "inputs": [
+          "车辆状态",
+          "轨迹数据",
+          "执行器状态",
+          "控制指令"
+        ],
+        "outputs": [
+          "执行器控制指令",
+          "执行器动作"
+        ],
+        "preconditions": [
+          "控制算法可用"
+        ],
+        "postconditions": [
+          "执行器按指令动作"
+        ],
+        "scenario": "稳定层执行控制时",
+        "constraint": "控制实时性要求"
+      },
+      {
+        "functionId": "F043",
+        "name": "特征更新",
+        "action": "更新",
+        "object": "特征数据",
+        "effect": "更新特征数据以降低延迟",
+        "trigger": "新特征数据输入",
+        "condition": "特征数据有效",
+        "inputs": [
+          "新特征数据",
+          "当前状态",
+          "当前特征状态",
+          "特征更新数据"
+        ],
+        "outputs": [
+          "更新后的特征数据",
+          "处理后的特征数据"
+        ],
+        "preconditions": [
+          "更新算法可用"
+        ],
+        "postconditions": [
+          "特征数据更及时"
+        ],
+        "scenario": "稳定层需要低延迟特征时",
+        "constraint": "更新实时性要求"
+      },
+      {
+        "functionId": "F044",
+        "name": "执行偏差检测",
+        "action": "检测",
+        "object": "执行偏差",
+        "effect": "识别计划与执行的偏差",
+        "trigger": "执行状态反馈",
+        "condition": "执行数据可用",
+        "inputs": [
+          "计划轨迹",
+          "实际执行状态"
+        ],
+        "outputs": [
+          "偏差检测结果"
+        ],
+        "preconditions": [
+          "检测算法可用"
+        ],
+        "postconditions": [
+          "偏差信息可用于调整"
+        ],
+        "scenario": "稳定层监控执行时",
+        "constraint": "检测准确性要求"
+      },
+      {
+        "functionId": "F045",
+        "name": "碰撞自由轨迹验证",
+        "action": "验证",
+        "object": "轨迹碰撞自由性",
+        "effect": "确认轨迹无碰撞风险",
+        "trigger": "轨迹生成完成",
+        "condition": "轨迹和环境数据有效",
+        "inputs": [
+          "轨迹数据",
+          "环境障碍物数据"
+        ],
+        "outputs": [
+          "碰撞验证结果"
+        ],
+        "preconditions": [
+          "验证算法可用"
+        ],
+        "postconditions": [
+          "验证结果可用于安全决策"
+        ],
+        "scenario": "稳定层验证轨迹安全性时",
+        "constraint": "验证准确性要求"
+      },
+      {
+        "functionId": "F046",
+        "name": "物理限制反馈",
+        "action": "反馈",
+        "object": "车辆物理限制信息",
+        "effect": "报告车辆物理限制",
+        "trigger": "检测到物理限制",
+        "condition": "限制信息有效",
+        "inputs": [
+          "车辆动态数据",
+          "物理限制模型"
+        ],
+        "outputs": [
+          "物理限制反馈信息"
+        ],
+        "preconditions": [
+          "反馈机制可用"
+        ],
+        "postconditions": [
+          "限制信息可用于上层决策"
+        ],
+        "scenario": "稳定层检测到物理限制时",
+        "constraint": "反馈实时性要求"
+      },
+      {
+        "functionId": "F047",
+        "name": "控制偏差反馈",
+        "action": "反馈",
+        "object": "控制偏差信息",
+        "effect": "将监控信息反馈给上层",
+        "trigger": "检测到控制偏差",
+        "condition": "偏差信息有效",
+        "inputs": [
+          "实际执行结果",
+          "控制指令",
+          "执行监控结果"
+        ],
+        "outputs": [
+          "控制偏差反馈信息",
+          "反馈信息"
+        ],
+        "preconditions": [
+          "反馈机制可用"
+        ],
+        "postconditions": [
+          "偏差信息可用于调整"
+        ],
+        "scenario": "底层控制检测到偏差时",
+        "constraint": "反馈实时性要求"
+      },
+      {
+        "functionId": "F048",
+        "name": "战术决策反馈",
+        "action": "反馈",
+        "object": "战术层决策信息",
+        "effect": "将战术层信息反馈给战略层",
+        "trigger": "战术层决策完成",
+        "condition": "决策信息有效",
+        "inputs": [
+          "战术层决策结果"
+        ],
+        "outputs": [
+          "反馈信息"
+        ],
+        "preconditions": [
+          "反馈机制可用"
+        ],
+        "postconditions": [
+          "信息可用于战略层调整"
+        ],
+        "scenario": "战术层向战略层反馈时",
+        "constraint": "反馈实时性要求"
+      },
+      {
+        "functionId": "F049",
+        "name": "上下文选择",
+        "action": "选择",
+        "object": "上下文信息",
+        "effect": "选择与目标相关的上下文",
+        "trigger": "场景数据输入",
+        "condition": "场景数据有效",
+        "inputs": [
+          "完整场景数据",
+          "目标价值信息"
+        ],
+        "outputs": [
+          "选择的上下文信息"
+        ],
+        "preconditions": [
+          "选择算法可用"
+        ],
+        "postconditions": [
+          "上下文可用于态势构建"
+        ],
+        "scenario": "战术级引导处理上下文时",
+        "constraint": "选择准确性要求"
+      },
+      {
+        "functionId": "F050",
+        "name": "上下文增强",
+        "action": "增强",
+        "object": "上下文信息",
+        "effect": "补充上下文相关信息",
+        "trigger": "上下文选择完成",
+        "condition": "选择结果有效",
+        "inputs": [
+          "选择的上下文信息",
+          "附加信息源"
+        ],
+        "outputs": [
+          "增强后的上下文信息"
+        ],
+        "preconditions": [
+          "增强算法可用"
+        ],
+        "postconditions": [
+          "信息更完整用于决策"
+        ],
+        "scenario": "战术级引导增强上下文时",
+        "constraint": "增强信息准确性"
+      },
+      {
+        "functionId": "F051",
+        "name": "间隙质量评估",
+        "action": "评估",
+        "object": "车间隙质量",
+        "effect": "评估间隙的适用性",
+        "trigger": "间隙检测完成",
+        "condition": "间隙数据有效",
+        "inputs": [
+          "间隙检测数据",
+          "车辆动态数据"
+        ],
+        "outputs": [
+          "间隙质量评估结果"
+        ],
+        "preconditions": [
+          "评估算法可用"
+        ],
+        "postconditions": [
+          "质量信息可用于决策"
+        ],
+        "scenario": "态势评估处理间隙信息时",
+        "constraint": "评估准确性要求"
+      },
+      {
+        "functionId": "F052",
+        "name": "自适应巡航目标位姿选择",
+        "action": "选择",
+        "object": "自适应巡航目标位姿",
+        "effect": "选择ACC目标位姿",
+        "trigger": "间隙质量评估完成",
+        "condition": "评估结果有效",
+        "inputs": [
+          "间隙质量评估结果",
+          "车辆状态"
+        ],
+        "outputs": [
+          "ACC目标位姿"
+        ],
+        "preconditions": [
+          "选择算法可用"
+        ],
+        "postconditions": [
+          "位姿可用于控制"
+        ],
+        "scenario": "战术级引导处理ACC时",
+        "constraint": "选择合理性要求"
+      },
+      {
+        "functionId": "F053",
+        "name": "动态状态变量更新",
+        "action": "更新",
+        "object": "动态元素状态变量",
+        "effect": "更新动态元素状态",
+        "trigger": "新传感器数据输入",
+        "condition": "传感器数据有效",
+        "inputs": [
+          "新传感器数据",
+          "当前状态变量"
+        ],
+        "outputs": [
+          "更新后的状态变量"
+        ],
+        "preconditions": [
+          "更新算法可用"
+        ],
+        "postconditions": [
+          "状态更准确"
+        ],
+        "scenario": "稳定层更新动态元素状态时",
+        "constraint": "更新实时性要求"
+      },
+      {
+        "functionId": "F054",
+        "name": "战术通信执行器控制",
+        "action": "控制",
+        "object": "战术通信执行器",
+        "effect": "控制用于通信的执行器",
+        "trigger": "通信需求触发",
+        "condition": "通信指令有效",
+        "inputs": [
+          "通信指令",
+          "执行器状态"
+        ],
+        "outputs": [
+          "执行器动作"
+        ],
+        "preconditions": [
+          "执行器可用"
+        ],
+        "postconditions": [
+          "通信目的达成"
+        ],
+        "scenario": "战术级引导进行通信时",
+        "constraint": "控制实时性要求"
+      },
+      {
+        "functionId": "F055",
+        "name": "任务指令接收",
+        "action": "接收",
+        "object": "任务指令",
+        "effect": "接收来自操作员的任务指令",
+        "trigger": "操作员输入",
+        "condition": "通信链路正常",
+        "inputs": [
+          "操作员指令",
+          "操作员机动指令"
+        ],
+        "outputs": [
+          "任务指令数据",
+          "机动指令数据"
+        ],
+        "preconditions": [
+          "通信接口可用"
+        ],
+        "postconditions": [
+          "指令可用于任务规划"
+        ],
+        "scenario": "通信模块接收任务时",
+        "constraint": "接收可靠性要求"
+      },
+      {
+        "functionId": "F056",
+        "name": "路径反馈",
+        "action": "反馈",
+        "object": "规划路径信息",
+        "effect": "向操作员反馈路径信息",
+        "trigger": "路径规划完成",
+        "condition": "路径数据有效",
+        "inputs": [
+          "规划路径数据"
+        ],
+        "outputs": [
+          "路径反馈信息"
+        ],
+        "preconditions": [
+          "通信接口可用"
+        ],
+        "postconditions": [
+          "操作员获得路径信息"
+        ],
+        "scenario": "通信模块反馈路径时",
+        "constraint": "反馈实时性要求"
+      },
+      {
+        "functionId": "F057",
+        "name": "预测性警告",
+        "action": "警告",
+        "object": "乘客或操作员",
+        "effect": "提供预测性警告信息",
+        "trigger": "预测到潜在风险",
+        "condition": "风险评估完成",
+        "inputs": [
+          "风险评估结果"
+        ],
+        "outputs": [
+          "警告信息"
+        ],
+        "preconditions": [
+          "警告机制可用"
+        ],
+        "postconditions": [
+          "乘客获得警告"
+        ],
+        "scenario": "通信模块发出警告时",
+        "constraint": "警告及时性要求"
+      },
+      {
+        "functionId": "F058",
+        "name": "短期警告发出",
+        "action": "发出",
+        "object": "短期警告",
+        "effect": "发出短期警告信息",
+        "trigger": "检测到短期风险",
+        "condition": "风险检测完成",
+        "inputs": [
+          "风险检测结果"
+        ],
+        "outputs": [
+          "短期警告信息"
+        ],
+        "preconditions": [
+          "警告机制可用"
+        ],
+        "postconditions": [
+          "警告信息传达"
+        ],
+        "scenario": "通信模块发出短期警告时",
+        "constraint": "警告及时性要求"
+      },
+      {
+        "functionId": "F059",
+        "name": "期望设定点指令接收",
+        "action": "接收",
+        "object": "期望设定点指令",
+        "effect": "接收操作员期望的设定点",
+        "trigger": "操作员输入",
+        "condition": "通信链路正常",
+        "inputs": [
+          "操作员设定点指令"
+        ],
+        "outputs": [
+          "设定点指令数据"
+        ],
+        "preconditions": [
+          "通信接口可用"
+        ],
+        "postconditions": [
+          "指令可用于稳定层"
+        ],
+        "scenario": "通信模块接收设定点时",
+        "constraint": "接收可靠性要求"
+      },
+      {
+        "functionId": "F060",
+        "name": "人机交互输入获取",
+        "action": "获取",
+        "object": "人机交互输入",
+        "effect": "处理驾驶员或乘客的机动输入指令",
+        "trigger": "用户操作",
+        "condition": "HMI可用",
+        "inputs": [
+          "摄像头输入",
+          "按钮输入",
+          "用户操作",
+          "系统信息",
+          "操作指令"
+        ],
+        "outputs": [
+          "HMI显示信息",
+          "机动指令",
+          "输入数据"
+        ],
+        "preconditions": [
+          "HMI界面可用"
+        ],
+        "postconditions": [
+          "输入可用于系统处理"
+        ],
+        "scenario": "通信模块处理HMI输入时",
+        "constraint": "输入可靠性要求"
+      },
+      {
+        "functionId": "F061",
+        "name": "远程监控通信",
+        "action": "通信",
+        "object": "远程监控信息",
+        "effect": "与远程监控单元通信",
+        "trigger": "监控需求触发",
+        "condition": "通信链路可用",
+        "inputs": [
+          "监控数据",
+          "通信协议"
+        ],
+        "outputs": [
+          "监控通信数据"
+        ],
+        "preconditions": [
+          "通信接口可用"
+        ],
+        "postconditions": [
+          "监控信息传达"
+        ],
+        "scenario": "通信模块进行远程监控时",
+        "constraint": "通信可靠性要求"
+      },
+      {
+        "functionId": "F062",
+        "name": "远程功能停用",
+        "action": "停用",
+        "object": "自动驾驶功能",
+        "effect": "远程停用自动驾驶功能",
+        "trigger": "远程指令接收",
+        "condition": "指令有效",
+        "inputs": [
+          "远程停用指令"
+        ],
+        "outputs": [
+          "停用控制信号"
+        ],
+        "preconditions": [
+          "停用机制可用"
+        ],
+        "postconditions": [
+          "功能安全停用"
+        ],
+        "scenario": "通信模块执行远程停用时",
+        "constraint": "停用安全性要求"
+      },
+      {
+        "functionId": "F063",
+        "name": "地图更新获取",
+        "action": "获取",
+        "object": "地图更新数据",
+        "effect": "与定位和地图模块交换数据",
+        "trigger": "地图更新可用",
+        "condition": "通信链路正常",
+        "inputs": [
+          "本地地图数据",
+          "V2X地图更新数据",
+          "V2X地图数据",
+          "地图相对位姿",
+          "地图请求",
+          "位置信息",
+          "感知特征"
+        ],
+        "outputs": [
+          "地图更新数据",
+          "更新后的地图数据",
+          "地图数据",
+          "交换后的地图数据"
+        ],
+        "preconditions": [
+          "V2X接口可用"
+        ],
+        "postconditions": [
+          "更新可用于地图模块"
+        ],
+        "scenario": "通信模块获取地图更新时",
+        "constraint": "获取可靠性要求"
+      },
+      {
+        "functionId": "F064",
+        "name": "协作感知",
+        "action": "感知",
+        "object": "协作感知数据",
+        "effect": "与其他车辆协作感知",
+        "trigger": "协作需求触发",
+        "condition": "V2X链路可用",
+        "inputs": [
+          "V2X感知数据",
+          "本地感知数据"
+        ],
+        "outputs": [
+          "协作感知结果"
+        ],
+        "preconditions": [
+          "协作算法可用"
+        ],
+        "postconditions": [
+          "感知能力增强"
+        ],
+        "scenario": "通信模块进行协作感知时",
+        "constraint": "协作实时性要求"
+      },
+      {
+        "functionId": "F065",
+        "name": "协作驾驶机动协调",
+        "action": "协调",
+        "object": "协作驾驶机动",
+        "effect": "协调多车协作机动",
+        "trigger": "协作机动需求",
+        "condition": "V2X链路可用",
+        "inputs": [
+          "协作请求",
+          "本地状态"
+        ],
+        "outputs": [
+          "协调指令"
+        ],
+        "preconditions": [
+          "协调算法可用"
+        ],
+        "postconditions": [
+          "机动协调完成"
+        ],
+        "scenario": "通信模块协调协作机动时",
+        "constraint": "协调实时性要求"
+      },
+      {
+        "functionId": "F066",
+        "name": "道路级地图特征交换",
+        "action": "交换",
+        "object": "道路级地图特征",
+        "effect": "与感知模块交换道路级特征",
+        "trigger": "特征数据更新",
+        "condition": "数据有效",
+        "inputs": [
+          "道路级地图特征",
+          "车道级地图特征",
+          "特征级地图特征"
+        ],
+        "outputs": [
+          "交换的特征数据"
+        ],
+        "preconditions": [
+          "交换机制可用"
+        ],
+        "postconditions": [
+          "特征数据共享"
+        ],
+        "scenario": "定位和地图模块与感知模块交换时",
+        "constraint": "交换实时性要求"
+      },
+      {
+        "functionId": "F067",
+        "name": "定位传感器数据获取",
+        "action": "获取",
+        "object": "定位传感器数据",
+        "effect": "获取定位传感器数据",
+        "trigger": "传感器数据更新",
+        "condition": "传感器可用",
+        "inputs": [
+          "定位传感器原始数据"
+        ],
+        "outputs": [
+          "定位传感器数据"
+        ],
+        "preconditions": [
+          "传感器已校准"
+        ],
+        "postconditions": [
+          "数据可用于定位算法"
+        ],
+        "scenario": "定位和地图模块获取传感器数据时",
+        "constraint": "获取实时性要求"
+      },
+      {
+        "functionId": "F068",
+        "name": "层级信息交换",
+        "action": "交换",
+        "object": "层级间信息",
+        "effect": "在不同层级间交换信息",
+        "trigger": "层级数据更新",
+        "condition": "数据有效",
+        "inputs": [
+          "层级数据"
+        ],
+        "outputs": [
+          "交换的信息"
+        ],
+        "preconditions": [
+          "交换机制可用"
+        ],
+        "postconditions": [
+          "信息在层级间共享"
+        ],
+        "scenario": "定位和地图模块层级间交换时",
+        "constraint": "交换一致性要求"
+      },
+      {
+        "functionId": "F069",
+        "name": "全局位姿获取",
+        "action": "获取",
+        "object": "全局位姿",
+        "effect": "获取绝对全局位姿",
+        "trigger": "定位传感器数据输入",
+        "condition": "传感器数据有效",
+        "inputs": [
+          "定位传感器数据"
+        ],
+        "outputs": [
+          "全局位姿估计"
+        ],
+        "preconditions": [
+          "定位算法可用"
+        ],
+        "postconditions": [
+          "位姿可用于地图相对定位"
+        ],
+        "scenario": "定位和地图模块进行全局定位时",
+        "constraint": "定位精度要求"
+      },
+      {
+        "functionId": "F070",
+        "name": "惯性运动数据融合",
+        "action": "融合",
+        "object": "惯性运动数据",
+        "effect": "融合惯性数据提高定位连续性",
+        "trigger": "惯性数据更新",
+        "condition": "惯性数据有效",
+        "inputs": [
+          "惯性运动数据",
+          "全局位姿"
+        ],
+        "outputs": [
+          "融合后的位姿数据"
+        ],
+        "preconditions": [
+          "融合算法可用"
+        ],
+        "postconditions": [
+          "位姿更连续准确"
+        ],
+        "scenario": "定位和地图模块融合惯性数据时",
+        "constraint": "融合实时性要求"
+      },
+      {
+        "functionId": "F071",
+        "name": "地图相对位姿估计",
+        "action": "估计",
+        "object": "地图相对位姿",
+        "effect": "估计相对于地图的位姿",
+        "trigger": "全局位姿和环境特征输入",
+        "condition": "数据有效",
+        "inputs": [
+          "全局位姿",
+          "环境特征"
+        ],
+        "outputs": [
+          "地图相对位姿估计"
+        ],
+        "preconditions": [
+          "估计算法可用"
+        ],
+        "postconditions": [
+          "位姿可用于地图信息检索"
+        ],
+        "scenario": "定位和地图模块进行相对定位时",
+        "constraint": "估计精度要求"
+      },
+      {
+        "functionId": "F072",
+        "name": "地图信息检索",
+        "action": "检索",
+        "object": "地图信息",
+        "effect": "向感知模块提供地图信息",
+        "trigger": "地图相对位姿确定",
+        "condition": "位姿有效",
+        "inputs": [
+          "检索的地图信息",
+          "地图数据库",
+          "地图相对位姿"
+        ],
+        "outputs": [
+          "提供的地图信息",
+          "检索的地图信息"
+        ],
+        "preconditions": [
+          "地图数据库可用"
+        ],
+        "postconditions": [
+          "信息可用于感知增强"
+        ],
+        "scenario": "定位和地图模块检索地图信息时",
+        "constraint": "检索实时性要求"
+      },
+      {
+        "functionId": "F073",
+        "name": "地图一致性维护",
+        "action": "维护",
+        "object": "地图一致性",
+        "effect": "保持不同层级地图一致性",
+        "trigger": "地图数据更新",
+        "condition": "更新数据有效",
+        "inputs": [
+          "各层级地图数据"
+        ],
+        "outputs": [
+          "一致性维护结果"
+        ],
+        "preconditions": [
+          "维护算法可用"
+        ],
+        "postconditions": [
+          "地图数据一致"
+        ],
+        "scenario": "定位和地图模块维护一致性时",
+        "constraint": "维护实时性要求"
+      },
+      {
+        "functionId": "F074",
+        "name": "电离层信号畸变补偿",
+        "action": "补偿",
+        "object": "电离层信号畸变",
+        "effect": "提高定位信号精度",
+        "trigger": "接收到多频载波信号",
+        "condition": "使用不同载波频率",
+        "inputs": [
+          "多频载波信号"
+        ],
+        "outputs": [
+          "校正后的定位信号"
+        ],
+        "preconditions": [
+          "GNSS接收器可用"
+        ],
+        "postconditions": [
+          "信号畸变被补偿"
+        ],
+        "scenario": "GNSS定位过程中电离层引起信号畸变",
+        "constraint": "需要支持多频段的GNSS接收器"
+      },
+      {
+        "functionId": "F075",
+        "name": "地面站校正数据应用",
+        "action": "应用",
+        "object": "地面站校正数据",
+        "effect": "提高定位精度",
+        "trigger": "接收到地面站校正数据",
+        "condition": "地面站校正数据可用",
+        "inputs": [
+          "地面站校正数据",
+          "原始GNSS定位数据"
+        ],
+        "outputs": [
+          "高精度定位数据"
+        ],
+        "preconditions": [
+          "与地面站通信链路可用"
+        ],
+        "postconditions": [
+          "定位精度提升"
+        ],
+        "scenario": "使用RTK或DGPS进行高精度定位",
+        "constraint": "依赖地面站覆盖范围"
+      },
+      {
+        "functionId": "F076",
+        "name": "绝对全局定位",
+        "action": "计算",
+        "object": "全局位置",
+        "effect": "确定车辆在全局坐标系中的位置",
+        "trigger": "定位请求或周期性触发",
+        "condition": "定位传感器数据可用",
+        "inputs": [
+          "GNSS信号",
+          "IMU数据",
+          "地图数据"
+        ],
+        "outputs": [
+          "全局位置坐标"
+        ],
+        "preconditions": [
+          "定位传感器正常工作"
+        ],
+        "postconditions": [
+          "车辆全局位置被确定"
+        ],
+        "scenario": "车辆在道路网络中确定自身全局位置",
+        "constraint": "在城市环境或复杂立交桥中精度和可靠性不足"
+      },
+      {
+        "functionId": "F077",
+        "name": "中尺度车道级定位",
+        "action": "定位",
+        "object": "车辆所在车道",
+        "effect": "确定车辆在车道内的精确横向和纵向位置",
+        "trigger": "持续定位需求",
+        "condition": "车道级地图和传感器数据可用",
+        "inputs": [
+          "车道级地图",
+          "传感器数据",
+          "高精度传感器数据"
+        ],
+        "outputs": [
+          "车道内精确位置",
+          "车道级位置信息"
+        ],
+        "preconditions": [
+          "车道级地图已加载"
+        ],
+        "postconditions": [
+          "车辆被定位到正确车道"
+        ],
+        "scenario": "高速公路或多车道道路上确定车辆所在车道",
+        "constraint": "需要较高定位精度"
+      },
+      {
+        "functionId": "F078",
+        "name": "稳定化模块反馈",
+        "action": "反馈",
+        "object": "模型修正信息",
+        "effect": "修正基于模型的滤波模块中的模型参数",
+        "trigger": "检测到车辆偏离规划轨迹",
+        "condition": "车辆实际轨迹与规划轨迹存在偏差",
+        "inputs": [
+          "实际轨迹",
+          "规划轨迹",
+          "偏差信息"
+        ],
+        "outputs": [
+          "模型修正参数"
+        ],
+        "preconditions": [
+          "稳定化模块和滤波模块之间存在反馈通道"
+        ],
+        "postconditions": [
+          "滤波模型被修正"
+        ],
+        "scenario": "车辆漂移时稳定化模块向滤波模块反馈修正信息",
+        "constraint": "反馈机制尚在讨论中"
+      },
+      {
+        "functionId": "F079",
+        "name": "驾驶员监控",
+        "action": "监控",
+        "object": "驾驶员或乘客状态",
+        "effect": "检测驾驶员或乘客的状态和行为",
+        "trigger": "持续监控需求",
+        "condition": "监控摄像头可用",
+        "inputs": [
+          "摄像头图像数据"
+        ],
+        "outputs": [
+          "驾驶员/乘客状态信息"
+        ],
+        "preconditions": [
+          "监控摄像头已安装并工作"
+        ],
+        "postconditions": [
+          "驾驶员/乘客状态被检测"
+        ],
+        "scenario": "SAE L5系统中监控乘客是否安全就座或检测医疗紧急情况",
+        "constraint": "在架构中的位置尚未确定"
+      },
+      {
+        "functionId": "F080",
+        "name": "自由空间提取",
+        "action": "提取",
+        "object": "自由空间",
+        "effect": "识别可行驶区域",
+        "trigger": "占据栅格地图更新",
+        "condition": "占据栅格地图可用",
+        "inputs": [
+          "占据栅格地图"
+        ],
+        "outputs": [
+          "自由空间信息"
+        ],
+        "preconditions": [
+          "占据栅格地图已构建"
+        ],
+        "postconditions": [
+          "可行驶区域被识别"
+        ],
+        "scenario": "从占据栅格中提取无障碍物的可行驶区域",
+        "constraint": "受传感器范围和精度限制"
+      },
+      {
+        "functionId": "F081",
+        "name": "动态目标分类",
+        "action": "分类",
+        "object": "动态目标",
+        "effect": "识别和分类环境中的动态目标",
+        "trigger": "感知数据更新",
+        "condition": "传感器数据和占据栅格可用",
+        "inputs": [
+          "传感器数据",
+          "占据栅格地图"
+        ],
+        "outputs": [
+          "动态目标分类结果"
+        ],
+        "preconditions": [
+          "占据栅格地图已构建"
+        ],
+        "postconditions": [
+          "动态目标被分类"
+        ],
+        "scenario": "区分行人、车辆、自行车等动态交通参与者",
+        "constraint": "分类准确性受传感器和算法影响"
+      },
+      {
+        "functionId": "F082",
+        "name": "全局特征地图提供",
+        "action": "提供",
+        "object": "全局特征地图",
+        "effect": "提供包含静态元素的全局特征地图",
+        "trigger": "后续模块请求特征地图",
+        "condition": "全局特征地图已构建",
+        "inputs": [
+          "地图请求",
+          "位置信息"
+        ],
+        "outputs": [
+          "全局特征地图数据"
+        ],
+        "preconditions": [
+          "静态元素已聚合到全局特征地图"
+        ],
+        "postconditions": [
+          "全局特征地图被提供"
+        ],
+        "scenario": "将长期维护的静态环境特征以全局地图形式提供",
+        "constraint": "特征维护时间是与占据栅格的主要区分因素"
+      },
+      {
+        "functionId": "F083",
+        "name": "基于服务器的共享地图访问",
+        "action": "访问",
+        "object": "服务器共享地图",
+        "effect": "获取云端共享地图数据",
+        "trigger": "地图数据请求",
+        "condition": "V2X通信连接可用",
+        "inputs": [
+          "位置信息",
+          "地图请求"
+        ],
+        "outputs": [
+          "共享地图数据"
+        ],
+        "preconditions": [
+          "V2X通信链路建立"
+        ],
+        "postconditions": [
+          "共享地图数据被获取"
+        ],
+        "scenario": "通过V2X连接访问服务器端的共享地图",
+        "constraint": "属于V2X通信范畴，未显式建模在架构中"
+      },
+      {
+        "functionId": "F084",
+        "name": "交通拥堵检测",
+        "action": "检测",
+        "object": "交通拥堵",
+        "effect": "识别前方道路的交通拥堵状况",
+        "trigger": "持续路况监控",
+        "condition": "交通信息数据可用",
+        "inputs": [
+          "交通信息数据",
+          "V2X数据",
+          "感知数据"
+        ],
+        "outputs": [
+          "交通拥堵检测结果"
+        ],
+        "preconditions": [
+          "交通信息源可用"
+        ],
+        "postconditions": [
+          "交通拥堵被检测"
+        ],
+        "scenario": "导航模块检测到前方交通拥堵并触发路线调整",
+        "constraint": "检测准确性依赖信息源质量"
+      },
+      {
+        "functionId": "F085",
+        "name": "路线自适应调整",
+        "action": "调整",
+        "object": "行驶路线",
+        "effect": "根据交通状况更新行驶路线",
+        "trigger": "检测到交通拥堵或路线异常",
+        "condition": "替代路线可用",
+        "inputs": [
+          "当前路线",
+          "交通状况",
+          "替代路线选项"
+        ],
+        "outputs": [
+          "更新后的行驶路线"
+        ],
+        "preconditions": [
+          "导航模块运行中"
+        ],
+        "postconditions": [
+          "行驶路线被更新"
+        ],
+        "scenario": "检测到交通拥堵后导航模块自动调整路线",
+        "constraint": "属于导航任务"
+      },
+      {
+        "functionId": "F086",
+        "name": "出口通过决策",
+        "action": "决策",
+        "object": "高速公路出口通过行为",
+        "effect": "决定是否通过特定高速公路出口",
+        "trigger": "接近高速公路出口",
+        "condition": "出口通过可能导致碰撞风险",
+        "inputs": [
+          "当前路线",
+          "出口位置",
+          "周围交通状况",
+          "安全评估"
+        ],
+        "outputs": [
+          "出口通过决策"
+        ],
+        "preconditions": [
+          "战术引导层运行中"
+        ],
+        "postconditions": [
+          "出口通过决策被制定"
+        ],
+        "scenario": "强制通过出口会导致碰撞时，战术引导层决定不通过该出口",
+        "constraint": "安全优先于路线遵循"
+      },
+      {
+        "functionId": "F087",
+        "name": "路线重新规划请求",
+        "action": "请求",
+        "object": "路线重新规划",
+        "effect": "触发导航模块重新规划路线",
+        "trigger": "错过出口或路线不可行",
+        "condition": "当前路线需要调整",
+        "inputs": [
+          "当前位置",
+          "目标位置",
+          "错过出口信息"
+        ],
+        "outputs": [
+          "重新规划请求"
+        ],
+        "preconditions": [
+          "战术引导层做出决策"
+        ],
+        "postconditions": [
+          "重新规划请求被发送至导航模块"
+        ],
+        "scenario": "错过高速公路出口后请求重新规划路线以反映现实",
+        "constraint": "战术引导层有权请求重新规划"
+      },
+      {
+        "functionId": "F088",
+        "name": "替代路线选择",
+        "action": "选择",
+        "object": "替代路线",
+        "effect": "选择最小绕行的替代路线以规避风险或保持舒适性",
+        "trigger": "当前路线存在风险或舒适性不满足",
+        "condition": "替代路线可用且仍在自动化能力范围内",
+        "inputs": [
+          "当前路线",
+          "替代路线选项",
+          "风险评估",
+          "舒适性目标"
+        ],
+        "outputs": [
+          "选定的替代路线"
+        ],
+        "preconditions": [
+          "引导层具有决策权"
+        ],
+        "postconditions": [
+          "替代路线被选定"
+        ],
+        "scenario": "在灰色区域中选择最小绕行的替代路线以规避风险",
+        "constraint": "决策权归属引导层但存在争议"
+      },
+      {
+        "functionId": "F089",
+        "name": "预测模型应用",
+        "action": "应用",
+        "object": "预测模型",
+        "effect": "预测未来状态或行为",
+        "trigger": "需要预测信息时",
+        "condition": "预测模型可用",
+        "inputs": [
+          "当前状态",
+          "预测模型"
+        ],
+        "outputs": [
+          "预测结果"
+        ],
+        "preconditions": [
+          "预测模型已训练/初始化"
+        ],
+        "postconditions": [
+          "未来状态被预测"
+        ],
+        "scenario": "在滤波、引导、稳定化等多个模块中使用预测模型",
+        "constraint": "预测是跨模块工具而非独立模块"
+      },
+      {
+        "functionId": "F090",
+        "name": "运动预测",
+        "action": "预测",
+        "object": "车辆运动",
+        "effect": "预测车辆未来运动状态",
+        "trigger": "稳定化控制需求",
+        "condition": "车辆动力学模型可用",
+        "inputs": [
+          "当前运动状态",
+          "车辆动力学模型",
+          "控制输入"
+        ],
+        "outputs": [
+          "未来运动状态预测"
+        ],
+        "preconditions": [
+          "车辆动力学模型已建立"
+        ],
+        "postconditions": [
+          "车辆运动被预测"
+        ],
+        "scenario": "稳定化模块中预测车辆运动以辅助控制",
+        "constraint": "预测时间范围受限于模型精度"
+      },
+      {
+        "functionId": "F091",
+        "name": "隐式协作行为执行",
+        "action": "执行",
+        "object": "隐式协作行为",
+        "effect": "实现与其他交通参与者的隐式协作",
+        "trigger": "交互场景检测",
+        "condition": "其他交通参与者行为可预测",
+        "inputs": [
+          "周围交通参与者状态",
+          "场景信息"
+        ],
+        "outputs": [
+          "协作行为指令"
+        ],
+        "preconditions": [
+          "感知和预测模块正常工作"
+        ],
+        "postconditions": [
+          "隐式协作行为被执行"
+        ],
+        "scenario": "在无通信条件下通过行为暗示实现与其他车辆的协作",
+        "constraint": "已在Stadtpilot项目中实现"
+      },
+      {
+        "functionId": "F092",
+        "name": "V2I显式通信",
+        "action": "通信",
+        "object": "基础设施信息",
+        "effect": "与基础设施进行显式信息交换",
+        "trigger": "V2I通信需求",
+        "condition": "V2I通信链路可用",
+        "inputs": [
+          "车辆状态信息",
+          "请求信息"
+        ],
+        "outputs": [
+          "基础设施响应信息"
+        ],
+        "preconditions": [
+          "V2I通信设备可用"
+        ],
+        "postconditions": [
+          "与基础设施完成信息交换"
+        ],
+        "scenario": "车辆与交通信号灯或路侧设备进行显式通信",
+        "constraint": "已在Stadtpilot项目中实现"
+      },
+      {
+        "functionId": "F093",
+        "name": "地图误差传播管理",
+        "action": "管理",
+        "object": "地图和定位误差",
+        "effect": "防止错误的定位或地图数据传播到后续模块",
+        "trigger": "定位或地图数据更新",
+        "condition": "使用地图数据的模块运行中",
+        "inputs": [
+          "定位数据",
+          "地图数据",
+          "数据完整性信息"
+        ],
+        "outputs": [
+          "误差标记",
+          "数据质量评估"
+        ],
+        "preconditions": [
+          "数据完整性检查机制可用"
+        ],
+        "postconditions": [
+          "误差传播被管理"
+        ],
+        "scenario": "确保使用地图数据的模块意识到可能的定位和地图误差",
+        "constraint": "当前无法保证信息完整性和数据时效性"
+      }
+    ],
+    "missingRelations": [
+      {
+        "source": "F001",
+        "target": "F002",
+        "type": "data_flow",
+        "flowObject": "原始传感器数据"
+      },
+      {
+        "source": "F002",
+        "target": "F003",
+        "type": "data_flow",
+        "flowObject": "提取的特征数据"
+      },
+      {
+        "source": "F003",
+        "target": "F005",
+        "type": "data_flow",
+        "flowObject": "滤波后的特征数据"
+      },
+      {
+        "source": "F004",
+        "target": "F006",
+        "type": "data_flow",
+        "flowObject": "车道线数据"
+      },
+      {
+        "source": "F005",
+        "target": "F006",
+        "type": "data_flow",
+        "flowObject": "动态目标跟踪数据"
+      },
+      {
+        "source": "F006",
+        "target": "F010",
+        "type": "data_flow",
+        "flowObject": "环境特征数据"
+      },
+      {
+        "source": "F007",
+        "target": "F010",
+        "type": "data_flow",
+        "flowObject": "交通标志状态"
+      },
+      {
+        "source": "F008",
+        "target": "F020",
+        "type": "data_flow",
+        "flowObject": "自车运动估计数据"
+      },
+      {
+        "source": "F009",
+        "target": "F011",
+        "type": "data_flow",
+        "flowObject": "自身监控数据"
+      },
+      {
+        "source": "F010",
+        "target": "F025",
+        "type": "data_flow",
+        "flowObject": "场景模型"
+      },
+      {
+        "source": "F011",
+        "target": "F028",
+        "type": "data_flow",
+        "flowObject": "自身能力评估"
+      },
+      {
+        "source": "F012",
+        "target": "F026",
+        "type": "data_flow",
+        "flowObject": "道路拓扑模型"
+      },
+      {
+        "source": "F013",
+        "target": "F030",
+        "type": "data_flow",
+        "flowObject": "增强后的场景信息"
+      },
+      {
+        "source": "F014",
+        "target": "F012",
+        "type": "data_flow",
+        "flowObject": "V2X交通信息"
+      },
+      {
+        "source": "F015",
+        "target": "F002",
+        "type": "data_flow",
+        "flowObject": "融合后的环境表示"
+      },
+      {
+        "source": "F016",
+        "target": "F046",
+        "type": "data_flow",
+        "flowObject": "摩擦系数估计值"
+      },
+      {
+        "source": "F017",
+        "target": "F018",
+        "type": "data_flow",
+        "flowObject": "磨损程度估计值"
+      },
+      {
+        "source": "F019",
+        "target": "F011",
+        "type": "data_flow",
+        "flowObject": "能量水平估计值"
+      },
+      {
+        "source": "F020",
+        "target": "F002",
+        "type": "data_flow",
+        "flowObject": "补偿后的感知数据"
+      },
+      {
+        "source": "F021",
+        "target": "F045",
+        "type": "data_flow",
+        "flowObject": "轨迹验证结果"
+      },
+      {
+        "source": "F022",
+        "target": "F011",
+        "type": "data_flow",
+        "flowObject": "自车状态表征"
+      },
+      {
+        "source": "F023",
+        "target": "F010",
+        "type": "data_flow",
+        "flowObject": "上下文场景模型"
+      },
+      {
+        "source": "F024",
+        "target": "F012",
+        "type": "data_flow",
+        "flowObject": "道路拓扑模型"
+      },
+      {
+        "source": "F025",
+        "target": "F026",
+        "type": "data_flow",
+        "flowObject": "任务计划"
+      },
+      {
+        "source": "F026",
+        "target": "F027",
+        "type": "data_flow",
+        "flowObject": "最优路径"
+      },
+      {
+        "source": "F027",
+        "target": "F056",
+        "type": "data_flow",
+        "flowObject": "备选路径集合"
+      },
+      {
+        "source": "F028",
+        "target": "F032",
+        "type": "data_flow",
+        "flowObject": "技能限制评估结果"
+      },
+      {
+        "source": "F029",
+        "target": "F013",
+        "type": "data_flow",
+        "flowObject": "选择的场景信息"
+      },
+      {
+        "source": "F030",
+        "target": "F031",
+        "type": "data_flow",
+        "flowObject": "态势表示数据"
+      },
+      {
+        "source": "F031",
+        "target": "F025",
+        "type": "data_flow",
+        "flowObject": "态势评估结果"
+      },
+      {
+        "source": "F032",
+        "target": "F036",
+        "type": "control_flow",
+        "flowObject": "能力监控结果"
+      },
+      {
+        "source": "F033",
+        "target": "F034",
+        "type": "data_flow",
+        "flowObject": "选择的机动类型"
+      },
+      {
+        "source": "F034",
+        "target": "F037",
+        "type": "data_flow",
+        "flowObject": "机动执行计划"
+      },
+      {
+        "source": "F035",
+        "target": "F047",
+        "type": "data_flow",
+        "flowObject": "执行监控结果"
+      },
+      {
+        "source": "F036",
+        "target": "F062",
+        "type": "control_flow",
+        "flowObject": "停用指令"
+      },
+      {
+        "source": "F037",
+        "target": "F040",
+        "type": "data_flow",
+        "flowObject": "目标位姿集合"
+      },
+      {
+        "source": "F038",
+        "target": "F040",
+        "type": "data_flow",
+        "flowObject": "轨迹约束条件"
+      },
+      {
+        "source": "F039",
+        "target": "F040",
+        "type": "control_flow",
+        "flowObject": "选择的算法"
+      },
+      {
+        "source": "F040",
+        "target": "F041",
+        "type": "data_flow",
+        "flowObject": "选择的最优轨迹"
+      },
+      {
+        "source": "F041",
+        "target": "F042",
+        "type": "data_flow",
+        "flowObject": "车辆坐标系下的轨迹"
+      },
+      {
+        "source": "F042",
+        "target": "F035",
+        "type": "data_flow",
+        "flowObject": "执行器状态"
+      },
+      {
+        "source": "F043",
+        "target": "F002",
+        "type": "data_flow",
+        "flowObject": "更新后的特征数据"
+      },
+      {
+        "source": "F044",
+        "target": "F035",
+        "type": "data_flow",
+        "flowObject": "偏差检测结果"
+      },
+      {
+        "source": "F045",
+        "target": "F040",
+        "type": "data_flow",
+        "flowObject": "碰撞验证结果"
+      },
+      {
+        "source": "F046",
+        "target": "F038",
+        "type": "data_flow",
+        "flowObject": "物理限制反馈信息"
+      },
+      {
+        "source": "F047",
+        "target": "F048",
+        "type": "data_flow",
+        "flowObject": "控制偏差反馈信息"
+      },
+      {
+        "source": "F048",
+        "target": "F025",
+        "type": "data_flow",
+        "flowObject": "反馈信息"
+      },
+      {
+        "source": "F049",
+        "target": "F050",
+        "type": "data_flow",
+        "flowObject": "选择的上下文信息"
+      },
+      {
+        "source": "F050",
+        "target": "F023",
+        "type": "data_flow",
+        "flowObject": "增强后的上下文信息"
+      },
+      {
+        "source": "F051",
+        "target": "F052",
+        "type": "data_flow",
+        "flowObject": "间隙质量评估结果"
+      },
+      {
+        "source": "F052",
+        "target": "F037",
+        "type": "data_flow",
+        "flowObject": "ACC目标位姿"
+      },
+      {
+        "source": "F053",
+        "target": "F003",
+        "type": "data_flow",
+        "flowObject": "更新后的状态变量"
+      },
+      {
+        "source": "F054",
+        "target": "F014",
+        "type": "control_flow",
+        "flowObject": "执行器动作"
+      },
+      {
+        "source": "F055",
+        "target": "F025",
+        "type": "data_flow",
+        "flowObject": "任务指令数据"
+      },
+      {
+        "source": "F056",
+        "target": "F060",
+        "type": "data_flow",
+        "flowObject": "路径反馈信息"
+      },
+      {
+        "source": "F057",
+        "target": "F060",
+        "type": "data_flow",
+        "flowObject": "警告信息"
+      },
+      {
+        "source": "F058",
+        "target": "F060",
+        "type": "data_flow",
+        "flowObject": "短期警告信息"
+      },
+      {
+        "source": "F059",
+        "target": "F025",
+        "type": "data_flow",
+        "flowObject": "设定点指令数据"
+      },
+      {
+        "source": "F060",
+        "target": "F055",
+        "type": "data_flow",
+        "flowObject": "机动指令"
+      },
+      {
+        "source": "F061",
+        "target": "F009",
+        "type": "data_flow",
+        "flowObject": "监控通信数据"
+      },
+      {
+        "source": "F062",
+        "target": "F036",
+        "type": "control_flow",
+        "flowObject": "停用控制信号"
+      },
+      {
+        "source": "F063",
+        "target": "F072",
+        "type": "data_flow",
+        "flowObject": "更新后的地图数据"
+      },
+      {
+        "source": "F064",
+        "target": "F015",
+        "type": "data_flow",
+        "flowObject": "协作感知结果"
+      },
+      {
+        "source": "F065",
+        "target": "F091",
+        "type": "control_flow",
+        "flowObject": "协调指令"
+      },
+      {
+        "source": "F066",
+        "target": "F002",
+        "type": "data_flow",
+        "flowObject": "交换的特征数据"
+      },
+      {
+        "source": "F067",
+        "target": "F069",
+        "type": "data_flow",
+        "flowObject": "定位传感器数据"
+      },
+      {
+        "source": "F068",
+        "target": "F073",
+        "type": "data_flow",
+        "flowObject": "交换的信息"
+      },
+      {
+        "source": "F069",
+        "target": "F070",
+        "type": "data_flow",
+        "flowObject": "全局位姿估计"
+      },
+      {
+        "source": "F070",
+        "target": "F071",
+        "type": "data_flow",
+        "flowObject": "融合后的位姿数据"
+      },
+      {
+        "source": "F071",
+        "target": "F072",
+        "type": "data_flow",
+        "flowObject": "地图相对位姿估计"
+      },
+      {
+        "source": "F072",
+        "target": "F013",
+        "type": "data_flow",
+        "flowObject": "提供的地图信息"
+      },
+      {
+        "source": "F073",
+        "target": "F063",
+        "type": "data_flow",
+        "flowObject": "一致性维护结果"
+      },
+      {
+        "source": "F074",
+        "target": "F075",
+        "type": "data_flow",
+        "flowObject": "校正后的定位信号"
+      },
+      {
+        "source": "F075",
+        "target": "F076",
+        "type": "data_flow",
+        "flowObject": "高精度定位数据"
+      },
+      {
+        "source": "F076",
+        "target": "F069",
+        "type": "data_flow",
+        "flowObject": "全局位置坐标"
+      },
+      {
+        "source": "F077",
+        "target": "F071",
+        "type": "data_flow",
+        "flowObject": "车道级位置信息"
+      },
+      {
+        "source": "F078",
+        "target": "F003",
+        "type": "data_flow",
+        "flowObject": "模型修正参数"
+      },
+      {
+        "source": "F079",
+        "target": "F011",
+        "type": "data_flow",
+        "flowObject": "驾驶员/乘客状态信息"
+      },
+      {
+        "source": "F080",
+        "target": "F026",
+        "type": "data_flow",
+        "flowObject": "自由空间信息"
+      },
+      {
+        "source": "F081",
+        "target": "F005",
+        "type": "data_flow",
+        "flowObject": "动态目标分类结果"
+      },
+      {
+        "source": "F082",
+        "target": "F013",
+        "type": "data_flow",
+        "flowObject": "全局特征地图数据"
+      },
+      {
+        "source": "F083",
+        "target": "F063",
+        "type": "data_flow",
+        "flowObject": "共享地图数据"
+      },
+      {
+        "source": "F084",
+        "target": "F085",
+        "type": "data_flow",
+        "flowObject": "交通拥堵检测结果"
+      },
+      {
+        "source": "F085",
+        "target": "F026",
+        "type": "data_flow",
+        "flowObject": "更新后的行驶路线"
+      },
+      {
+        "source": "F086",
+        "target": "F087",
+        "type": "control_flow",
+        "flowObject": "出口通过决策"
+      },
+      {
+        "source": "F087",
+        "target": "F026",
+        "type": "control_flow",
+        "flowObject": "重新规划请求"
+      },
+      {
+        "source": "F088",
+        "target": "F085",
+        "type": "data_flow",
+        "flowObject": "选定的替代路线"
+      },
+      {
+        "source": "F089",
+        "target": "F090",
+        "type": "data_flow",
+        "flowObject": "预测结果"
+      },
+      {
+        "source": "F090",
+        "target": "F005",
+        "type": "data_flow",
+        "flowObject": "未来运动状态预测"
+      },
+      {
+        "source": "F091",
+        "target": "F033",
+        "type": "data_flow",
+        "flowObject": "协作行为指令"
+      },
+      {
+        "source": "F092",
+        "target": "F014",
+        "type": "data_flow",
+        "flowObject": "基础设施响应信息"
+      },
+      {
+        "source": "F093",
+        "target": "F072",
+        "type": "data_flow",
+        "flowObject": "误差标记"
+      }
+    ]
+  }
+}

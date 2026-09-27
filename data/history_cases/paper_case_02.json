@@ -1,0 +1,3201 @@
+[
+    {
+        "caseId": "CASE002",
+        "projectName": "Battery Management System Hardware Concepts  An Overview.pdf",
+        "functions": [
+            {
+                "functionId": "F001",
+                "name": "温度采集",
+                "action": "采集",
+                "object": "电池温度",
+                "effect": "获取电池电压、温度等原始信号，为后续处理提供数据基础",
+                "trigger": "周期性触发或事件触发",
+                "condition": "电池处于充电、放电或存储状态",
+                "inputs": [
+                    "温度通道数据",
+                    "电压传感器信号",
+                    "温度传感器信号",
+                    "I2C/SMBus通信数据",
+                    "电芯电压信号",
+                    "NTC/PTC传感器信号",
+                    "电流传感器信号"
+                ],
+                "outputs": [
+                    "数字化原始信号数据",
+                    "过温/欠温告警",
+                    "电压数据",
+                    "电流数据",
+                    "温度报警信号",
+                    "温度数值",
+                    "温度值",
+                    "温度数据"
+                ],
+                "preconditions": [
+                    "温度传感器已校准",
+                    "传感器连接正常"
+                ],
+                "postconditions": [
+                    "温度数据可用"
+                ],
+                "scenario": "电池管理系统需要监控电池温度以防止过热或过冷",
+                "constraint": "传感器精度和响应时间需满足系统要求"
+            },
+            {
+                "functionId": "F002",
+                "name": "SOC状态估计",
+                "action": "估计",
+                "object": "电池荷电状态",
+                "effect": "计算电池当前剩余电量百分比，为用户提供电量信息",
+                "trigger": "周期性触发",
+                "condition": "电池处于工作状态",
+                "inputs": [
+                    "电压数据",
+                    "电流",
+                    "电压",
+                    "电池模型参数",
+                    "电流数据",
+                    "SOH",
+                    "SOC",
+                    "温度数据",
+                    "电流测量值（库仑计数）",
+                    "温度",
+                    "电压测量值"
+                ],
+                "outputs": [
+                    "SOC估计值",
+                    "SOC值",
+                    "SOC百分比值",
+                    "可用功率或SOF指标"
+                ],
+                "preconditions": [
+                    "电压、电流、温度数据可用",
+                    "算法参数已配置"
+                ],
+                "postconditions": [
+                    "SOC值可用"
+                ],
+                "scenario": "电池管理系统需要准确估计电池SOC以提供可靠的续航里程信息",
+                "constraint": "估计精度受电压精度和电流积分误差影响"
+            },
+            {
+                "functionId": "F003",
+                "name": "数据通信",
+                "action": "传输",
+                "object": "BMS数据",
+                "effect": "实现电池系统与整车控制器之间的信息交互",
+                "trigger": "事件触发或周期性触发",
+                "condition": "通信链路正常",
+                "inputs": [
+                    "传感器数据",
+                    "状态信息",
+                    "电池状态数据（SOC/SOH/故障码）",
+                    "控制指令",
+                    "整车控制指令",
+                    "状态数据"
+                ],
+                "outputs": [
+                    "接收的充放电指令",
+                    "传输的数据",
+                    "发送至整车控制器的电池状态报文",
+                    "传输至目标模块的数据包"
+                ],
+                "preconditions": [
+                    "通信接口已配置",
+                    "通信协议已建立"
+                ],
+                "postconditions": [
+                    "数据成功传输"
+                ],
+                "scenario": "BMS需要与整车控制器或其他系统模块进行数据通信",
+                "constraint": "通信速率和可靠性需满足系统安全要求"
+            },
+            {
+                "functionId": "F004",
+                "name": "电磁干扰滤波",
+                "action": "滤除",
+                "object": "电磁干扰信号",
+                "effect": "提高传感器数据采集的准确性",
+                "trigger": "持续执行",
+                "condition": "存在电磁干扰",
+                "inputs": [
+                    "传感器信号",
+                    "干扰信号"
+                ],
+                "outputs": [
+                    "滤波后的信号"
+                ],
+                "preconditions": [
+                    "滤波器件已安装",
+                    "滤波参数已配置"
+                ],
+                "postconditions": [
+                    "信号质量提高"
+                ],
+                "scenario": "在强电磁干扰环境下保证BMS数据采集的可靠性",
+                "constraint": "滤波器件需靠近传感器测量路径安装"
+            },
+            {
+                "functionId": "F005",
+                "name": "接触器控制",
+                "action": "控制",
+                "object": "电池接触器",
+                "effect": "连接或断开电池包与高压负载/充电机，实现系统隔离",
+                "trigger": "控制指令触发",
+                "condition": "系统需要连接或断开电池",
+                "inputs": [
+                    "系统状态",
+                    "电压状态",
+                    "接触器状态反馈",
+                    "预充状态",
+                    "控制指令",
+                    "故障标志",
+                    "整车控制器指令"
+                ],
+                "outputs": [
+                    "接触器状态",
+                    "接触器开/合状态",
+                    "接触器状态反馈",
+                    "接触器线圈驱动信号",
+                    "接触器驱动信号"
+                ],
+                "preconditions": [
+                    "接触器驱动电路正常",
+                    "预充电完成"
+                ],
+                "postconditions": [
+                    "接触器状态改变"
+                ],
+                "scenario": "在系统启动、关闭或故障时控制电池与负载的连接",
+                "constraint": "需确保零电压切换以防止触点焊接"
+            },
+            {
+                "functionId": "F006",
+                "name": "预充电控制",
+                "action": "控制",
+                "object": "预充电电路",
+                "effect": "在接触器闭合前对直流母线电容充电",
+                "trigger": "接触器闭合指令触发",
+                "condition": "直流母线电压低于电池电压",
+                "inputs": [
+                    "电池电压",
+                    "母线电压"
+                ],
+                "outputs": [
+                    "预充电状态"
+                ],
+                "preconditions": [
+                    "预充电电阻和接触器正常"
+                ],
+                "postconditions": [
+                    "母线电压接近电池电压"
+                ],
+                "scenario": "在主接触器闭合前通过预充电电路缓慢提升母线电压",
+                "constraint": "预充电时间需控制在合理范围内"
+            },
+            {
+                "functionId": "F007",
+                "name": "过压保护",
+                "action": "检测",
+                "object": "电池过压状态",
+                "effect": "防止电池因过充电而损坏或发生安全事故",
+                "trigger": "电压超过阈值",
+                "condition": "电池电压持续高于上限",
+                "inputs": [
+                    "电压数据",
+                    "齐纳二极管",
+                    "分压电阻网络",
+                    "总电压测量值",
+                    "单体电压测量值",
+                    "电压阈值参数"
+                ],
+                "outputs": [
+                    "断开充电回路或降低充电电流指令",
+                    "过压报警信号",
+                    "欠压报警信号",
+                    "钳位后的安全电压",
+                    "断开放电回路或降低放电功率指令"
+                ],
+                "preconditions": [
+                    "过压阈值已配置",
+                    "检测电路正常"
+                ],
+                "postconditions": [
+                    "触发保护动作"
+                ],
+                "scenario": "防止电池因过压而损坏或发生危险",
+                "constraint": "检测响应时间需满足安全要求"
+            },
+            {
+                "functionId": "F008",
+                "name": "库仑计数",
+                "action": "积分",
+                "object": "电池电流",
+                "effect": "通过电流积分计算电池充放电容量",
+                "trigger": "周期性触发",
+                "condition": "电池处于充放电状态",
+                "inputs": [
+                    "电流数据",
+                    "时间数据"
+                ],
+                "outputs": [
+                    "累计容量值"
+                ],
+                "preconditions": [
+                    "电流数据准确",
+                    "初始SOC已知"
+                ],
+                "postconditions": [
+                    "容量数据可用"
+                ],
+                "scenario": "用于动态SOC估计，跟踪电池充放电过程",
+                "constraint": "需考虑电流传感器的漂移和偏移误差"
+            },
+            {
+                "functionId": "F009",
+                "name": "温度监控",
+                "action": "监控",
+                "object": "外围部件温度",
+                "effect": "监控接触器、熔断器、母排等部件温度",
+                "trigger": "周期性触发",
+                "condition": "系统处于高功率运行状态",
+                "inputs": [
+                    "温度传感器信号"
+                ],
+                "outputs": [
+                    "温度数据"
+                ],
+                "preconditions": [
+                    "温度传感器已安装",
+                    "传感器连接正常"
+                ],
+                "postconditions": [
+                    "温度数据可用"
+                ],
+                "scenario": "在高功率运行时监控关键部件温度防止过热",
+                "constraint": "传感器布置需覆盖关键热点位置"
+            },
+            {
+                "functionId": "F010",
+                "name": "电芯电压精确测量",
+                "action": "测量",
+                "object": "电芯电压",
+                "effect": "实时获取每个电芯的电压状态，确保电芯工作在安全电压范围内",
+                "trigger": "系统上电或周期性触发",
+                "condition": "主测量芯片正常工作",
+                "inputs": [
+                    "电芯电压模拟信号",
+                    "温度传感器信号",
+                    "多路电芯电压信号",
+                    "单电芯电压信号",
+                    "电流检测电阻电压信号",
+                    "分压电阻网络",
+                    "电池单体连接线路",
+                    "滤波器",
+                    "ADC",
+                    "阻抗转换器"
+                ],
+                "outputs": [
+                    "单体电压数值",
+                    "高分辨率电压数字值",
+                    "电芯温度值",
+                    "各电芯电压数字值",
+                    "电池包总电压数值",
+                    "电芯电流值",
+                    "电芯电压值"
+                ],
+                "preconditions": [
+                    "BMS系统已上电",
+                    "测量芯片与电芯正确连接"
+                ],
+                "postconditions": [
+                    "电压数据可供后续处理使用"
+                ],
+                "scenario": "BMS主芯片对串联电芯进行高精度电压采集",
+                "constraint": "测量精度需满足系统安全要求"
+            },
+            {
+                "functionId": "F011",
+                "name": "电芯电压窗口比较",
+                "action": "比较",
+                "object": "电芯电压与预设窗口",
+                "effect": "检测是否有电芯电压超出预定义的安全窗口，提供二进制报警信号",
+                "trigger": "持续监控或周期性触发",
+                "condition": "伴随芯片正常工作",
+                "inputs": [
+                    "电芯电压信号",
+                    "预设电压窗口阈值"
+                ],
+                "outputs": [
+                    "二进制越限标志信号"
+                ],
+                "preconditions": [
+                    "预设电压窗口已配置",
+                    "伴随芯片已上电"
+                ],
+                "postconditions": [
+                    "越限信号可供BMS主控决策使用"
+                ],
+                "scenario": "伴随芯片对电芯电压进行窗口比较，提供冗余安全保护",
+                "constraint": "仅提供二进制信息，不提供精确电压值"
+            },
+            {
+                "functionId": "F012",
+                "name": "信号源可信度选择",
+                "action": "选择",
+                "object": "最可信的电压信号源",
+                "effect": "在高分辨率信号和简单窗口比较信号之间选择最可靠的信号源",
+                "trigger": "信号源状态变化或周期性评估",
+                "condition": "存在多个信号源",
+                "inputs": [
+                    "高分辨率电压值",
+                    "窗口比较二进制信号",
+                    "信号源健康状态"
+                ],
+                "outputs": [
+                    "选定的可信信号"
+                ],
+                "preconditions": [
+                    "至少两个独立信号源可用",
+                    "信号源健康评估机制已实现"
+                ],
+                "postconditions": [
+                    "系统使用最可信的信号进行后续处理"
+                ],
+                "scenario": "BMS主控在高分辨率但易故障的信号和简单但可靠的窗口比较信号之间进行选择",
+                "constraint": "需权衡信号精度与可靠性"
+            },
+            {
+                "functionId": "F013",
+                "name": "硬件锁步保护",
+                "action": "执行",
+                "object": "锁步保护机制",
+                "effect": "通过特殊CPU中的锁步机制检测处理器故障，确保计算正确性",
+                "trigger": "CPU执行指令时持续运行",
+                "condition": "使用支持锁步的特殊CPU",
+                "inputs": [
+                    "双核CPU执行结果"
+                ],
+                "outputs": [
+                    "故障检测标志"
+                ],
+                "preconditions": [
+                    "硬件支持锁步机制",
+                    "双核同步运行"
+                ],
+                "postconditions": [
+                    "检测到故障时触发安全响应"
+                ],
+                "scenario": "在功能安全关键的BMS处理器中实施锁步冗余保护",
+                "constraint": "需要专用硬件支持"
+            },
+            {
+                "functionId": "F014",
+                "name": "内存错误校正",
+                "action": "校正",
+                "object": "内存错误",
+                "effect": "检测并校正内存中的数据错误，保证数据完整性",
+                "trigger": "内存读写操作时",
+                "condition": "硬件支持ECC功能",
+                "inputs": [
+                    "内存读取数据",
+                    "ECC校验码"
+                ],
+                "outputs": [
+                    "校正后的数据",
+                    "错误状态标志"
+                ],
+                "preconditions": [
+                    "内存支持ECC",
+                    "ECC功能已启用"
+                ],
+                "postconditions": [
+                    "单比特错误被自动校正，多比特错误被检测"
+                ],
+                "scenario": "BMS处理器对关键内存区域实施错误校正保护",
+                "constraint": "仅能校正单比特错误"
+            },
+            {
+                "functionId": "F015",
+                "name": "硬件自测试",
+                "action": "执行",
+                "object": "硬件自测试",
+                "effect": "验证硬件模块功能正常，检测潜在硬件故障",
+                "trigger": "系统上电或周期性触发",
+                "condition": "硬件支持自测试功能",
+                "inputs": [
+                    "测试激励信号"
+                ],
+                "outputs": [
+                    "自测试结果",
+                    "硬件健康状态"
+                ],
+                "preconditions": [
+                    "自测试程序已加载",
+                    "硬件处于可测试状态"
+                ],
+                "postconditions": [
+                    "根据测试结果决定是否进入安全状态"
+                ],
+                "scenario": "BMS在启动时或运行中对关键硬件模块执行自测试",
+                "constraint": "自测试期间可能影响正常功能执行"
+            },
+            {
+                "functionId": "F016",
+                "name": "高压低压电气隔离",
+                "action": "隔离",
+                "object": "高压与低压系统",
+                "effect": "通过光学、电感或电容方式解耦数字信号，防止高压故障传导至低压系统",
+                "trigger": "系统设计和硬件实现阶段",
+                "condition": "系统存在高压和低压部分",
+                "inputs": [
+                    "隔离测试信号",
+                    "高压侧数字信号",
+                    "绝缘电阻测量值"
+                ],
+                "outputs": [
+                    "隔离后的低压侧数字信号",
+                    "绝缘电阻值",
+                    "隔离状态判定"
+                ],
+                "preconditions": [
+                    "隔离器件正确安装",
+                    "隔离设计满足安全标准"
+                ],
+                "postconditions": [
+                    "高压能量浪涌被阻断，低压系统安全"
+                ],
+                "scenario": "电池包高压部分与低压通信/控制部分之间实施电气隔离",
+                "constraint": "隔离方式需满足系统安全等级要求"
+            },
+            {
+                "functionId": "F017",
+                "name": "温度传感器电气隔离",
+                "action": "隔离",
+                "object": "温度传感器信号",
+                "effect": "将热传感器信号进行电气隔离，防止高压故障通过传感器线路进入低压区域",
+                "trigger": "系统设计和硬件实现阶段",
+                "condition": "温度传感器位于高压区域",
+                "inputs": [
+                    "高压侧温度传感器信号"
+                ],
+                "outputs": [
+                    "隔离后的温度信号"
+                ],
+                "preconditions": [
+                    "隔离器件已安装",
+                    "传感器正确连接"
+                ],
+                "postconditions": [
+                    "温度信号安全传输至低压处理系统"
+                ],
+                "scenario": "对电池包内所有温度传感器实施电气隔离保护",
+                "constraint": "隔离不得影响温度测量精度"
+            },
+            {
+                "functionId": "F018",
+                "name": "电芯电荷均衡",
+                "action": "均衡",
+                "object": "串联电芯电荷",
+                "effect": "减小串联电芯之间的电荷不平衡，维持系统性能和可靠性",
+                "trigger": "检测到电芯间电荷差异超过阈值",
+                "condition": "存在串联电芯且出现电荷不平衡",
+                "inputs": [
+                    "各电芯电压/SOC数据",
+                    "均衡阈值",
+                    "各电芯电压数据",
+                    "BMS前端IC（如MAX11068）",
+                    "均衡电阻",
+                    "均衡策略参数",
+                    "各单体电压值"
+                ],
+                "outputs": [
+                    "均衡后的单体电压",
+                    "均衡状态",
+                    "均衡控制信号",
+                    "均衡电流",
+                    "单电芯均衡控制指令"
+                ],
+                "preconditions": [
+                    "均衡电路可用",
+                    "电芯电压数据已采集"
+                ],
+                "postconditions": [
+                    "电芯间电荷差异降低至可接受范围"
+                ],
+                "scenario": "BMS对串联电芯实施被动或主动均衡以消除不一致性",
+                "constraint": "均衡电流受重量和充电电流约束"
+            },
+            {
+                "functionId": "F019",
+                "name": "串联电芯电压监测通道配置",
+                "action": "配置",
+                "object": "电压监测通道",
+                "effect": "根据电池拓扑结构确定所需电压测量通道数量，优化BMS复杂度",
+                "trigger": "系统设计阶段",
+                "condition": "电池包拓扑结构已确定",
+                "inputs": [
+                    "电池拓扑结构参数（串并联配置）"
+                ],
+                "outputs": [
+                    "电压监测通道数量配置"
+                ],
+                "preconditions": [
+                    "电池包电气规格已确定"
+                ],
+                "postconditions": [
+                    "BMS硬件配置与电池拓扑匹配"
+                ],
+                "scenario": "根据串联-并联拓扑选择最优的电压监测通道配置方案",
+                "constraint": "并联串结构会成倍增加监测通道需求"
+            },
+            {
+                "functionId": "F020",
+                "name": "基于库仑计数的SOC估计",
+                "action": "估计",
+                "object": "SOC（库仑计数法）",
+                "effect": "通过高级电池模型在不使用电流测量电阻的情况下估计SOC",
+                "trigger": "周期性触发",
+                "condition": "电流测量可用",
+                "inputs": [
+                    "电压",
+                    "时间戳",
+                    "电池模型参数",
+                    "电流测量值",
+                    "初始SOC",
+                    "温度"
+                ],
+                "outputs": [
+                    "SOC估计值"
+                ],
+                "preconditions": [
+                    "电流测量精度满足要求",
+                    "初始SOC已知"
+                ],
+                "postconditions": [
+                    "SOC值更新并可供使用"
+                ],
+                "scenario": "TI燃料计IC通过库仑计数法进行SOC估计",
+                "constraint": "存在累积误差，需定期校准"
+            },
+            {
+                "functionId": "F021",
+                "name": "充电调节",
+                "action": "调节",
+                "object": "充电过程",
+                "effect": "控制电池充电电流和电压，确保充电安全和效率",
+                "trigger": "充电连接检测或充电指令",
+                "condition": "充电器已连接且电池允许充电",
+                "inputs": [
+                    "电池电压",
+                    "电池温度",
+                    "充电状态"
+                ],
+                "outputs": [
+                    "充电控制信号"
+                ],
+                "preconditions": [
+                    "充电调节器可用",
+                    "电池状态允许充电"
+                ],
+                "postconditions": [
+                    "充电过程按安全策略执行"
+                ],
+                "scenario": "燃料计IC中的充电调节器对单电芯充电过程进行控制",
+                "constraint": "需遵循电池充电曲线规范"
+            },
+            {
+                "functionId": "F022",
+                "name": "串行接口数据传输",
+                "action": "传输",
+                "object": "测量和计算数据",
+                "effect": "通过串行接口将测量值和计算值传输给外围系统",
+                "trigger": "数据更新或主机请求",
+                "condition": "串行接口已建立连接",
+                "inputs": [
+                    "电压、电流、温度测量值",
+                    "SOC估计值"
+                ],
+                "outputs": [
+                    "串行数据流"
+                ],
+                "preconditions": [
+                    "通信接口已初始化",
+                    "通信协议已配置"
+                ],
+                "postconditions": [
+                    "数据成功传输至主机系统"
+                ],
+                "scenario": "燃料计IC通过I2C/SPI等串行接口向主系统报告电池状态",
+                "constraint": "通信速率和可靠性需满足系统要求"
+            },
+            {
+                "functionId": "F023",
+                "name": "高级SOC估计",
+                "action": "估计",
+                "object": "高级SOC",
+                "effect": "使用复杂算法进行高精度SOC估计，需要较大计算能力",
+                "trigger": "周期性触发",
+                "condition": "BMS主控具有足够处理能力",
+                "inputs": [
+                    "所有电芯电压",
+                    "总电流",
+                    "温度分布",
+                    "历史数据"
+                ],
+                "outputs": [
+                    "高精度SOC估计值"
+                ],
+                "preconditions": [
+                    "所有传感器数据已采集",
+                    "高级算法已加载"
+                ],
+                "postconditions": [
+                    "高精度SOC值可供系统决策"
+                ],
+                "scenario": "BMS主控执行需要大量计算资源的高级SOC估计算法",
+                "constraint": "需要足够的处理器性能和内存"
+            },
+            {
+                "functionId": "F024",
+                "name": "功率预测",
+                "action": "预测",
+                "object": "电池可用功率",
+                "effect": "预测电池在未来一段时间内可提供的功率能力",
+                "trigger": "周期性触发或车辆请求",
+                "condition": "电池状态数据可用",
+                "inputs": [
+                    "SOC",
+                    "温度",
+                    "电压",
+                    "电流限制",
+                    "电池模型参数"
+                ],
+                "outputs": [
+                    "可用功率预测值"
+                ],
+                "preconditions": [
+                    "电池模型已建立",
+                    "当前状态数据已采集"
+                ],
+                "postconditions": [
+                    "功率预测值可供整车控制决策"
+                ],
+                "scenario": "BMS主控执行功率预测算法为车辆动力管理提供依据",
+                "constraint": "预测精度受模型准确性和工况变化影响"
+            },
+            {
+                "functionId": "F025",
+                "name": "信号滤波",
+                "action": "滤波",
+                "object": "采集信号",
+                "effect": "去除采集信号中的噪声和干扰，提高信号质量",
+                "trigger": "信号采集后自动执行",
+                "condition": "滤波算法已配置",
+                "inputs": [
+                    "原始采集信号"
+                ],
+                "outputs": [
+                    "滤波后的信号"
+                ],
+                "preconditions": [
+                    "原始信号已采集",
+                    "滤波参数已配置"
+                ],
+                "postconditions": [
+                    "滤波后数据可供后续处理"
+                ],
+                "scenario": "BMS从控模块对采集的电压和温度信号进行数字滤波处理",
+                "constraint": "滤波延迟需在可接受范围内"
+            },
+            {
+                "functionId": "F026",
+                "name": "被动均衡",
+                "action": "执行",
+                "object": "被动均衡",
+                "effect": "通过电阻放电降低高SOC单体电量，实现单体间SOC一致性",
+                "trigger": "检测到电芯电压差异超过阈值",
+                "condition": "被动均衡电路可用",
+                "inputs": [
+                    "各单体SOC估计值",
+                    "单体电压",
+                    "均衡阈值",
+                    "各电芯电压数据",
+                    "均衡策略参数",
+                    "温度数据"
+                ],
+                "outputs": [
+                    "均衡状态反馈",
+                    "均衡开关控制信号",
+                    "被动均衡开关控制信号",
+                    "主动均衡控制信号"
+                ],
+                "preconditions": [
+                    "均衡电阻和开关正常",
+                    "系统处于均衡允许状态"
+                ],
+                "postconditions": [
+                    "高电荷电芯电压降低，电芯间差异减小"
+                ],
+                "scenario": "TI bq76PL536A、LT6802G-2等IC执行被动均衡操作",
+                "constraint": "均衡过程产生热量，需控制功耗"
+            },
+            {
+                "functionId": "F027",
+                "name": "二级保护",
+                "action": "提供",
+                "object": "二级安全保护",
+                "effect": "在主保护失效时提供额外的安全保护层，增强系统功能安全",
+                "trigger": "检测到一级保护失效或严重故障",
+                "condition": "二级保护IC正常工作",
+                "inputs": [
+                    "电芯电压",
+                    "一级保护状态"
+                ],
+                "outputs": [
+                    "二级保护动作信号"
+                ],
+                "preconditions": [
+                    "二级保护IC已安装并配置",
+                    "与一级保护独立"
+                ],
+                "postconditions": [
+                    "严重故障时电池被安全断开"
+                ],
+                "scenario": "二级保护IC与主监测IC配合提供冗余安全保护",
+                "constraint": "需与主保护系统独立，避免共因故障"
+            },
+            {
+                "functionId": "F028",
+                "name": "IC菊花链连接",
+                "action": "连接",
+                "object": "多个BMS IC",
+                "effect": "通过菊花链方式连接多个前端IC，减少通信线路数量",
+                "trigger": "系统硬件设计阶段",
+                "condition": "IC支持菊花链功能",
+                "inputs": [
+                    "上级IC通信信号"
+                ],
+                "outputs": [
+                    "下级IC通信信号"
+                ],
+                "preconditions": [
+                    "IC具有菊花链通信接口",
+                    "连接线路正确"
+                ],
+                "postconditions": [
+                    "多个IC通过单一通信链路与主机通信"
+                ],
+                "scenario": "MAX11068和bq76PL536A通过I2C或电平移位接口实现菊花链连接",
+                "constraint": "链长度受通信延迟和信号完整性限制"
+            },
+            {
+                "functionId": "F029",
+                "name": "主机接口通信",
+                "action": "通信",
+                "object": "微控制器",
+                "effect": "通过专用主机接口与微控制器进行数据交换和命令传输",
+                "trigger": "数据更新或命令请求",
+                "condition": "通信接口已建立",
+                "inputs": [
+                    "采集数据",
+                    "状态信息"
+                ],
+                "outputs": [
+                    "串行数据流",
+                    "中断信号"
+                ],
+                "preconditions": [
+                    "通信协议已配置",
+                    "接口电气连接正常"
+                ],
+                "postconditions": [
+                    "数据传输至微控制器进行处理"
+                ],
+                "scenario": "bq76PL536A通过专用主机接口连接微控制器，MAX11068通过最低I2C端口连接",
+                "constraint": "通信速率需满足数据刷新要求"
+            },
+            {
+                "functionId": "F030",
+                "name": "SPI总线通信",
+                "action": "通信",
+                "object": "SPI总线设备",
+                "effect": "通过CAN总线实现BMS模块间及与整车系统的可靠通信",
+                "trigger": "主机发起SPI事务",
+                "condition": "SPI总线已配置",
+                "inputs": [
+                    "SPI命令和数据",
+                    "待发送数据帧"
+                ],
+                "outputs": [
+                    "SPI响应数据",
+                    "CAN数据帧"
+                ],
+                "preconditions": [
+                    "SPI接口已初始化",
+                    "数字隔离器已安装"
+                ],
+                "postconditions": [
+                    "数据成功传输"
+                ],
+                "scenario": "LT6802G-2通过SPI总线与微控制器通信，使用数字隔离器连接多个芯片",
+                "constraint": "不支持直接菊花链，需额外隔离器"
+            },
+            {
+                "functionId": "F031",
+                "name": "电流传感测量",
+                "action": "测量",
+                "object": "电池包总电流",
+                "effect": "获取电池包充放电总电流，用于SOC估计和过流保护",
+                "trigger": "周期性触发",
+                "condition": "电流传感器正常工作",
+                "inputs": [
+                    "激励信号",
+                    "电流传感器输出信号",
+                    "分流电阻或霍尔传感器",
+                    "NTC/PTC热敏电阻或数字温度传感器",
+                    "电化学阻抗谱数据"
+                ],
+                "outputs": [
+                    "电池包总电流值",
+                    "电池温度估计值",
+                    "阻抗谱特征",
+                    "电流数值",
+                    "温度数值"
+                ],
+                "preconditions": [
+                    "LEM电流传感器已安装并校准",
+                    "信号调理电路正常"
+                ],
+                "postconditions": [
+                    "电流数据可供SOC估计和保护判断"
+                ],
+                "scenario": "使用LEM电流传感器测量i-MiEV电池包总电流",
+                "constraint": "测量范围和精度需满足系统要求"
+            },
+            {
+                "functionId": "F032",
+                "name": "绝缘监测",
+                "action": "监测",
+                "object": "高压绝缘状态",
+                "effect": "检测电池包高压系统与车身之间的绝缘电阻，确保电气安全",
+                "trigger": "周期性触发或上电时触发",
+                "condition": "绝缘监测模块正常工作",
+                "inputs": [
+                    "绝缘检测信号",
+                    "多开关组合状态",
+                    "漏电流信号",
+                    "磁调制相位差数据",
+                    "高压对地电压信号",
+                    "正负极对 chassis 电压",
+                    "电压信号",
+                    "开关状态",
+                    "已知电阻值"
+                ],
+                "outputs": [
+                    "绝缘状态",
+                    "绝缘电阻值",
+                    "负极绝缘电阻Rn",
+                    "绝缘故障标志",
+                    "报警信号",
+                    "正极绝缘电阻Rp",
+                    "绝缘状态判定"
+                ],
+                "preconditions": [
+                    "绝缘监测器已安装",
+                    "高压系统已上电"
+                ],
+                "postconditions": [
+                    "绝缘故障时触发安全保护"
+                ],
+                "scenario": "i-MiEV电池包中的绝缘监测器持续监测高压绝缘状态",
+                "constraint": "需满足汽车安全标准的绝缘电阻要求"
+            },
+            {
+                "functionId": "F033",
+                "name": "冷却风扇控制",
+                "action": "控制",
+                "object": "冷却风扇",
+                "effect": "控制风扇运转以排出电池包内热空气，维持适宜工作温度",
+                "trigger": "温度超过阈值或空调系统联动",
+                "condition": "风扇电机和驱动电路正常",
+                "inputs": [
+                    "电池温度数据",
+                    "冷却需求"
+                ],
+                "outputs": [
+                    "风扇控制信号"
+                ],
+                "preconditions": [
+                    "风扇已安装",
+                    "驱动电路正常"
+                ],
+                "postconditions": [
+                    "电池包内热空气被排出"
+                ],
+                "scenario": "i-MiEV电池包使用风扇将空调冷却空气引导通过电池模块并排出",
+                "constraint": "风扇噪音和功耗需控制在可接受范围"
+            },
+            {
+                "functionId": "F034",
+                "name": "电池模块温度监测",
+                "action": "监测",
+                "object": "电池模块温度",
+                "effect": "获取电池模块多个位置的温度信息，用于热管理和安全保护",
+                "trigger": "周期性触发",
+                "condition": "温度传感器正常连接",
+                "inputs": [
+                    "温度传感器信号（NTC/PTC/热电偶）",
+                    "多个温度传感器信号"
+                ],
+                "outputs": [
+                    "温度梯度",
+                    "超温报警标志",
+                    "各测点温度值"
+                ],
+                "preconditions": [
+                    "温度传感器已安装",
+                    "采集通道正常"
+                ],
+                "postconditions": [
+                    "温度数据可用于热管理和保护决策"
+                ],
+                "scenario": "i-MiEV每个CMU上的三个温度传感器监测模块温度分布",
+                "constraint": "传感器位置和数量需覆盖关键热点"
+            },
+            {
+                "functionId": "F035",
+                "name": "电池内部CAN通信",
+                "action": "通信",
+                "object": "电池内部CAN网络",
+                "effect": "实现CMU与BMU之间的数据交换，传输电芯电压和温度信息",
+                "trigger": "数据更新或请求",
+                "condition": "内部CAN总线正常",
+                "inputs": [
+                    "CMU采集数据"
+                ],
+                "outputs": [
+                    "CAN数据帧"
+                ],
+                "preconditions": [
+                    "CAN总线物理连接正常",
+                    "通信协议已配置"
+                ],
+                "postconditions": [
+                    "BMU获取所有CMU数据"
+                ],
+                "scenario": "i-MiEV的CMU通过电池内部CAN总线与BMU通信",
+                "constraint": "需保证通信实时性和抗干扰能力"
+            },
+            {
+                "functionId": "F036",
+                "name": "电池数据降分辨率传输",
+                "action": "传输",
+                "object": "电池数据至整车CAN",
+                "effect": "将部分电池信号以较低分辨率传输至整车CAN总线供其他系统使用",
+                "trigger": "数据更新时",
+                "condition": "整车CAN接口可用",
+                "inputs": [
+                    "电池内部数据"
+                ],
+                "outputs": [
+                    "降分辨率的CAN数据帧"
+                ],
+                "preconditions": [
+                    "网关功能已实现",
+                    "数据映射已配置"
+                ],
+                "postconditions": [
+                    "整车系统可获取基本电池信息"
+                ],
+                "scenario": "i-MiEV电池内部CAN上的部分信号以较低分辨率出现在整车CAN上",
+                "constraint": "降分辨率不得影响关键安全信息传输"
+            },
+            {
+                "functionId": "F037",
+                "name": "维修插头安全断开",
+                "action": "断开",
+                "object": "电池包高压回路",
+                "effect": "通过拔出维修插头将电池包分为两个电气隔离部分，确保维修安全",
+                "trigger": "人工操作维修插头",
+                "condition": "车辆已下电",
+                "inputs": [
+                    "维修插头物理状态"
+                ],
+                "outputs": [
+                    "高压回路断开状态"
+                ],
+                "preconditions": [
+                    "车辆已断电",
+                    "操作人员已培训"
+                ],
+                "postconditions": [
+                    "电池包被分为两个安全部分"
+                ],
+                "scenario": "i-MiEV的维修插头拔出后将电池包分为两部分，位于左座椅下方",
+                "constraint": "操作前必须确认系统已断电"
+            },
+            {
+                "functionId": "F038",
+                "name": "熔断器过流保护",
+                "action": "保护",
+                "object": "电池包过流",
+                "effect": "在严重过流或短路时熔断以切断高压回路，保护电池和系统安全",
+                "trigger": "电流超过熔断器额定值",
+                "condition": "过流或短路故障发生",
+                "inputs": [
+                    "回路电流"
+                ],
+                "outputs": [
+                    "熔断器断开状态"
+                ],
+                "preconditions": [
+                    "熔断器已正确安装",
+                    "额定值匹配系统要求"
+                ],
+                "postconditions": [
+                    "高压回路被物理切断"
+                ],
+                "scenario": "i-MiEV电池包中部的主熔断器在严重过流时熔断保护",
+                "constraint": "熔断器为一次性器件，熔断后需更换"
+            },
+            {
+                "functionId": "F039",
+                "name": "柔性PCB电压采集",
+                "action": "采集",
+                "object": "电芯端子电压",
+                "effect": "通过柔性PCB连接电芯端子与BMS PCB，实现电压信号传输",
+                "trigger": "系统上电后持续采集",
+                "condition": "柔性PCB正确连接",
+                "inputs": [
+                    "电芯端子电压"
+                ],
+                "outputs": [
+                    "传输至BMS PCB的电压信号"
+                ],
+                "preconditions": [
+                    "柔性PCB已焊接/连接",
+                    "BMS PCB已安装"
+                ],
+                "postconditions": [
+                    "电压信号可供IC测量"
+                ],
+                "scenario": "Smart Fortwo电池包使用柔性PCB连接电芯端子与BMS PCB进行电压采集",
+                "constraint": "柔性PCB需耐受振动和温度变化"
+            },
+            {
+                "functionId": "F040",
+                "name": "电芯串联焊接连接",
+                "action": "连接",
+                "object": "电芯串联电路",
+                "effect": "通过焊接方式实现电芯间的串联电气连接，构建高压电池包",
+                "trigger": "电池包制造阶段",
+                "condition": "电芯已正确定位",
+                "inputs": [
+                    "电芯端子"
+                ],
+                "outputs": [
+                    "串联电气连接"
+                ],
+                "preconditions": [
+                    "电芯已装入框架",
+                    "焊接设备就绪"
+                ],
+                "postconditions": [
+                    "电芯间形成可靠的串联连接"
+                ],
+                "scenario": "Smart Fortwo电池包中90个软包电芯通过焊接实现串联连接",
+                "constraint": "焊接质量需满足电气和机械强度要求"
+            },
+            {
+                "functionId": "F041",
+                "name": "液冷系统热管理",
+                "action": "管理",
+                "object": "电池热状态",
+                "effect": "通过液冷板对电池进行冷却或加热，维持电池在最佳温度范围",
+                "trigger": "温度超出目标范围",
+                "condition": "液冷系统可用",
+                "inputs": [
+                    "电池温度分布",
+                    "冷却液温度"
+                ],
+                "outputs": [
+                    "液冷系统控制信号"
+                ],
+                "preconditions": [
+                    "液冷板已安装",
+                    "冷却液循环系统正常"
+                ],
+                "postconditions": [
+                    "电池温度维持在目标范围内"
+                ],
+                "scenario": "Smart Fortwo电池包顶部安装液冷板进行液体冷却热管理",
+                "constraint": "需防止冷却液泄漏至电气部分"
+            },
+            {
+                "functionId": "F042",
+                "name": "电池包集成管理",
+                "action": "管理",
+                "object": "电池包整体集成",
+                "effect": "将BMS完整集成在电池包壳体内，实现空间高效利用和整体化设计",
+                "trigger": "系统设计和制造阶段",
+                "condition": "集成设计方案已确定",
+                "inputs": [
+                    "BMS组件",
+                    "电池包结构"
+                ],
+                "outputs": [
+                    "集成化电池包系统"
+                ],
+                "preconditions": [
+                    "所有组件已就位",
+                    "布局设计已完成"
+                ],
+                "postconditions": [
+                    "BMS与电池包高度集成，线缆最少化"
+                ],
+                "scenario": "Smart Fortwo电池包将整个BMS集成在壳体内，实现空间高效利用和最少线缆",
+                "constraint": "集成设计需考虑可维护性和散热"
+            },
+            {
+                "functionId": "F043",
+                "name": "低边电流测量",
+                "action": "测量",
+                "object": "低边路径电流",
+                "effect": "在正极与负载之间测量电流，可检测短路故障",
+                "trigger": "周期性触发",
+                "condition": "分流电阻放置于负载与地/负极之间",
+                "inputs": [
+                    "电流检测放大器",
+                    "低边分流电阻",
+                    "高边分流电阻",
+                    "高共模电压电流检测放大器"
+                ],
+                "outputs": [
+                    "电流数值"
+                ],
+                "preconditions": [
+                    "分流电阻位于低边位置",
+                    "放大器供电正常"
+                ],
+                "postconditions": [
+                    "电流数据可用于系统监控",
+                    "地路径存在扰动"
+                ],
+                "scenario": "将分流电阻置于负载与系统地之间，利用低共模电压优势简化放大器选型",
+                "constraint": "会扰动地路径，使负载地电位抬高；无法检测绕过监测器的短路电流"
+            },
+            {
+                "functionId": "F044",
+                "name": "电池串电流独立监测",
+                "action": "监测",
+                "object": "各电池串电流",
+                "effect": "检测多串并联系统中的功率不平衡",
+                "trigger": "周期性触发",
+                "condition": "电池系统包含多个可切换的并联串",
+                "inputs": [
+                    "每串独立的电流传感器"
+                ],
+                "outputs": [
+                    "各串电流数值"
+                ],
+                "preconditions": [
+                    "每串均安装电流监测装置"
+                ],
+                "postconditions": [
+                    "可识别串间功率不平衡",
+                    "支持串级故障诊断"
+                ],
+                "scenario": "在多串并联电池系统中，为每个电池串配置独立电流监测设备，以追踪运行中的功率不平衡",
+                "constraint": "增加硬件成本和布线复杂度"
+            },
+            {
+                "functionId": "F045",
+                "name": "霍尔效应电流传感",
+                "action": "测量",
+                "object": "电流产生的磁场",
+                "effect": "非接触式测量电流，提供电气隔离",
+                "trigger": "周期性触发",
+                "condition": "电流流过导体产生磁场",
+                "inputs": [
+                    "霍尔传感器",
+                    "铁氧体磁环",
+                    "母排或电流连接件"
+                ],
+                "outputs": [
+                    "与磁场强度和电流成正比的电压信号"
+                ],
+                "preconditions": [
+                    "霍尔传感器已正确定位于电流路径旁",
+                    "信号调理电路正常"
+                ],
+                "postconditions": [
+                    "获得隔离的电流测量值",
+                    "无额外导通损耗"
+                ],
+                "scenario": "利用霍尔效应传感器（如Honeywell SS413A、LEM HAH1BV）非接触式测量电流，通过铁氧体磁环集中磁场",
+                "constraint": "带宽有限（通常几十kHz）；输出信号存在较大温度漂移需补偿；成本和体积较大"
+            },
+            {
+                "functionId": "F046",
+                "name": "温度非线性校正",
+                "action": "校正",
+                "object": "温度测量值",
+                "effect": "将非线性电压-温度关系转换为准确温度值",
+                "trigger": "每次温度采样后",
+                "condition": "使用NTC/PTC等非线性温度传感器",
+                "inputs": [
+                    "ADC采样的电压值",
+                    "查找表（Look-up Table）"
+                ],
+                "outputs": [
+                    "校正后的温度值"
+                ],
+                "preconditions": [
+                    "查找表已根据传感器特性标定并存储"
+                ],
+                "postconditions": [
+                    "获得线性化的准确温度数据"
+                ],
+                "scenario": "在数字处理链（如智能单体控制板）中实现查找表，将NTC传感器的非线性电压-温度关系转换为正确温度值",
+                "constraint": "查找表需覆盖传感器全工作温度范围（-50°C至150°C）；需足够精度以减小插值误差"
+            },
+            {
+                "functionId": "F047",
+                "name": "SOH健康状态估计",
+                "action": "估计",
+                "object": "电池健康状态（SOH）",
+                "effect": "评估电池老化程度，预测剩余使用寿命",
+                "trigger": "周期性触发或特定工况触发",
+                "condition": "电池系统运行中积累足够数据",
+                "inputs": [
+                    "电压、电流、温度历史数据",
+                    "充放电循环次数",
+                    "内阻变化"
+                ],
+                "outputs": [
+                    "SOH百分比值或老化指标"
+                ],
+                "preconditions": [
+                    "测量数据长期记录可用",
+                    "老化模型已建立"
+                ],
+                "postconditions": [
+                    "SOH值可用于维护预警和功率限制调整"
+                ],
+                "scenario": "基于测量获取的状态变量（电压、电流、温度）和历史数据，通过算法估计电池健康状态",
+                "constraint": "SOH估计需长期数据积累；不同老化机理需不同模型"
+            },
+            {
+                "functionId": "F048",
+                "name": "电压测量合理性校验",
+                "action": "校验",
+                "object": "电压测量值",
+                "effect": "检测电压测量系统是否存在故障",
+                "trigger": "每次电压采样后",
+                "condition": "同时具备单体电压和总电压测量值",
+                "inputs": [
+                    "各单体电压之和",
+                    "电池包总电压测量值"
+                ],
+                "outputs": [
+                    "校验结果（通过/失败）"
+                ],
+                "preconditions": [
+                    "单体电压和总电压均已测量完成"
+                ],
+                "postconditions": [
+                    "若校验失败可触发测量系统故障报警"
+                ],
+                "scenario": "利用单体电压之和应等于总包电压的原理，作为电压测量的合理性判据",
+                "constraint": "需考虑测量误差容限；线路压降可能影响校验精度"
+            },
+            {
+                "functionId": "F049",
+                "name": "二次保护监测",
+                "action": "监测",
+                "object": "电池系统安全状态",
+                "effect": "在主保护失效时提供冗余安全保护",
+                "trigger": "持续监测或主保护失效时",
+                "condition": "主BMS前端IC工作异常或测量值超出安全范围",
+                "inputs": [
+                    "单体电压",
+                    "温度",
+                    "主IC状态"
+                ],
+                "outputs": [
+                    "二次保护触发信号（如断开接触器）"
+                ],
+                "preconditions": [
+                    "二次保护IC（如MAX11081、LT6801）已配置并独立供电"
+                ],
+                "postconditions": [
+                    "系统进入安全状态",
+                    "冗余保护提升系统可靠性"
+                ],
+                "scenario": "使用二次监督IC（如Maxim MAX17880、Linear LT6801）作为冗余保护设备，在主BMS前端IC失效时提供额外安全层",
+                "constraint": "二次保护IC需独立于主IC工作；增加系统成本和复杂度"
+            },
+            {
+                "functionId": "F050",
+                "name": "电池优化利用管理",
+                "action": "管理",
+                "object": "电池系统使用策略",
+                "effect": "基于状态变量优化电池使用，延长寿命并提升性能",
+                "trigger": "周期性触发",
+                "condition": "SOC、SOH、SOF等状态变量可用",
+                "inputs": [
+                    "SOC",
+                    "SOH",
+                    "SOF",
+                    "温度",
+                    "驾驶需求"
+                ],
+                "outputs": [
+                    "充放电功率限制",
+                    "能量分配策略"
+                ],
+                "preconditions": [
+                    "状态估计功能正常运行"
+                ],
+                "postconditions": [
+                    "电池在安全范围内最大化利用",
+                    "寿命得到延长"
+                ],
+                "scenario": "基于测量获取的状态变量（SOC/SOH/SOF），制定优化的电池使用策略，实现安全保护与性能利用的平衡",
+                "constraint": "需在安全边界内优化；不同老化状态下需动态调整策略"
+            },
+            {
+                "functionId": "F051",
+                "name": "电池单体容量监测",
+                "action": "监测",
+                "object": "电池单体容量",
+                "effect": "识别电池单体间容量差异，为均衡控制提供依据",
+                "trigger": "周期性触发或电池管理系统启动时",
+                "condition": "电池组处于运行或充电状态",
+                "inputs": [
+                    "电池单体电流",
+                    "静置时间",
+                    "单体开路电压",
+                    "单体电压采样信号",
+                    "温度数据",
+                    "电池单体电压"
+                ],
+                "outputs": [
+                    "过压/欠压告警",
+                    "自放电率估计值",
+                    "异常单体标记",
+                    "各单体电压值",
+                    "容量差异报告",
+                    "各单体容量估计值"
+                ],
+                "preconditions": [
+                    "电池管理系统已上电",
+                    "电压和电流传感器正常工作"
+                ],
+                "postconditions": [
+                    "容量数据更新至BMS内存",
+                    "触发均衡逻辑判断"
+                ],
+                "scenario": "在电池组长期运行后，由于制造差异和老化不一致，各单体容量出现偏差，BMS需持续监测以决定是否启动均衡",
+                "constraint": "监测精度受传感器精度和算法模型限制，需定期校准"
+            },
+            {
+                "functionId": "F052",
+                "name": "主动均衡能量再分配",
+                "action": "再分配",
+                "object": "电池单体间能量",
+                "effect": "将高容量/高SOC单体能量转移至低容量/低SOC单体，提升电池包可用能量",
+                "trigger": "单体间SOC或容量差异超过主动均衡启动阈值",
+                "condition": "电池包处于充电、放电或静置状态，且系统具备主动均衡硬件",
+                "inputs": [
+                    "各单体SOC",
+                    "各单体容量估计值",
+                    "单体电压",
+                    "温度"
+                ],
+                "outputs": [
+                    "功率电子器件驱动信号",
+                    "能量转移路径控制指令"
+                ],
+                "preconditions": [
+                    "主动均衡电路（如电感、DC-DC变换器）正常",
+                    "控制算法已初始化"
+                ],
+                "postconditions": [
+                    "能量从高SOC单体转移至低SOC单体",
+                    "电池包可用容量提升"
+                ],
+                "scenario": "在电池包运行过程中，BMS检测到单体间容量差异显著，启动主动均衡，通过电感或变压器将能量从高容量单体转移至低容量单体",
+                "constraint": "需复杂控制算法和昂贵磁性元件，目前尚未在量产车中广泛应用，成本和PCB面积是主要限制"
+            },
+            {
+                "functionId": "F053",
+                "name": "高压互锁检测",
+                "action": "检测",
+                "object": "高压连接器互锁状态",
+                "effect": "确保高压连接器未意外断开，防止电弧和电击风险",
+                "trigger": "车辆上电自检或运行中周期性检测",
+                "condition": "高压系统处于激活状态",
+                "inputs": [
+                    "互锁回路电压或电流信号"
+                ],
+                "outputs": [
+                    "互锁状态标志",
+                    "故障报警信号"
+                ],
+                "preconditions": [
+                    "互锁回路物理连接完整",
+                    "检测电路正常"
+                ],
+                "postconditions": [
+                    "若互锁断开则触发高压接触器断开",
+                    "记录故障码"
+                ],
+                "scenario": "在车辆行驶中，若高压连接器因振动松脱，互锁回路断开，BMS立即检测到并断开主接触器，防止高压暴露",
+                "constraint": "需与整车控制器协同，避免误触发导致动力中断"
+            },
+            {
+                "functionId": "F054",
+                "name": "无传感器温度估计",
+                "action": "估计",
+                "object": "电池单体内部温度",
+                "effect": "弥补物理传感器不足，提供更精确的内部温度信息",
+                "trigger": "周期性触发或与EIS测量同步",
+                "condition": "电池处于静置或小电流状态，适合阻抗测量",
+                "inputs": [
+                    "电化学阻抗谱（EIS）数据",
+                    "电流激励信号",
+                    "电压响应"
+                ],
+                "outputs": [
+                    "单体内部温度估计值"
+                ],
+                "preconditions": [
+                    "具备EIS测量硬件",
+                    "电池处于准稳态"
+                ],
+                "postconditions": [
+                    "温度估计值用于修正热模型",
+                    "补充物理传感器数据"
+                ],
+                "scenario": "在传感器故障或布置不足时，BMS通过施加小幅度交流激励测量阻抗，利用阻抗-温度关系估计内部温度",
+                "constraint": "EIS测量需专用硬件，计算复杂度高，不适合高频实时应用"
+            },
+            {
+                "functionId": "F055",
+                "name": "线束温度监测",
+                "action": "监测",
+                "object": "高压线束温度",
+                "effect": "防止线束过热导致绝缘老化或火灾",
+                "trigger": "连续监测或电流超限时触发",
+                "condition": "大电流充放电或高温环境",
+                "inputs": [
+                    "线束温度传感器信号",
+                    "电流值"
+                ],
+                "outputs": [
+                    "线束温度值",
+                    "过温报警"
+                ],
+                "preconditions": [
+                    "线束温度传感器已安装",
+                    "信号传输正常"
+                ],
+                "postconditions": [
+                    "触发降功率或断开接触器",
+                    "记录过温事件"
+                ],
+                "scenario": "在持续高功率放电时，BMS监测到高压线束温度接近限值，主动限制输出功率，防止线束绝缘层熔化",
+                "constraint": "传感器需靠近线束布置，安装工艺要求高"
+            },
+            {
+                "functionId": "F056",
+                "name": "熔断器保护配合",
+                "action": "配合",
+                "object": "高压熔断器与接触器",
+                "effect": "在短路等极端故障下确保电流被可靠切断",
+                "trigger": "短路电流超过接触器分断能力",
+                "condition": "发生高压侧短路故障",
+                "inputs": [
+                    "短路电流幅值",
+                    "接触器分断能力参数",
+                    "熔断器I²t特性"
+                ],
+                "outputs": [
+                    "熔断器熔断",
+                    "接触器保持或断开"
+                ],
+                "preconditions": [
+                    "熔断器额定参数已根据寄生参数选型",
+                    "接触器与熔断器特性匹配"
+                ],
+                "postconditions": [
+                    "故障电流被切断",
+                    "系统进入安全状态"
+                ],
+                "scenario": "当电池包内部发生短路，电流迅速上升超过接触器分断能力，熔断器在毫秒级熔断，切断故障电流",
+                "constraint": "需考虑电池包内寄生电感和电容对短路电流上升率的影响，熔断器选型需精确匹配"
+            },
+            {
+                "functionId": "F057",
+                "name": "低温充电抑制",
+                "action": "抑制",
+                "object": "低温下电池充电行为",
+                "effect": "防止锂金属析出和枝晶生长，避免内短路",
+                "trigger": "检测到电池温度低于充电允许下限",
+                "condition": "电池处于充电请求状态但温度过低",
+                "inputs": [
+                    "电池最低温度",
+                    "充电请求信号"
+                ],
+                "outputs": [
+                    "充电禁止信号",
+                    "充电电流限制值"
+                ],
+                "preconditions": [
+                    "温度传感器正常",
+                    "BMS与充电机通信正常"
+                ],
+                "postconditions": [
+                    "充电被禁止或限制为小电流预热",
+                    "触发加热系统"
+                ],
+                "scenario": "冬季低温环境下，用户插入充电枪，BMS检测到电池温度低于0°C，禁止大电流充电，先启动加热系统",
+                "constraint": "需平衡用户充电需求与电池安全，部分系统允许小电流预热"
+            },
+            {
+                "functionId": "F058",
+                "name": "深度放电后运行禁止",
+                "action": "禁止",
+                "object": "深度放电后电池运行",
+                "effect": "防止铜集流体腐蚀导致的内部短路",
+                "trigger": "检测到单体电压低于深度放电阈值",
+                "condition": "电池曾经历过度放电至安全电压以下",
+                "inputs": [
+                    "单体最低电压",
+                    "历史放电记录"
+                ],
+                "outputs": [
+                    "运行禁止标志",
+                    "故障码存储"
+                ],
+                "preconditions": [
+                    "电压测量准确",
+                    "BMS具备历史数据存储能力"
+                ],
+                "postconditions": [
+                    "电池被锁定不可使用",
+                    "需专业设备复位或更换"
+                ],
+                "scenario": "车辆长期停放导致电池自放电至2.0V以下，BMS记录该事件并禁止后续上电，防止腐蚀引发短路",
+                "constraint": "需区分临时电压跌落与真实深度放电，避免误锁"
+            },
+            {
+                "functionId": "F059",
+                "name": "内部短路早期诊断",
+                "action": "诊断",
+                "object": "电池单体内部短路",
+                "effect": "及时发现电池包内部短路故障，防止热失控",
+                "trigger": "自放电率异常或电压异常下降",
+                "condition": "电池处于静置或轻载状态",
+                "inputs": [
+                    "一致性指标",
+                    "电压数据",
+                    "等效参数",
+                    "自放电率",
+                    "电流数据",
+                    "单体电压变化率",
+                    "历史数据",
+                    "温度数据"
+                ],
+                "outputs": [
+                    "故障位置",
+                    "故障等级",
+                    "短路判定结果",
+                    "报警信号",
+                    "预警信号",
+                    "内短路概率评估"
+                ],
+                "preconditions": [
+                    "具备高精度电压测量",
+                    "有足够历史数据用于趋势分析"
+                ],
+                "postconditions": [
+                    "触发降功率或断开接触器",
+                    "上传故障至云端"
+                ],
+                "scenario": "BMS通过长期监测发现某单体自放电率显著高于其他单体，判断存在微短路风险，提前预警",
+                "constraint": "需区分正常老化与内短路，误报率高会影响用户体验"
+            },
+            {
+                "functionId": "F060",
+                "name": "电压采样线断线检测",
+                "action": "检测",
+                "object": "单体电压采样线连接状态",
+                "effect": "确保电压监测完整性，防止因断线导致保护失效",
+                "trigger": "启用均衡电路时或周期性主动检测",
+                "condition": "电池处于静置或小电流状态",
+                "inputs": [
+                    "均衡开关控制信号",
+                    "相邻单体电压变化"
+                ],
+                "outputs": [
+                    "断线标志",
+                    "故障位置定位"
+                ],
+                "preconditions": [
+                    "均衡电路功能正常",
+                    "电压采样通道可用"
+                ],
+                "postconditions": [
+                    "标记故障通道",
+                    "启用冗余保护策略"
+                ],
+                "scenario": "BMS主动开启某单体均衡电阻，若相邻单体电压无预期变化，则判断采样线断开，触发故障处理",
+                "constraint": "检测依赖均衡电路，若均衡电阻失效则无法检测；低通滤波电容会延缓电压变化，需足够检测时间"
+            },
+            {
+                "functionId": "F061",
+                "name": "传感器信号有效性校验",
+                "action": "校验",
+                "object": "电压/电流/温度传感器信号",
+                "effect": "识别传感器故障，防止错误数据导致误动作",
+                "trigger": "连续运行或每次采样后",
+                "condition": "电池处于动态工况（电流变化）",
+                "inputs": [
+                    "单体电压序列",
+                    "总电流",
+                    "温度",
+                    "电池模型预测值"
+                ],
+                "outputs": [
+                    "传感器故障标志",
+                    "故障传感器定位"
+                ],
+                "preconditions": [
+                    "具备电池等效电路模型",
+                    "模型参数已校准"
+                ],
+                "postconditions": [
+                    "剔除故障传感器数据",
+                    "启用冗余或降级策略"
+                ],
+                "scenario": "放电电流突增时，所有单体电压应下降，若某单体电压不变或上升，则判断其传感器故障",
+                "constraint": "需精确电池模型支持，模型失配可能导致误判"
+            },
+            {
+                "functionId": "F062",
+                "name": "安全与可靠性权衡决策",
+                "action": "决策",
+                "object": "保护动作执行策略",
+                "effect": "在安全保护与系统可用性之间取得平衡，避免过度保护导致危险",
+                "trigger": "检测到故障但保护动作本身可能引发更高风险",
+                "condition": "车辆处于高速行驶或关键任务状态",
+                "inputs": [
+                    "故障类型",
+                    "车辆运行状态",
+                    "动力需求",
+                    "环境条件"
+                ],
+                "outputs": [
+                    "保护动作选择（降功率/报警/断开）",
+                    "决策日志"
+                ],
+                "preconditions": [
+                    "具备整车状态感知能力",
+                    "预设安全策略矩阵"
+                ],
+                "postconditions": [
+                    "执行选定保护策略",
+                    "记录决策依据"
+                ],
+                "scenario": "高速行驶中检测到轻微欠压，BMS判断立即断开接触器会导致失去动力更危险，选择限功率并报警，待安全停车后再断开",
+                "constraint": "需符合功能安全标准（如ISO 26262），策略需预先验证"
+            },
+            {
+                "functionId": "F063",
+                "name": "共模电流绝缘检测",
+                "action": "检测",
+                "object": "高压系统共模电流",
+                "effect": "通过外部激励线圈测量共模电流变化，计算绝缘电阻",
+                "trigger": "周期性触发",
+                "condition": "高压系统带电且主回路穿过检测线圈",
+                "inputs": [
+                    "交流激励信号",
+                    "共模电流响应",
+                    "电压测量值"
+                ],
+                "outputs": [
+                    "绝缘电阻计算值"
+                ],
+                "preconditions": [
+                    "环形线圈已安装且主回路穿过",
+                    "激励源正常"
+                ],
+                "postconditions": [
+                    "绝缘值记录",
+                    "超限报警"
+                ],
+                "scenario": "BMS通过外部线圈施加交流激励，测量共模电流变化，结合电压计算绝缘电阻，适用于特定拓扑",
+                "constraint": "需主回路导线穿过线圈，安装不便，不适用于所有电池包结构"
+            },
+            {
+                "functionId": "F064",
+                "name": "多状态切换绝缘测量",
+                "action": "测量",
+                "object": "正负极绝缘电阻",
+                "effect": "通过多开关组合改变 chassis 电位，精确计算Rp和Rn",
+                "trigger": "上电自检或周期性触发",
+                "condition": "高压系统处于IT网络配置",
+                "inputs": [
+                    "测量电路参数",
+                    "开关控制序列",
+                    "系统电压",
+                    "各状态下电压测量值",
+                    "已知电阻值"
+                ],
+                "outputs": [
+                    "绝缘电阻值",
+                    "Rn",
+                    "绝缘状态标志",
+                    "Rp"
+                ],
+                "preconditions": [
+                    "开关和电阻网络正常",
+                    "电压测量单元高精度"
+                ],
+                "postconditions": [
+                    "绝缘电阻值存储",
+                    "触发保护逻辑"
+                ],
+                "scenario": "BMS依次闭合不同开关组合，测量 chassis 对正负极电压变化，解方程组求得正负极绝缘电阻",
+                "constraint": "寄生电容导致电压稳定慢，需等待足够时间；对称故障可能漏检"
+            },
+            {
+                "functionId": "F065",
+                "name": "自适应绝缘测量时间控制",
+                "action": "控制",
+                "object": "绝缘测量等待时间",
+                "effect": "根据RC时间常数动态调整测量等待时间，提高测量效率和准确性",
+                "trigger": "启动绝缘测量时",
+                "condition": "系统具备可调测量时序能力",
+                "inputs": [
+                    "预估或实测RC时间常数",
+                    "电压稳定判据"
+                ],
+                "outputs": [
+                    "测量使能信号",
+                    "有效测量值"
+                ],
+                "preconditions": [
+                    "已知或可估计系统寄生电容",
+                    "具备自适应算法"
+                ],
+                "postconditions": [
+                    "获得稳定绝缘电阻值",
+                    "缩短不必要的等待时间"
+                ],
+                "scenario": "BMS根据当前环境湿度和温度估计寄生电容大小，动态调整测量等待时间，在潮湿环境下延长等待，在干燥环境下缩短",
+                "constraint": "需预先标定或在线估计RC参数，算法复杂度增加"
+            },
+            {
+                "functionId": "F066",
+                "name": "绝缘故障报告",
+                "action": "报告",
+                "object": "绝缘故障",
+                "effect": "通知上层系统存在绝缘异常，触发安全保护机制",
+                "trigger": "绝缘电阻低于阈值时触发",
+                "condition": "DC系统绝缘电阻低于100 Ω/V或AC系统低于500 Ω/V或ECE-R100要求低于500 Ω/V",
+                "inputs": [
+                    "绝缘电阻测量值",
+                    "系统标称电压",
+                    "系统类型(DC/AC)"
+                ],
+                "outputs": [
+                    "绝缘故障信号",
+                    "故障代码"
+                ],
+                "preconditions": [
+                    "绝缘电阻测量功能正常运行"
+                ],
+                "postconditions": [
+                    "故障信息已上报至VCU或整车控制器"
+                ],
+                "scenario": "当BMS检测到绝缘电阻低于标准规定的最小值时，向整车系统报告绝缘故障，以便采取断电或其他保护措施",
+                "constraint": "阈值根据DC/AC系统类型和适用标准（ECE-TRANS2010、ISO6469-1、ECE-R100）确定"
+            },
+            {
+                "functionId": "F067",
+                "name": "电池系统结构分析",
+                "action": "分析",
+                "object": "电池系统结构",
+                "effect": "确定BMS拓扑结构以匹配应用需求",
+                "trigger": "设计阶段触发",
+                "condition": "电池包设计需求已明确",
+                "inputs": [
+                    "应用场景",
+                    "电池系统结构",
+                    "重量约束",
+                    "复杂度约束"
+                ],
+                "outputs": [
+                    "BMS拓扑方案"
+                ],
+                "preconditions": [
+                    "电池系统需求规格已定义"
+                ],
+                "postconditions": [
+                    "BMS拓扑结构已确定并用于后续硬件设计"
+                ],
+                "scenario": "在BMS设计过程中，根据电池系统的结构（如串并联配置、模组划分）确定适合的BMS拓扑，例如集中式或分布式架构",
+                "constraint": "需权衡重量、复杂度与监测精度"
+            },
+            {
+                "functionId": "F068",
+                "name": "CAN通信",
+                "action": "通信",
+                "object": "车辆控制器",
+                "effect": "实现BMS与整车之间的数据交换",
+                "trigger": "周期性触发或事件触发",
+                "condition": "BMS与VCU均处于正常工作状态",
+                "inputs": [
+                    "电池状态数据",
+                    "故障信息",
+                    "控制指令"
+                ],
+                "outputs": [
+                    "电池状态报文",
+                    "故障报文",
+                    "响应指令"
+                ],
+                "preconditions": [
+                    "CAN总线连接正常",
+                    "通信协议已配置"
+                ],
+                "postconditions": [
+                    "数据已成功传输至车辆控制器"
+                ],
+                "scenario": "BMS通过CAN总线与车辆控制器（VCU）进行通信，传输电池电压、温度、SOC等状态信息，并接收充放电控制指令",
+                "constraint": "需符合车辆CAN通信协议标准"
+            },
+            {
+                "functionId": "F069",
+                "name": "物理量采集",
+                "action": "采集",
+                "object": "物理量",
+                "effect": "获取电池系统运行所需的电压、电流、温度等基础数据",
+                "trigger": "周期性触发",
+                "condition": "BMS处于工作状态",
+                "inputs": [
+                    "传感器信号",
+                    "模拟前端信号"
+                ],
+                "outputs": [
+                    "电压值",
+                    "电流值",
+                    "温度值"
+                ],
+                "preconditions": [
+                    "传感器和ADC模块正常工作"
+                ],
+                "postconditions": [
+                    "物理量数据已数字化并可供后续算法使用"
+                ],
+                "scenario": "BMS通过模拟前端（AFE）和ADC对电池单体电压、总电压、电流和温度进行周期性采集，为状态估计和保护决策提供数据基础",
+                "constraint": "采集精度和采样率需满足应用需求"
+            },
+            {
+                "functionId": "F070",
+                "name": "电池保护关断",
+                "action": "关断",
+                "object": "电池系统",
+                "effect": "切断电池与负载/充电器的连接以保护电池安全",
+                "trigger": "检测到严重故障（如过压、过流、过温、绝缘故障）时触发",
+                "condition": "故障等级达到关断阈值",
+                "inputs": [
+                    "故障信号",
+                    "保护策略参数"
+                ],
+                "outputs": [
+                    "接触器断开指令",
+                    "系统关断状态"
+                ],
+                "preconditions": [
+                    "接触器或开关可正常动作"
+                ],
+                "postconditions": [
+                    "电池系统与外部电路断开",
+                    "系统进入安全状态"
+                ],
+                "scenario": "当BMS检测到可能导致电池损坏或人身安全的严重故障时，控制主接触器断开，将电池系统与高压母线隔离",
+                "constraint": "需评估关断对系统级安全的影响（如行驶中突然断电的风险）"
+            },
+            {
+                "functionId": "F071",
+                "name": "深度放电保护",
+                "action": "保护",
+                "object": "深度放电电池",
+                "effect": "防止深度放电电池再次充电以避免安全隐患",
+                "trigger": "检测到电池经历深度放电后触发",
+                "condition": "电池电压低于深度放电阈值",
+                "inputs": [
+                    "电池电压",
+                    "深度放电阈值"
+                ],
+                "outputs": [
+                    "充电禁止信号",
+                    "故障记录"
+                ],
+                "preconditions": [
+                    "深度放电状态已确认"
+                ],
+                "postconditions": [
+                    "电池被标记为不可充电状态",
+                    "系统拒绝充电请求"
+                ],
+                "scenario": "当电池因长期搁置或异常导致深度放电后，BMS拒绝再次对其进行充电，将其保持在安全状态，避免因充电引发热失控等安全问题",
+                "constraint": "该策略需权衡电池可恢复性与系统级安全风险"
+            },
+            {
+                "functionId": "F072",
+                "name": "电池内部参数监测",
+                "action": "监测",
+                "object": "电池内部参数",
+                "effect": "获取电池内部状态信息以支持更精细的管理",
+                "trigger": "周期性触发或事件触发",
+                "condition": "集成式BMS方案已部署",
+                "inputs": [
+                    "嵌入式传感器信号",
+                    "内部状态数据"
+                ],
+                "outputs": [
+                    "内部参数值",
+                    "异常告警"
+                ],
+                "preconditions": [
+                    "BMS功能已集成至电池单体内部"
+                ],
+                "postconditions": [
+                    "内部参数数据已更新并可用于高级诊断"
+                ],
+                "scenario": "在将BMS功能集成到电池单体内部的方案中，监测电池内部参数（如内部温度、内部压力等），实现更精细的电池管理和安全监控",
+                "constraint": "适用于大容量电池或特殊工况；需解决单体内部集成的空间和成本问题"
+            },
+            {
+                "functionId": "F073",
+                "name": "故障检测",
+                "action": "检测",
+                "object": "系统故障",
+                "effect": "识别大型电池包外围系统的热相关故障",
+                "trigger": "周期性触发或事件触发",
+                "condition": "BMS处于运行状态",
+                "inputs": [
+                    "传感器数据",
+                    "系统参数",
+                    "通信状态",
+                    "外围系统信号",
+                    "热管理系统状态",
+                    "温度数据"
+                ],
+                "outputs": [
+                    "故障等级",
+                    "故障代码",
+                    "故障类型",
+                    "报警信号",
+                    "故障位置信息",
+                    "故障类型判定"
+                ],
+                "preconditions": [
+                    "故障检测算法已部署",
+                    "阈值参数已配置"
+                ],
+                "postconditions": [
+                    "故障信息已记录并可用于保护决策"
+                ],
+                "scenario": "BMS持续对传感器数据、通信链路、执行器状态等进行监控，识别过压、欠压、过流、过温、通信中断、传感器失效等故障",
+                "constraint": "需兼顾检测灵敏度和误报率"
+            },
+            {
+                "functionId": "F074",
+                "name": "电池寿命保障",
+                "action": "保障",
+                "object": "电池寿命",
+                "effect": "通过控制电池工作在安全范围内延长使用寿命",
+                "trigger": "持续运行",
+                "condition": "电池处于充放电或静置状态",
+                "inputs": [
+                    "性能指标",
+                    "电流",
+                    "电池运行数据",
+                    "SOH",
+                    "电池电压",
+                    "SOC",
+                    "温度",
+                    "均衡记录"
+                ],
+                "outputs": [
+                    "充放电限制指令",
+                    "工作范围约束",
+                    "性能评估报告",
+                    "寿命预测结果"
+                ],
+                "preconditions": [
+                    "电池安全工作范围已定义"
+                ],
+                "postconditions": [
+                    "电池运行在制造商规定的安全工作窗口内"
+                ],
+                "scenario": "BMS通过限制电池的充放电电压、电流和温度范围，确保电池单体始终工作在制造商规定的安全操作区域（SOA）内，从而保障电池的循环寿命和日历寿命",
+                "constraint": "需根据电池化学体系（如LFP、NMC）确定不同的工作范围"
+            },
+            {
+                "functionId": "F075",
+                "name": "热看门狗监控",
+                "action": "监控",
+                "object": "温度异常状态",
+                "effect": "在温度超过安全阈值时触发报警或保护动作",
+                "trigger": "温度超过预设阈值",
+                "condition": "热看门狗功能已启用",
+                "inputs": [
+                    "温度测量值",
+                    "温度阈值设定"
+                ],
+                "outputs": [
+                    "报警信号",
+                    "保护控制指令"
+                ],
+                "preconditions": [
+                    "热看门狗已配置",
+                    "阈值参数已设定"
+                ],
+                "postconditions": [
+                    "报警状态已更新",
+                    "保护措施已执行"
+                ],
+                "scenario": "LM75x数字温度传感器集成的热看门狗功能在检测到温度超限时通过Two-Wire接口发送报警",
+                "constraint": "报警响应时间需满足安全要求"
+            },
+            {
+                "functionId": "F076",
+                "name": "自放电特性表征",
+                "action": "表征",
+                "object": "电池自放电行为",
+                "effect": "评估电池自放电速率，用于电池健康状态分析",
+                "trigger": "测试指令触发",
+                "condition": "电池处于静置状态",
+                "inputs": [
+                    "脉冲测量信号",
+                    "电压响应数据"
+                ],
+                "outputs": [
+                    "自放电速率",
+                    "自放电特性曲线"
+                ],
+                "preconditions": [
+                    "电池已充分静置",
+                    "测试设备已校准"
+                ],
+                "postconditions": [
+                    "自放电数据已记录",
+                    "特性参数已更新"
+                ],
+                "scenario": "使用脉冲测量技术对锂离子电池自放电行为进行快速表征分析",
+                "constraint": "测量精度和测试时间需满足要求"
+            },
+            {
+                "functionId": "F077",
+                "name": "主动均衡控制",
+                "action": "控制",
+                "object": "电池均衡过程",
+                "effect": "通过被动PWM模式提高大型多单体电池包的安全性",
+                "trigger": "均衡条件满足",
+                "condition": "电池管理系统处于均衡模式",
+                "inputs": [
+                    "单体电压数据",
+                    "均衡算法参数",
+                    "PWM控制参数"
+                ],
+                "outputs": [
+                    "均衡开关控制信号",
+                    "能量转移指令",
+                    "均衡状态",
+                    "PWM控制信号"
+                ],
+                "preconditions": [
+                    "主动均衡电路正常",
+                    "电池状态允许均衡"
+                ],
+                "postconditions": [
+                    "均衡过程已执行",
+                    "能量转移已完成"
+                ],
+                "scenario": "采用主动均衡方法实现电池单体间的能量重新分配",
+                "constraint": "均衡效率和热损耗需在可接受范围"
+            },
+            {
+                "functionId": "F078",
+                "name": "系统安全分析",
+                "action": "分析",
+                "object": "系统安全性",
+                "effect": "识别锂离子电池储能系统的安全风险和隐患",
+                "trigger": "安全评估任务触发",
+                "condition": "系统设计和运行数据可用",
+                "inputs": [
+                    "系统架构信息",
+                    "故障数据",
+                    "安全标准"
+                ],
+                "outputs": [
+                    "安全分析报告",
+                    "风险等级评估"
+                ],
+                "preconditions": [
+                    "系统信息完整",
+                    "安全标准已明确"
+                ],
+                "postconditions": [
+                    "安全风险已识别",
+                    "改进措施已提出"
+                ],
+                "scenario": "对锂离子电池电网储能系统进行系统安全性分析",
+                "constraint": "分析需符合相关安全标准"
+            },
+            {
+                "functionId": "F079",
+                "name": "内部温度瞬时测量",
+                "action": "测量",
+                "object": "电池内部温度",
+                "effect": "实时获取锂离子电池内部温度分布",
+                "trigger": "测量指令触发",
+                "condition": "电池处于工作状态",
+                "inputs": [
+                    "内部温度传感信号",
+                    "测量激励"
+                ],
+                "outputs": [
+                    "内部温度值",
+                    "温度分布数据"
+                ],
+                "preconditions": [
+                    "内部温度测量装置正常",
+                    "测量系统已校准"
+                ],
+                "postconditions": [
+                    "内部温度已获取",
+                    "数据已记录"
+                ],
+                "scenario": "对锂离子可充电电池内部温度进行瞬时测量",
+                "constraint": "测量响应速度和精度需满足要求"
+            },
+            {
+                "functionId": "F080",
+                "name": "低温加热控制",
+                "action": "控制",
+                "object": "电池加热过程",
+                "effect": "在低温环境下提升电池温度，改善性能和延长寿命",
+                "trigger": "电池温度低于低温阈值",
+                "condition": "电池处于低温环境",
+                "inputs": [
+                    "电池温度",
+                    "环境温度",
+                    "加热策略参数"
+                ],
+                "outputs": [
+                    "加热控制信号",
+                    "加热功率指令"
+                ],
+                "preconditions": [
+                    "加热装置可用",
+                    "电池状态允许加热"
+                ],
+                "postconditions": [
+                    "电池温度已提升",
+                    "加热过程已记录"
+                ],
+                "scenario": "分析低温对锂离子电池性能和老化的影响，并制定加热策略",
+                "constraint": "加热速率和均匀性需满足安全要求"
+            },
+            {
+                "functionId": "F081",
+                "name": "电池系统保护",
+                "action": "保护",
+                "object": "固定式电池系统",
+                "effect": "防止电池系统因电气故障导致损坏或安全事故",
+                "trigger": "故障检测触发",
+                "condition": "电池系统处于运行状态",
+                "inputs": [
+                    "故障检测信号",
+                    "系统状态数据"
+                ],
+                "outputs": [
+                    "保护动作指令",
+                    "断路器控制信号"
+                ],
+                "preconditions": [
+                    "保护装置正常",
+                    "保护策略已配置"
+                ],
+                "postconditions": [
+                    "保护措施已执行",
+                    "系统已隔离"
+                ],
+                "scenario": "根据IEEE指南对固定式电池系统实施保护",
+                "constraint": "保护动作时间需满足标准要求"
+            },
+            {
+                "functionId": "F082",
+                "name": "失效模式分析",
+                "action": "分析",
+                "object": "电池失效模式",
+                "effect": "识别锂离子电池的失效模式、机理和影响",
+                "trigger": "分析任务触发",
+                "condition": "电池运行和故障数据可用",
+                "inputs": [
+                    "故障数据",
+                    "电池设计信息",
+                    "运行环境数据"
+                ],
+                "outputs": [
+                    "失效模式清单",
+                    "失效机理分析",
+                    "影响评估"
+                ],
+                "preconditions": [
+                    "数据充足",
+                    "分析方法已确定"
+                ],
+                "postconditions": [
+                    "失效模式已识别",
+                    "改进建议已提出"
+                ],
+                "scenario": "对锂离子电池进行失效模式、机理和影响分析(FMMEA)",
+                "constraint": "分析需覆盖所有关键失效模式"
+            },
+            {
+                "functionId": "F083",
+                "name": "电气安全评估",
+                "action": "评估",
+                "object": "电池电气安全性",
+                "effect": "比较不同正极材料电池单体的电气安全性能",
+                "trigger": "评估任务触发",
+                "condition": "电池样品和测试条件就绪",
+                "inputs": [
+                    "电池测试数据",
+                    "安全标准",
+                    "材料特性"
+                ],
+                "outputs": [
+                    "安全性能评估报告",
+                    "材料对比结果"
+                ],
+                "preconditions": [
+                    "测试设备正常",
+                    "安全标准已明确"
+                ],
+                "postconditions": [
+                    "安全性能已评估",
+                    "结论已输出"
+                ],
+                "scenario": "比较基于NMC、NCA和LFP技术的商用锂离子电池单体的电气安全性",
+                "constraint": "测试需符合相关安全标准"
+            },
+            {
+                "functionId": "F084",
+                "name": "导线阻抗测定",
+                "action": "测定",
+                "object": "电池包导线阻抗",
+                "effect": "检测多单体电池包中的导线连接故障",
+                "trigger": "周期性检测或故障触发",
+                "condition": "电池包处于运行状态",
+                "inputs": [
+                    "电压测量值",
+                    "电流测量值",
+                    "阻抗计算模型"
+                ],
+                "outputs": [
+                    "导线阻抗值",
+                    "故障判定结果"
+                ],
+                "preconditions": [
+                    "测量系统正常",
+                    "阻抗基准值已设定"
+                ],
+                "postconditions": [
+                    "阻抗已测定",
+                    "故障已识别"
+                ],
+                "scenario": "测定多单体电池包中的导线阻抗以实现导线故障检测",
+                "constraint": "测量精度需满足故障检测要求"
+            },
+            {
+                "functionId": "F085",
+                "name": "传感器故障检测与隔离",
+                "action": "检测与隔离",
+                "object": "传感器故障",
+                "effect": "识别并隔离汽车应用中圆柱形锂离子电池的传感器故障",
+                "trigger": "周期性检测或异常触发",
+                "condition": "电池管理系统处于运行状态",
+                "inputs": [
+                    "传感器输出数据",
+                    "结构分析模型",
+                    "冗余传感器数据"
+                ],
+                "outputs": [
+                    "故障传感器标识",
+                    "故障类型",
+                    "隔离指令"
+                ],
+                "preconditions": [
+                    "结构分析模型已建立",
+                    "传感器冗余设计已实施"
+                ],
+                "postconditions": [
+                    "故障已检测",
+                    "故障传感器已隔离"
+                ],
+                "scenario": "基于结构分析的汽车应用圆柱形锂离子电池传感器故障检测与隔离",
+                "constraint": "故障检测率和隔离准确率需满足要求"
+            },
+            {
+                "functionId": "F086",
+                "name": "接地与滤波影响分析",
+                "action": "分析",
+                "object": "接地和滤波对绝缘监测的影响",
+                "effect": "评估接地和滤波对绝缘电力网络中功率绝缘监测的影响",
+                "trigger": "分析任务触发",
+                "condition": "绝缘监测系统和接地配置已确定",
+                "inputs": [
+                    "接地配置参数",
+                    "滤波器参数",
+                    "绝缘监测数据"
+                ],
+                "outputs": [
+                    "影响分析报告",
+                    "优化建议"
+                ],
+                "preconditions": [
+                    "系统配置信息完整",
+                    "监测数据可用"
+                ],
+                "postconditions": [
+                    "影响已评估",
+                    "优化方案已提出"
+                ],
+                "scenario": "分析接地和滤波对绝缘地面电力网络中功率绝缘监测的影响",
+                "constraint": "分析需覆盖各种接地和滤波配置"
+            },
+            {
+                "functionId": "F087",
+                "name": "无线电池管理",
+                "action": "管理",
+                "object": "电池单体数据",
+                "effect": "实现无线通信的电池管理系统，简化布线",
+                "trigger": "周期性触发或事件触发",
+                "condition": "无线通信链路已建立",
+                "inputs": [
+                    "单体电压",
+                    "电流数据",
+                    "单体电压数据",
+                    "电池管理数据",
+                    "无线通信信号",
+                    "高频信号",
+                    "温度",
+                    "温度数据"
+                ],
+                "outputs": [
+                    "均衡控制",
+                    "电池状态信息",
+                    "状态信息",
+                    "通信状态",
+                    "控制指令",
+                    "传输数据",
+                    "管理指令"
+                ],
+                "preconditions": [
+                    "无线BMS硬件已部署",
+                    "通信协议已配置"
+                ],
+                "postconditions": [
+                    "数据已传输",
+                    "管理指令已执行"
+                ],
+                "scenario": "实现无线的、集成于电池单体的电池管理系统",
+                "constraint": "无线通信可靠性和抗干扰能力需满足要求"
+            },
+            {
+                "functionId": "F088",
+                "name": "多通道电池传感",
+                "action": "传感",
+                "object": "多通道电池参数",
+                "effect": "同时采集多个电池单体的电压等参数",
+                "trigger": "周期性触发",
+                "condition": "电池传感器已连接",
+                "inputs": [
+                    "单体电压信号",
+                    "温度信号"
+                ],
+                "outputs": [
+                    "多通道测量数据",
+                    "报警信号"
+                ],
+                "preconditions": [
+                    "传感器芯片正常",
+                    "通信接口已配置"
+                ],
+                "postconditions": [
+                    "数据已采集",
+                    "异常已标记"
+                ],
+                "scenario": "使用12通道高压电池传感器进行多单体电池参数采集，支持外部单体均衡",
+                "constraint": "通道数和测量精度需满足设计要求"
+            },
+            {
+                "functionId": "F089",
+                "name": "菊花链通信",
+                "action": "通信",
+                "object": "电池管理模块间数据",
+                "effect": "通过差分UART实现电池管理模块的菊花链通信",
+                "trigger": "通信请求触发",
+                "condition": "菊花链通信链路已建立",
+                "inputs": [
+                    "电池管理数据",
+                    "差分UART信号"
+                ],
+                "outputs": [
+                    "传输数据",
+                    "通信状态"
+                ],
+                "preconditions": [
+                    "通信模块正常",
+                    "菊花链拓扑已配置"
+                ],
+                "postconditions": [
+                    "数据已传输",
+                    "链路状态已更新"
+                ],
+                "scenario": "使用集成单体均衡和差分UART的12通道高压传感器实现菊花链通信",
+                "constraint": "通信速率和节点数需满足系统要求"
+            }
+        ],
+        "relations": [
+            {
+                "source": "F001",
+                "target": "F002",
+                "type": "data_flow",
+                "flowObject": "电压数据"
+            },
+            {
+                "source": "F001",
+                "target": "F002",
+                "type": "data_flow",
+                "flowObject": "电流数据"
+            },
+            {
+                "source": "F001",
+                "target": "F002",
+                "type": "data_flow",
+                "flowObject": "温度数据"
+            },
+            {
+                "source": "F001",
+                "target": "F008",
+                "type": "data_flow",
+                "flowObject": "电流数据"
+            },
+            {
+                "source": "F001",
+                "target": "F010",
+                "type": "data_flow",
+                "flowObject": "电芯电压信号"
+            },
+            {
+                "source": "F001",
+                "target": "F010",
+                "type": "data_flow",
+                "flowObject": "温度传感器信号"
+            },
+            {
+                "source": "F001",
+                "target": "F031",
+                "type": "data_flow",
+                "flowObject": "电流传感器信号"
+            },
+            {
+                "source": "F001",
+                "target": "F034",
+                "type": "data_flow",
+                "flowObject": "温度传感器信号"
+            },
+            {
+                "source": "F001",
+                "target": "F069",
+                "type": "data_flow",
+                "flowObject": "传感器信号"
+            },
+            {
+                "source": "F002",
+                "target": "F003",
+                "type": "data_flow",
+                "flowObject": "SOC估计值"
+            },
+            {
+                "source": "F002",
+                "target": "F024",
+                "type": "data_flow",
+                "flowObject": "SOC估计值"
+            },
+            {
+                "source": "F002",
+                "target": "F050",
+                "type": "data_flow",
+                "flowObject": "SOC估计值"
+            },
+            {
+                "source": "F002",
+                "target": "F074",
+                "type": "data_flow",
+                "flowObject": "SOC估计值"
+            },
+            {
+                "source": "F003",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "控制指令"
+            },
+            {
+                "source": "F003",
+                "target": "F068",
+                "type": "data_flow",
+                "flowObject": "电池状态数据"
+            },
+            {
+                "source": "F004",
+                "target": "F001",
+                "type": "data_flow",
+                "flowObject": "滤波后的信号"
+            },
+            {
+                "source": "F005",
+                "target": "F006",
+                "type": "control_flow",
+                "flowObject": "接触器状态"
+            },
+            {
+                "source": "F006",
+                "target": "F005",
+                "type": "data_flow",
+                "flowObject": "预充电状态"
+            },
+            {
+                "source": "F007",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "断开充电回路或降低充电电流指令"
+            },
+            {
+                "source": "F007",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "断开放电回路或降低放电功率指令"
+            },
+            {
+                "source": "F008",
+                "target": "F002",
+                "type": "data_flow",
+                "flowObject": "累计容量值"
+            },
+            {
+                "source": "F008",
+                "target": "F020",
+                "type": "data_flow",
+                "flowObject": "累计容量值"
+            },
+            {
+                "source": "F009",
+                "target": "F033",
+                "type": "data_flow",
+                "flowObject": "温度数据"
+            },
+            {
+                "source": "F009",
+                "target": "F041",
+                "type": "data_flow",
+                "flowObject": "温度数据"
+            },
+            {
+                "source": "F010",
+                "target": "F011",
+                "type": "data_flow",
+                "flowObject": "电芯电压值"
+            },
+            {
+                "source": "F010",
+                "target": "F012",
+                "type": "data_flow",
+                "flowObject": "高分辨率电压数字值"
+            },
+            {
+                "source": "F010",
+                "target": "F018",
+                "type": "data_flow",
+                "flowObject": "各电芯电压数字值"
+            },
+            {
+                "source": "F010",
+                "target": "F026",
+                "type": "data_flow",
+                "flowObject": "各电芯电压数据"
+            },
+            {
+                "source": "F010",
+                "target": "F048",
+                "type": "data_flow",
+                "flowObject": "各电芯电压数字值"
+            },
+            {
+                "source": "F010",
+                "target": "F051",
+                "type": "data_flow",
+                "flowObject": "各电芯电压数字值"
+            },
+            {
+                "source": "F011",
+                "target": "F012",
+                "type": "data_flow",
+                "flowObject": "二进制越限标志信号"
+            },
+            {
+                "source": "F012",
+                "target": "F007",
+                "type": "data_flow",
+                "flowObject": "选定的可信信号"
+            },
+            {
+                "source": "F013",
+                "target": "F073",
+                "type": "data_flow",
+                "flowObject": "故障检测标志"
+            },
+            {
+                "source": "F014",
+                "target": "F073",
+                "type": "data_flow",
+                "flowObject": "错误状态标志"
+            },
+            {
+                "source": "F015",
+                "target": "F073",
+                "type": "data_flow",
+                "flowObject": "自测试结果"
+            },
+            {
+                "source": "F016",
+                "target": "F032",
+                "type": "data_flow",
+                "flowObject": "绝缘电阻值"
+            },
+            {
+                "source": "F017",
+                "target": "F001",
+                "type": "data_flow",
+                "flowObject": "隔离后的温度信号"
+            },
+            {
+                "source": "F018",
+                "target": "F026",
+                "type": "data_flow",
+                "flowObject": "均衡状态"
+            },
+            {
+                "source": "F018",
+                "target": "F052",
+                "type": "data_flow",
+                "flowObject": "均衡后的单体电压"
+            },
+            {
+                "source": "F019",
+                "target": "F010",
+                "type": "control_flow",
+                "flowObject": "电压监测通道数量配置"
+            },
+            {
+                "source": "F020",
+                "target": "F002",
+                "type": "data_flow",
+                "flowObject": "SOC估计值"
+            },
+            {
+                "source": "F021",
+                "target": "F057",
+                "type": "control_flow",
+                "flowObject": "充电控制信号"
+            },
+            {
+                "source": "F022",
+                "target": "F003",
+                "type": "data_flow",
+                "flowObject": "串行数据流"
+            },
+            {
+                "source": "F023",
+                "target": "F002",
+                "type": "data_flow",
+                "flowObject": "高精度SOC估计值"
+            },
+            {
+                "source": "F024",
+                "target": "F050",
+                "type": "data_flow",
+                "flowObject": "可用功率预测值"
+            },
+            {
+                "source": "F025",
+                "target": "F001",
+                "type": "data_flow",
+                "flowObject": "滤波后的信号"
+            },
+            {
+                "source": "F026",
+                "target": "F018",
+                "type": "control_flow",
+                "flowObject": "被动均衡开关控制信号"
+            },
+            {
+                "source": "F027",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "二级保护动作信号"
+            },
+            {
+                "source": "F028",
+                "target": "F089",
+                "type": "data_flow",
+                "flowObject": "下级IC通信信号"
+            },
+            {
+                "source": "F029",
+                "target": "F030",
+                "type": "data_flow",
+                "flowObject": "串行数据流"
+            },
+            {
+                "source": "F030",
+                "target": "F035",
+                "type": "data_flow",
+                "flowObject": "CAN数据帧"
+            },
+            {
+                "source": "F031",
+                "target": "F008",
+                "type": "data_flow",
+                "flowObject": "电池包总电流值"
+            },
+            {
+                "source": "F031",
+                "target": "F043",
+                "type": "data_flow",
+                "flowObject": "电流数值"
+            },
+            {
+                "source": "F031",
+                "target": "F044",
+                "type": "data_flow",
+                "flowObject": "各串电流数值"
+            },
+            {
+                "source": "F032",
+                "target": "F066",
+                "type": "data_flow",
+                "flowObject": "绝缘电阻值"
+            },
+            {
+                "source": "F033",
+                "target": "F041",
+                "type": "control_flow",
+                "flowObject": "风扇控制信号"
+            },
+            {
+                "source": "F034",
+                "target": "F009",
+                "type": "data_flow",
+                "flowObject": "各测点温度值"
+            },
+            {
+                "source": "F035",
+                "target": "F036",
+                "type": "data_flow",
+                "flowObject": "CAN数据帧"
+            },
+            {
+                "source": "F036",
+                "target": "F068",
+                "type": "data_flow",
+                "flowObject": "降分辨率的CAN数据帧"
+            },
+            {
+                "source": "F037",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "高压回路断开状态"
+            },
+            {
+                "source": "F038",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "熔断器断开状态"
+            },
+            {
+                "source": "F039",
+                "target": "F010",
+                "type": "data_flow",
+                "flowObject": "传输至BMS PCB的电压信号"
+            },
+            {
+                "source": "F040",
+                "target": "F039",
+                "type": "data_flow",
+                "flowObject": "串联电气连接"
+            },
+            {
+                "source": "F041",
+                "target": "F033",
+                "type": "control_flow",
+                "flowObject": "液冷系统控制信号"
+            },
+            {
+                "source": "F043",
+                "target": "F031",
+                "type": "data_flow",
+                "flowObject": "电流数值"
+            },
+            {
+                "source": "F044",
+                "target": "F031",
+                "type": "data_flow",
+                "flowObject": "各串电流数值"
+            },
+            {
+                "source": "F045",
+                "target": "F031",
+                "type": "data_flow",
+                "flowObject": "与磁场强度和电流成正比的电压信号"
+            },
+            {
+                "source": "F046",
+                "target": "F001",
+                "type": "data_flow",
+                "flowObject": "校正后的温度值"
+            },
+            {
+                "source": "F047",
+                "target": "F050",
+                "type": "data_flow",
+                "flowObject": "SOH百分比值或老化指标"
+            },
+            {
+                "source": "F047",
+                "target": "F074",
+                "type": "data_flow",
+                "flowObject": "SOH百分比值或老化指标"
+            },
+            {
+                "source": "F048",
+                "target": "F073",
+                "type": "data_flow",
+                "flowObject": "校验结果（通过/失败）"
+            },
+            {
+                "source": "F049",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "二次保护触发信号（如断开接触器）"
+            },
+            {
+                "source": "F050",
+                "target": "F021",
+                "type": "control_flow",
+                "flowObject": "充放电功率限制"
+            },
+            {
+                "source": "F051",
+                "target": "F018",
+                "type": "data_flow",
+                "flowObject": "各单体容量估计值"
+            },
+            {
+                "source": "F051",
+                "target": "F052",
+                "type": "data_flow",
+                "flowObject": "各单体容量估计值"
+            },
+            {
+                "source": "F052",
+                "target": "F018",
+                "type": "control_flow",
+                "flowObject": "能量转移路径控制指令"
+            },
+            {
+                "source": "F053",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "互锁状态标志"
+            },
+            {
+                "source": "F054",
+                "target": "F009",
+                "type": "data_flow",
+                "flowObject": "单体内部温度估计值"
+            },
+            {
+                "source": "F055",
+                "target": "F075",
+                "type": "data_flow",
+                "flowObject": "线束温度值"
+            },
+            {
+                "source": "F056",
+                "target": "F038",
+                "type": "control_flow",
+                "flowObject": "熔断器熔断"
+            },
+            {
+                "source": "F057",
+                "target": "F021",
+                "type": "control_flow",
+                "flowObject": "充电禁止信号"
+            },
+            {
+                "source": "F058",
+                "target": "F070",
+                "type": "control_flow",
+                "flowObject": "运行禁止标志"
+            },
+            {
+                "source": "F059",
+                "target": "F073",
+                "type": "data_flow",
+                "flowObject": "短路判定结果"
+            },
+            {
+                "source": "F060",
+                "target": "F073",
+                "type": "data_flow",
+                "flowObject": "断线标志"
+            },
+            {
+                "source": "F061",
+                "target": "F085",
+                "type": "data_flow",
+                "flowObject": "传感器故障标志"
+            },
+            {
+                "source": "F062",
+                "target": "F070",
+                "type": "control_flow",
+                "flowObject": "保护动作选择（降功率/报警/断开）"
+            },
+            {
+                "source": "F063",
+                "target": "F032",
+                "type": "data_flow",
+                "flowObject": "绝缘电阻计算值"
+            },
+            {
+                "source": "F064",
+                "target": "F032",
+                "type": "data_flow",
+                "flowObject": "绝缘电阻值"
+            },
+            {
+                "source": "F065",
+                "target": "F032",
+                "type": "control_flow",
+                "flowObject": "测量使能信号"
+            },
+            {
+                "source": "F066",
+                "target": "F073",
+                "type": "data_flow",
+                "flowObject": "绝缘故障信号"
+            },
+            {
+                "source": "F067",
+                "target": "F019",
+                "type": "data_flow",
+                "flowObject": "BMS拓扑方案"
+            },
+            {
+                "source": "F068",
+                "target": "F003",
+                "type": "data_flow",
+                "flowObject": "电池状态报文"
+            },
+            {
+                "source": "F069",
+                "target": "F001",
+                "type": "data_flow",
+                "flowObject": "电压值"
+            },
+            {
+                "source": "F069",
+                "target": "F001",
+                "type": "data_flow",
+                "flowObject": "电流值"
+            },
+            {
+                "source": "F069",
+                "target": "F001",
+                "type": "data_flow",
+                "flowObject": "温度值"
+            },
+            {
+                "source": "F070",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "接触器断开指令"
+            },
+            {
+                "source": "F071",
+                "target": "F021",
+                "type": "control_flow",
+                "flowObject": "充电禁止信号"
+            },
+            {
+                "source": "F072",
+                "target": "F059",
+                "type": "data_flow",
+                "flowObject": "内部参数值"
+            },
+            {
+                "source": "F073",
+                "target": "F070",
+                "type": "control_flow",
+                "flowObject": "故障等级"
+            },
+            {
+                "source": "F073",
+                "target": "F081",
+                "type": "control_flow",
+                "flowObject": "故障类型"
+            },
+            {
+                "source": "F074",
+                "target": "F050",
+                "type": "data_flow",
+                "flowObject": "充放电限制指令"
+            },
+            {
+                "source": "F075",
+                "target": "F070",
+                "type": "control_flow",
+                "flowObject": "保护控制指令"
+            },
+            {
+                "source": "F076",
+                "target": "F047",
+                "type": "data_flow",
+                "flowObject": "自放电速率"
+            },
+            {
+                "source": "F077",
+                "target": "F026",
+                "type": "control_flow",
+                "flowObject": "均衡开关控制信号"
+            },
+            {
+                "source": "F078",
+                "target": "F082",
+                "type": "data_flow",
+                "flowObject": "安全分析报告"
+            },
+            {
+                "source": "F079",
+                "target": "F009",
+                "type": "data_flow",
+                "flowObject": "内部温度值"
+            },
+            {
+                "source": "F080",
+                "target": "F041",
+                "type": "control_flow",
+                "flowObject": "加热控制信号"
+            },
+            {
+                "source": "F081",
+                "target": "F005",
+                "type": "control_flow",
+                "flowObject": "保护动作指令"
+            },
+            {
+                "source": "F084",
+                "target": "F060",
+                "type": "data_flow",
+                "flowObject": "导线阻抗值"
+            },
+            {
+                "source": "F085",
+                "target": "F061",
+                "type": "data_flow",
+                "flowObject": "故障传感器标识"
+            },
+            {
+                "source": "F086",
+                "target": "F032",
+                "type": "data_flow",
+                "flowObject": "影响分析报告"
+            },
+            {
+                "source": "F087",
+                "target": "F003",
+                "type": "data_flow",
+                "flowObject": "电池状态信息"
+            },
+            {
+                "source": "F088",
+                "target": "F010",
+                "type": "data_flow",
+                "flowObject": "多通道测量数据"
+            },
+            {
+                "source": "F089",
+                "target": "F028",
+                "type": "data_flow",
+                "flowObject": "传输数据"
+            }
+        ],
+        "evaluation": {
+            "function_score": 8,
+            "relation_score": 7,
+            "completeness_score": 9,
+            "field_score": 8,
+            "overall_score": 8,
+            "decision": "accept",
+            "problems": [
+                "部分功能存在重复定义，如F001温度采集与F009温度监控、F034电池模块温度监测功能边界模糊",
+                "F001的inputs中包含'电压传感器信号'、'电芯电压信号'等非温度采集相关输入，存在字段污染",
+                "F010电芯电压精确测量的outputs中包含'电芯温度值'、'电芯电流值'，与功能定义不符",
+                "F031电流传感测量的inputs包含'电化学阻抗谱数据'、outputs包含'阻抗谱特征'，与电流测量功能不匹配",
+                "部分relation的flowObject命名不够精确，如F001->F002的'电压数据'、'电流数据'、'温度数据'过于笼统",
+                "F005->F006和F006->F005形成双向控制流，逻辑上预充电应在接触器控制之前，关系定义存在歧义",
+                "F043低边电流测量与F031电流传感测量存在功能重叠，且F043->F031的数据流方向不合理（低边测量是电流测量的一种实现方式，不应作为数据源）",
+                "部分功能的trigger描述过于宽泛，如'周期性触发'未明确周期或触发条件"
+            ],
+            "suggestions": [
+                "合并或明确区分温度相关功能（F001、F009、F034、F079）的职责边界，避免功能重叠",
+                "清理F001、F010、F031等功能的inputs和outputs字段，移除与功能定义不相关的元素",
+                "重新审视F005与F006的控制流关系，建议改为F006->F005的单向依赖（预充电完成后才允许主接触器闭合）",
+                "将F043作为F031的实现变体或子功能，而非独立功能，或明确其作为设计决策而非运行时功能",
+                "细化relation中的flowObject命名，使用更具体的数据项名称（如'单体电压原始采样值'而非'电压数据'）",
+                "为trigger字段增加具体的触发条件或周期参数，提高功能的可执行性描述",
+                "考虑增加BMS与充电机通信、OTA升级、故障诊断与DTC管理等系统级功能",
+                "对F078系统安全分析、F082失效模式分析、F083电气安全评估等设计阶段功能与运行时功能进行分类标注"
+            ],
+            "status": "qualified"
+        },
+        "quality": {
+            "overall_score": 8,
+            "status": "qualified",
+            "decision": "accept"
+        }
+    }
+]

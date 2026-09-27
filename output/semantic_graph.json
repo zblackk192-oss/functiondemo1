@@ -1,0 +1,375 @@
+{
+  "nodes": [
+    {
+      "functionId": "F001",
+      "name": "检测动力电池剩余电量",
+      "action": "检测",
+      "object": "动力电池剩余电量",
+      "effect": "获取动力电池当前剩余电量状态",
+      "trigger": "车辆启动",
+      "condition": "电池管理系统已上电且通信正常",
+      "inputs": [
+        "车辆启动信号",
+        "电池状态数据"
+      ],
+      "outputs": [
+        "动力电池剩余电量"
+      ],
+      "preconditions": [
+        "车辆已启动"
+      ],
+      "postconditions": [
+        "已获得动力电池剩余电量"
+      ],
+      "scenario": "车辆运行",
+      "constraint": "满足实时电量检测需求",
+      "requirementEvidence": "",
+      "historyEvidence": [],
+      "evidenceType": "",
+      "reason": "",
+      "confidence": 0.0,
+      "id": "F001",
+      "nodeType": "existing"
+    },
+    {
+      "functionId": "F002",
+      "name": "限制驱动功率",
+      "action": "限制",
+      "object": "驱动功率",
+      "effect": "降低车辆最大可用驱动功率，减少电量消耗",
+      "trigger": "动力电池剩余电量低于20%",
+      "condition": "动力电池剩余电量低于20%",
+      "inputs": [
+        "动力电池剩余电量"
+      ],
+      "outputs": [
+        "驱动功率限制指令"
+      ],
+      "preconditions": [
+        "动力电池剩余电量低于20%"
+      ],
+      "postconditions": [
+        "驱动功率已受限"
+      ],
+      "scenario": "低电量运行",
+      "constraint": "保证低电量状态下车辆安全运行",
+      "requirementEvidence": "",
+      "historyEvidence": [],
+      "evidenceType": "",
+      "reason": "",
+      "confidence": 0.0,
+      "id": "F002",
+      "nodeType": "existing"
+    },
+    {
+      "functionId": "F003",
+      "name": "提示驾驶员充电",
+      "action": "提示",
+      "object": "驾驶员",
+      "effect": "通知驾驶员当前电量过低，需要及时充电",
+      "trigger": "动力电池剩余电量低于20%",
+      "condition": "动力电池剩余电量低于20%",
+      "inputs": [
+        "动力电池剩余电量"
+      ],
+      "outputs": [
+        "充电提示信号"
+      ],
+      "preconditions": [
+        "动力电池剩余电量低于20%"
+      ],
+      "postconditions": [
+        "已向驾驶员发出充电提示"
+      ],
+      "scenario": "低电量运行",
+      "constraint": "提示信息需要及时反馈",
+      "requirementEvidence": "",
+      "historyEvidence": [],
+      "evidenceType": "",
+      "reason": "",
+      "confidence": 0.0,
+      "id": "F003",
+      "nodeType": "existing"
+    },
+    {
+      "functionId": "F004",
+      "name": "动力电池温度监测",
+      "action": "监测",
+      "object": "动力电池温度",
+      "effect": "实时获取动力电池温度状态，为低电量下的安全运行和功率限制提供热安全依据",
+      "trigger": "车辆启动及运行过程中",
+      "condition": "电池管理系统已上电且温度传感器正常",
+      "inputs": [
+        "温度传感器信号",
+        "电池状态数据"
+      ],
+      "outputs": [
+        "动力电池温度值",
+        "温度异常标志"
+      ],
+      "preconditions": [
+        "温度传感器正常工作",
+        "BMS通信正常"
+      ],
+      "postconditions": [
+        "已获得动力电池当前温度状态"
+      ],
+      "scenario": "车辆运行",
+      "constraint": "需满足实时温度检测精度和响应速度要求",
+      "requirementEvidence": "当前需求场景为低电量运行并限制驱动功率，低电量下电池内阻增大发热增加，温度监测是保证低电量状态下车辆安全运行的必要前提",
+      "historyEvidence": [
+        {
+          "caseId": "CASE001",
+          "matchedFunctionId": "F002",
+          "neighborFunctionId": "F009",
+          "similarity": 0.7466104030609131,
+          "matchedPattern": "电池状态监测 -> 电流检测/温度监控，历史案例中电池状态监测始终与温度和电流检测功能协同工作"
+        },
+        {
+          "caseId": "CASE002",
+          "matchedFunctionId": "F079",
+          "neighborFunctionId": "F009",
+          "similarity": 0.736548900604248,
+          "matchedPattern": "内部温度瞬时测量 -> 温度监控，高功率或异常工况下必须进行温度监控"
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "当前设计仅包含剩余电量检测和功率限制，但多个高相似历史案例表明，电池状态监测（对应F001）在低电量或高负载场景下必须伴随温度监测。低电量运行时电池内阻升高，发热风险增加，缺失温度监测将导致功率限制策略缺乏热安全边界，存在安全隐患。",
+      "confidence": 0.88,
+      "id": "F004",
+      "nodeType": "completed"
+    },
+    {
+      "functionId": "F005",
+      "name": "动力电池故障诊断",
+      "action": "诊断",
+      "object": "动力电池故障",
+      "effect": "识别动力电池是否存在异常状态或潜在故障，防止低电量下带故障运行引发安全事故",
+      "trigger": "电池状态数据异常或周期性触发",
+      "condition": "电池管理系统运行中且具备诊断算法",
+      "inputs": [
+        "动力电池剩余电量",
+        "电池电压",
+        "电池电流",
+        "动力电池温度值"
+      ],
+      "outputs": [
+        "故障诊断结果",
+        "故障类型",
+        "严重程度评估"
+      ],
+      "preconditions": [
+        "故障诊断算法已部署",
+        "电池状态数据可获取"
+      ],
+      "postconditions": [
+        "已完成电池健康状态评估并输出诊断结果"
+      ],
+      "scenario": "车辆运行",
+      "constraint": "需要准确的诊断算法和低误报率",
+      "requirementEvidence": "当前需求约束为保证低电量状态下车辆安全运行，若电池本身存在故障，仅限制功率无法保证安全，需进行故障诊断",
+      "historyEvidence": [
+        {
+          "caseId": "CASE001",
+          "matchedFunctionId": "F002",
+          "neighborFunctionId": "F005",
+          "similarity": 0.73476642370224,
+          "matchedPattern": "电池状态监测 -> 故障诊断，历史案例中电池状态监测直接输出数据给故障诊断功能进行异常识别"
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "当前设计中F001检测动力电池剩余电量，但未对电池整体健康状态进行诊断。历史案例CASE001明确指出电池状态监测（语义对应F001）下游必须连接故障诊断功能。在低电量场景下，电池更容易暴露出内短路、压差过大等故障，缺失故障诊断将导致系统无法区分正常低电量与故障导致的电压跌落。",
+      "confidence": 0.85,
+      "id": "F005",
+      "nodeType": "completed"
+    },
+    {
+      "functionId": "F006",
+      "name": "动力电池保护关断",
+      "action": "关断",
+      "object": "动力电池高压回路",
+      "effect": "在电量极低或发生严重故障时切断动力电池输出，保护电池免受深度放电损坏并确保人员安全",
+      "trigger": "动力电池剩余电量低于极限阈值或检测到严重故障",
+      "condition": "电量低于安全下限或故障等级达到关断阈值",
+      "inputs": [
+        "动力电池剩余电量",
+        "故障诊断结果",
+        "运行禁止标志"
+      ],
+      "outputs": [
+        "接触器断开指令",
+        "系统关断状态"
+      ],
+      "preconditions": [
+        "高压接触器可正常动作",
+        "BMS控制权限正常"
+      ],
+      "postconditions": [
+        "动力电池与高压母线断开",
+        "车辆进入安全停车状态"
+      ],
+      "scenario": "极低电量运行或严重故障",
+      "constraint": "需评估行驶中突然断电的安全风险，应结合车速和路况执行安全降级后关断",
+      "requirementEvidence": "当前需求中F002仅在电量低于20%时限制功率，但若电量继续下降至极低水平，必须有最终的保护关断机制以保证安全",
+      "historyEvidence": [
+        {
+          "caseId": "CASE002",
+          "matchedFunctionId": "F058",
+          "neighborFunctionId": "F070",
+          "similarity": 0.6858574151992798,
+          "matchedPattern": "深度放电后运行禁止 -> 电池保护关断，历史案例中当电池状态恶化至危险阈值时，必须触发保护关断以隔离高压系统"
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "当前设计仅有F002限制驱动功率作为低电量应对措施，但缺乏电量进一步耗尽时的最终保护手段。历史案例CASE002显示，当电池状态达到危险阈值时，必须通过电池保护关断功能切断高压回路。这是电动汽车电池管理系统不可或缺的安全兜底功能。",
+      "confidence": 0.9,
+      "id": "F006",
+      "nodeType": "completed"
+    },
+    {
+      "functionId": "F007",
+      "name": "导航至最近充电站",
+      "action": "规划",
+      "object": "充电站路线",
+      "effect": "在提示驾驶员充电的同时，提供前往最近可用充电站的路线规划，辅助驾驶员及时补能",
+      "trigger": "动力电池剩余电量低于20%且驾驶员确认需要充电",
+      "condition": "车机导航系统可用且定位正常",
+      "inputs": [
+        "充电提示信号",
+        "车辆当前位置",
+        "充电桩分布数据"
+      ],
+      "outputs": [
+        "充电站推荐列表",
+        "导航路线规划"
+      ],
+      "preconditions": [
+        "导航系统已启动",
+        "网络通信正常或本地有充电桩数据"
+      ],
+      "postconditions": [
+        "已向驾驶员展示充电站路线"
+      ],
+      "scenario": "低电量运行",
+      "constraint": "推荐的充电站需在当前剩余电量可达范围内",
+      "requirementEvidence": "当前需求中F003仅提示驾驶员充电，但在实际场景中，提示充电通常需要配合充电站位置信息才能真正帮助驾驶员解决低电量问题",
+      "historyEvidence": [],
+      "evidenceType": "requirement_only",
+      "reason": "F003提示驾驶员充电是低电量管理的人机交互环节，但仅发出提示而不提供解决方案（如附近充电站信息）在实际汽车系统中是不完整的用户体验设计。虽然历史案例未直接命中该功能，但基于当前需求的逻辑完整性推导，该功能是F003的合理下游延伸。",
+      "confidence": 0.7,
+      "id": "F007",
+      "nodeType": "completed"
+    }
+  ],
+  "edges": [
+    {
+      "source": "F001",
+      "target": "F002",
+      "type": "data_flow",
+      "flowObject": "动力电池剩余电量",
+      "historyEvidence": [],
+      "evidenceType": "",
+      "reason": "",
+      "confidence": 0.0
+    },
+    {
+      "source": "F001",
+      "target": "F003",
+      "type": "data_flow",
+      "flowObject": "动力电池剩余电量",
+      "historyEvidence": [],
+      "evidenceType": "",
+      "reason": "",
+      "confidence": 0.0
+    },
+    {
+      "source": "F001",
+      "target": "F004",
+      "type": "data_flow",
+      "flowObject": "电池状态数据",
+      "historyEvidence": [
+        {
+          "caseId": "CASE001",
+          "source": "F002",
+          "target": "F009",
+          "type": "data_flow",
+          "similarity": 0.7466104030609131
+        },
+        {
+          "caseId": "CASE001",
+          "source": "F002",
+          "target": "F016",
+          "type": "data_flow",
+          "similarity": 0.7466104030609131
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "当前设计中F001负责检测电池状态，F004为新增的动力电池温度监测功能。历史案例CASE001中，电池状态监测（对应F001）与电流/温度检测（对应F004）之间存在明确的数据流关系，电池基础状态数据是温度评估和热管理的输入前提。",
+      "confidence": 0.82
+    },
+    {
+      "source": "F001",
+      "target": "F005",
+      "type": "data_flow",
+      "flowObject": "动力电池剩余电量",
+      "historyEvidence": [
+        {
+          "caseId": "CASE001",
+          "source": "F002",
+          "target": "F005",
+          "type": "data_flow",
+          "similarity": 0.73476642370224
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "当前设计中F001检测电池剩余电量，F005为新增的故障诊断功能。历史案例CASE001中，电池状态监测（对应F001）向故障诊断（对应F005）输出数据流用于异常识别。当前设计缺失了从电量检测到故障诊断的数据传递路径。",
+      "confidence": 0.86
+    },
+    {
+      "source": "F004",
+      "target": "F002",
+      "type": "data_flow",
+      "flowObject": "动力电池温度值",
+      "historyEvidence": [
+        {
+          "caseId": "CASE001",
+          "source": "F009",
+          "target": "F002",
+          "type": "data_flow",
+          "similarity": 0.7466104030609131
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "当前设计中F002限制驱动功率仅依赖F001的剩余电量。但历史案例表明，温度/电流检测（对应F004）必须向状态监测或功率控制（对应F002）提供数据流。在低电量场景下，功率限制策略必须综合考虑温度状态以防止过热，因此F004应向F002提供温度数据。",
+      "confidence": 0.84
+    },
+    {
+      "source": "F005",
+      "target": "F006",
+      "type": "control_flow",
+      "flowObject": "故障诊断结果",
+      "historyEvidence": [
+        {
+          "caseId": "CASE002",
+          "source": "F058",
+          "target": "F070",
+          "type": "control_flow",
+          "similarity": 0.6858574151992798
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "当前设计新增了F005故障诊断和F006保护关断。历史案例CASE002中，运行禁止判断（对应F005的诊断决策）向电池保护关断（对应F006）发送控制流以触发关断。当前设计缺失了从故障诊断到保护关断的控制流关联。",
+      "confidence": 0.88
+    },
+    {
+      "source": "F003",
+      "target": "F007",
+      "type": "control_flow",
+      "flowObject": "充电提示信号",
+      "historyEvidence": [],
+      "evidenceType": "requirement_only",
+      "reason": "F003提示驾驶员充电后，应触发F007导航至最近充电站功能。F003输出的充电提示信号应作为F007启动路线规划的触发控制流，形成完整的低电量人机交互与辅助驾驶闭环。",
+      "confidence": 0.75
+    }
+  ]
+}
