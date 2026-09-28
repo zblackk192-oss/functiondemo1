@@ -11,8 +11,11 @@ PROGRAM_START_TIME = time.perf_counter()
 import config
 
 from utils.json_utils import (
-    load_json,
     save_json
+)
+
+from service.current_case_service import (
+    load_current_case
 )
 
 from service.faiss_service import (
@@ -80,9 +83,7 @@ def main():
     print("\n")
     print("【2/8】读取当前设计输入")
 
-    current_case = load_json(
-        config.CURRENT_CASE_PATH
-    )
+    current_case = load_current_case()
 
     normalized_case = normalize_current_case(
         current_case

@@ -6,6 +6,9 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from service.current_case_service import (
+    load_current_case
+)
 from service.faiss_service import FAISSIndex
 from service.completion_service import (
     completion,
@@ -14,7 +17,6 @@ from service.completion_service import (
 from service.graph_service import (
     build_semantic_graph
 )
-from utils.json_utils import load_json
 
 
 # ============================================================
@@ -94,9 +96,7 @@ def startup_event():
     # 2. 加载当前案例
     # --------------------------------------------------------
 
-    current_case = load_json(
-        config.CURRENT_CASE_PATH
-    )
+    current_case = load_current_case()
 
     # --------------------------------------------------------
     # 3. 标准化当前案例

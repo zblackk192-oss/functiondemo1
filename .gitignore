@@ -1,1 +1,13 @@
+# 环境变量文件，包含密钥，禁止上传
 .env
+
+# PyCharm 配置
+.idea/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 虚拟环境
+venv/
+.venv/
