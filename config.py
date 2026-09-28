@@ -82,13 +82,13 @@ SEMANTIC_GRAPH_PATH = (
 # 结果发布API
 # ==================================================
 
-# 是否把补全结果推送到结果API
+# 是否向结果API推送补全结果
 RESULT_API_ENABLED = env_to_bool(
     "RESULT_API_ENABLED",
     True
 )
 
-# 推送失败时是否让当前任务直接失败
+# 推送失败时是否让补全请求失败
 RESULT_API_REQUIRED = env_to_bool(
     "RESULT_API_REQUIRED",
     True
@@ -100,13 +100,7 @@ RESULT_API_URL = os.getenv(
     "http://127.0.0.1:8001/api/v1/results"
 )
 
-# 生产者与结果API之间的共享Token
-RESULT_API_TOKEN = os.getenv(
-    "RESULT_API_TOKEN",
-    ""
-)
-
-# 请求超时时间
+# 结果API请求超时时间
 RESULT_API_TIMEOUT = float(
     os.getenv(
         "RESULT_API_TIMEOUT",

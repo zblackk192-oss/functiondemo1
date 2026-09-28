@@ -1,17 +1,14 @@
 import json
 import os
-import secrets
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from uuid import uuid4
 
 from dotenv import load_dotenv
 from fastapi import (
-    Depends,
     FastAPI,
-    Header,
     HTTPException,
     status
 )
@@ -27,11 +24,6 @@ load_dotenv()
 # ============================================================
 # 配置
 # ============================================================
-
-RESULT_API_TOKEN = os.getenv(
-    "RESULT_API_TOKEN",
-    ""
-).strip()
 
 RESULT_STORE_PATH = Path(
     os.getenv(
@@ -52,46 +44,6 @@ app = FastAPI(
     description="接收功能补全服务的输出，并向下游提供最新结果",
     version="1.0.0"
 )
-
-
-# ============================================================
-# Token认证
-# ============================================================
-
-def verify_api_token(
-    authorization: Optional[str] = Header(
-        default=None
-    )
-):
-
-    if not RESULT_API_TOKEN:
-
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="结果API尚未配置RESULT_API_TOKEN"
-        )
-
-    expected_token = (
-        f"Bearer {RESULT_API_TOKEN}"
-    )
-
-    supplied_token = (
-        authorization
-        or ""
-    )
-
-    if not secrets.compare_digest(
-        supplied_token,
-        expected_token
-    ):
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="无效的API Token",
-            headers={
-                "WWW-Authenticate": "Bearer"
-            }
-        )
 
 
 # ============================================================
@@ -257,6 +209,32 @@ def load_latest_result():
             detail="服务器保存的结果文件不是有效JSON"
         ) from e
 
+    except OSError as e:
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                "读取服务器结果文件失败："
+                f"{e}"
+            )
+        ) from e
+
+
+# ============================================================
+# 根路径
+# ============================================================
+
+@app.get("/")
+def root():
+
+    return {
+        "service": "功能补全结果API",
+        "status": "running",
+        "health_url": "/health",
+        "publish_url": "/api/v1/results",
+        "latest_result_url": "/api/v1/results/latest"
+    }
+
 
 # ============================================================
 # 健康检查
@@ -267,9 +245,6 @@ def health():
 
     return {
         "status": "ok",
-        "token_configured": bool(
-            RESULT_API_TOKEN
-        ),
         "result_available": (
             RESULT_STORE_PATH.exists()
         ),
@@ -288,10 +263,7 @@ def health():
     status_code=status.HTTP_201_CREATED
 )
 def receive_result(
-    result: Dict[str, Any],
-    _: None = Depends(
-        verify_api_token
-    )
+    result: Dict[str, Any]
 ):
 
     validate_result(
@@ -313,11 +285,23 @@ def receive_result(
         "result": result
     }
 
-    with result_file_lock:
+    try:
 
-        save_result_record(
-            record
-        )
+        with result_file_lock:
+
+            save_result_record(
+                record
+            )
+
+    except OSError as e:
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                "保存补全结果失败："
+                f"{e}"
+            )
+        ) from e
 
     return {
         "success": True,
@@ -332,11 +316,7 @@ def receive_result(
 # ============================================================
 
 @app.get("/api/v1/results/latest")
-def get_latest_result(
-    _: None = Depends(
-        verify_api_token
-    )
-):
+def get_latest_result():
 
     with result_file_lock:
 

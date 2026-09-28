@@ -27,36 +27,16 @@ def _send_result(
         or ""
     ).strip()
 
-    api_token = (
-        config.RESULT_API_TOKEN
-        or ""
-    ).strip()
-
     if not api_url:
 
         raise RuntimeError(
             "未配置RESULT_API_URL"
         )
 
-    if not api_token:
-
-        raise RuntimeError(
-            "未配置RESULT_API_TOKEN"
-        )
-
-    headers = {
-        "Authorization":
-        f"Bearer {api_token}",
-
-        "Content-Type":
-        "application/json"
-    }
-
     try:
 
         response = requests.post(
             api_url,
-            headers=headers,
             json=result,
             timeout=(
                 config.RESULT_API_TIMEOUT
