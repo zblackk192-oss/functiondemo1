@@ -9,13 +9,26 @@ from fastapi.staticfiles import StaticFiles
 from service.current_case_service import (
     load_current_case
 )
-from service.faiss_service import FAISSIndex
+
+from service.faiss_service import (
+    FAISSIndex
+)
+
 from service.completion_service import (
     completion,
     normalize_current_case
 )
+
 from service.graph_service import (
     build_semantic_graph
+)
+
+from service.result_publish_service import (
+    publish_result
+)
+
+from utils.json_utils import (
+    save_json
 )
 
 
@@ -223,13 +236,55 @@ def run_completion():
         k=3
     )
 
+    # ========================================================
+    # 2. 保存本地result.json
+    # ========================================================
+
+    save_json(
+        result,
+        config.OUTPUT_PATH
+    )
+
+    print(
+        f"[结果保存] 已保存到："
+        f"{config.OUTPUT_PATH}"
+    )
+
+    # ========================================================
+    # 3. 推送到结果API
+    # ========================================================
+
+    publish_status = publish_result(
+        result
+    )
+
+    if publish_status.get(
+        "success",
+        False
+    ):
+
+        print(
+            "[结果发布] 已成功推送到结果API"
+        )
+
+    else:
+
+        print(
+            "[结果发布] 结果未成功推送"
+        )
+
+        print(
+            f"[结果发布] 详细信息："
+            f"{publish_status.get('message', '')}"
+        )
+
     total_time = (
         time.perf_counter()
         - start
     )
 
     # ========================================================
-    # 2. 获取结果
+    # 4. 获取结果
     # ========================================================
 
     retrieval = result.get(
@@ -256,21 +311,11 @@ def run_completion():
     )
 
     # ========================================================
-    # 3. 构建最终功能语义图
+    # 5. 构建最终功能语义图
     #
-    # 注意：
     # 语义图直接基于AI补全后的完整功能模型构建。
     #
-    # 不再：
-    # 当前功能 + missingFunctions
-    #
-    # 而是：
-    # completion_result.functions
-    #
-    # 这样可以保证：
-    #
     # 最终模型 = 语义图节点来源
-    #
     # 最终关系 = 语义图边来源
     # ========================================================
 
@@ -282,7 +327,7 @@ def run_completion():
             []
         ),
 
-        # 已经把真正的补全功能合并到
+        # 真正的补全功能已经合并到
         # completion_result.functions中，
         # 因此这里不再重复传missingFunctions。
         missing_functions=[],
@@ -295,9 +340,8 @@ def run_completion():
     )
 
     # ========================================================
-    # 4. 获取真正的missing结果
+    # 6. 获取真正的missing结果
     #
-    # 注意：
     # 此时llm_result已经经过
     # filter_llm_result()过滤。
     # ========================================================
@@ -313,10 +357,10 @@ def run_completion():
     )
 
     # ========================================================
-    # 5. 获取Qwen原始结果数量
+    # 7. 获取Qwen原始结果数量
     #
     # 仅用于调试和分析。
-    # 前端真正的“补全建议”使用过滤后的结果。
+    # 前端真正的补全建议使用过滤后的结果。
     # ========================================================
 
     raw_missing_functions = (
@@ -334,9 +378,7 @@ def run_completion():
     )
 
     print()
-
     print("=" * 60)
-
     print("AI补全完成")
 
     print(
@@ -394,10 +436,15 @@ def run_completion():
         f"{len(graph.get('edges', []))}"
     )
 
+    print(
+        f"结果API推送状态："
+        f"{publish_status.get('success', False)}"
+    )
+
     print("=" * 60)
 
     # ========================================================
-    # 6. 返回前端
+    # 8. 返回前端
     # ========================================================
 
     return {
@@ -413,7 +460,7 @@ def run_completion():
         # ----------------------------------------------------
         # 前端展示的AI补全结果
         #
-        # 这里已经过滤掉：
+        # 已经过滤掉：
         # 1. 当前已有功能
         # 2. 当前已有关系
         # 3. Qwen重复生成的功能/关系
@@ -423,20 +470,36 @@ def run_completion():
         llm_result,
 
         # ----------------------------------------------------
-        # Qwen原始结果
-        #
-        # 如果前端暂时不用，也可以保留。
-        # 方便后续调试模型能力。
+        # Qwen未经筛选的原始结果
         # ----------------------------------------------------
 
         "raw_llm_result":
         raw_llm_result,
 
+        # ----------------------------------------------------
+        # 合并后的最终模型
+        # ----------------------------------------------------
+
         "completion_result":
         completion_result,
 
+        # ----------------------------------------------------
+        # 结果API推送状态
+        # ----------------------------------------------------
+
+        "publish_status":
+        publish_status,
+
+        # ----------------------------------------------------
+        # 功能语义图
+        # ----------------------------------------------------
+
         "graph":
         graph,
+
+        # ----------------------------------------------------
+        # 统计信息
+        # ----------------------------------------------------
 
         "statistics": {
 
@@ -513,6 +576,14 @@ def run_completion():
                 )
             ),
 
+            # 推送状态
+            "resultPublished":
+            publish_status.get(
+                "success",
+                False
+            ),
+
+            # 完整处理耗时
             "totalTime":
             round(
                 total_time,
@@ -540,6 +611,14 @@ def health():
         current_case is not None,
 
         "normalized_case_loaded":
-        normalized_case is not None
+        normalized_case is not None,
 
+        "result_api_enabled":
+        config.RESULT_API_ENABLED,
+
+        "result_api_configured":
+        bool(
+            config.RESULT_API_URL
+            and config.RESULT_API_TOKEN
+        )
     }

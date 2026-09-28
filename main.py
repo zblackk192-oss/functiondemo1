@@ -36,6 +36,9 @@ from service.graph_service import (
     save_semantic_graph
 )
 
+from service.result_publish_service import (
+    publish_result
+)
 
 # ==================================================
 # 主程序
@@ -240,6 +243,21 @@ def main():
         "\n用户确认Qwen补全建议"
     )
 
+    # ==================================================
+    # 发布已确认的补全结果
+    # ==================================================
+
+    print()
+    print("正在向结果API发布补全结果")
+
+    publish_status = publish_result(
+        result
+    )
+
+    print(
+        f"结果发布状态："
+        f"{publish_status.get('success', False)}"
+    )
     # ==================================================
     # 7. 获取最终标准化模型
     # ==================================================
