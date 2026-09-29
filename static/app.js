@@ -668,6 +668,20 @@ async function runCompletion() {
 
     appState.relationDecisions = [];
 
+    const finalConfirmButton =
+        document.getElementById(
+            "finalConfirmButton"
+        );
+
+    if (finalConfirmButton) {
+
+        finalConfirmButton.disabled = false;
+
+        finalConfirmButton.innerText =
+            "✓ 确认并发布最终模型";
+
+    }
+
 
     try {
 
@@ -756,7 +770,55 @@ async function runCompletion() {
         // 初始化人工决策状态
         // ----------------------------------------------------
 
-        appState.functionDecisions =
+        const functionUpdateDecisions =
+            appState.llmResult.functionUpdates.map(
+                function(update) {
+
+                    const updatedFunction =
+                        applyFunctionUpdates(
+                            appState.currentFunctions,
+                            [update]
+                        ).find(
+                            item =>
+                                item.id === update.id
+                        );
+
+
+                    if (!updatedFunction) {
+
+                        return null;
+
+                    }
+
+
+                    updatedFunction.reason =
+                        update.reason || "";
+
+                    updatedFunction.confidence =
+                        Number(
+                            update.confidence || 0
+                        );
+
+
+                    return {
+
+                        status: "pending",
+
+                        modified: false,
+
+                        suggestionType:
+                            "field_update",
+
+                        function:
+                            updatedFunction
+
+                    };
+
+                }
+            ).filter(Boolean);
+
+
+        const missingFunctionDecisions =
             appState.llmResult.missingFunctions.map(
                 function(item) {
 
@@ -765,6 +827,9 @@ async function runCompletion() {
                         status: "pending",
 
                         modified: false,
+
+                        suggestionType:
+                            "missing_function",
 
                         function:
                             normalizeFunction(
@@ -775,6 +840,14 @@ async function runCompletion() {
 
                 }
             );
+
+
+        // 字段补全建议和缺失功能建议必须在本作用域内立即写入全局状态。
+        // 之后的渲染与人工确认都只读取appState.functionDecisions。
+        appState.functionDecisions = [
+            ...functionUpdateDecisions,
+            ...missingFunctionDecisions
+        ];
 
 
         appState.relationDecisions =
@@ -1323,7 +1396,12 @@ function createFunctionSuggestion(
             <div>
 
                 <span class="suggestion-index">
-                    建议${index + 1}
+                    ${
+                        decision.suggestionType ===
+                        "field_update"
+                            ? "字段补全"
+                            : "缺失功能"
+                    }${index + 1}
                 </span>
 
                 <strong>
@@ -2710,7 +2788,7 @@ function applyFunctionUpdates(
 // 最终确认
 // ============================================================
 
-function confirmResult() {
+async function confirmResult() {
 
     if (!appState.completionReady) {
 
@@ -2779,63 +2857,19 @@ function confirmResult() {
             );
 
 
-    const updatedCurrentFunctions =
-        applyFunctionUpdates(
-            appState.currentFunctions,
-            appState.llmResult.functionUpdates
-        );
-
-
     // --------------------------------------------------------
     // 3. 标准化
     // --------------------------------------------------------
 
-    const allSuggestionsAccepted =
-        [
-            ...appState.functionDecisions,
-            ...appState.relationDecisions
-        ].every(
-            item =>
-                item.status === "accepted"
-        );
-
-
-    const noSuggestionWasEdited =
-        [
-            ...appState.functionDecisions,
-            ...appState.relationDecisions
-        ].every(
-            item =>
-                item.modified !== true
-        );
-
-
-    const serverCompletionAvailable =
-        Array.isArray(
-            appState.completionResult.functions
-        ) &&
-        appState.completionResult.functions.length > 0;
-
-
-    // 全部接受时直接采用后端已经完成合并和校验的completion_result，
-    // 避免前端再次拼装时遗漏字段、功能或关系。
-    // 存在拒绝项时，才按照人工决策重新构建最终模型。
+    // 最终模型始终只根据明确接受的建议构建。
+    // 不直接采用包含全部AI候选的completionResult，防止隐藏或未决候选被误发布。
     const finalResult =
-        allSuggestionsAccepted &&
-        noSuggestionWasEdited &&
-        serverCompletionAvailable
-            ? standardizeFinalResult(
-                appState.completionResult.functions,
-                appState.completionResult.relations,
-                [],
-                []
-            )
-            : standardizeFinalResult(
-                updatedCurrentFunctions,
-                appState.currentRelations,
-                acceptedFunctions,
-                acceptedRelations
-            );
+        standardizeFinalResult(
+            appState.currentFunctions,
+            appState.currentRelations,
+            acceptedFunctions,
+            acceptedRelations
+        );
 
 
     appState.finalResult =
@@ -2843,56 +2877,177 @@ function confirmResult() {
 
 
     // --------------------------------------------------------
-    // 4. 更新状态
+    // 4. 将人工确认后的最终模型提交给后端并发布
     // --------------------------------------------------------
 
-    setStep(
-        "step-confirm",
-        "completed"
-    );
-
-
-    setStep(
-        "step-result",
-        "completed"
-    );
-
-
-    // --------------------------------------------------------
-    // 5. 展示最终结果
-    // --------------------------------------------------------
-
-    renderFinalModel(
-        finalResult
-    );
-
-
-    setSystemStatus(
-        "人工确认完成，标准化模型已生成",
-        "confirmed"
-    );
-
-
-    const status =
+    const confirmButton =
         document.getElementById(
-            "confirmationStatus"
+            "finalConfirmButton"
         );
 
 
-    if (status) {
+    if (confirmButton) {
 
-        status.className =
-            "status-tag confirmed";
+        confirmButton.disabled = true;
 
-        status.innerText =
-            "已人工确认";
+        confirmButton.innerText =
+            "正在发布确认结果...";
 
     }
 
 
-    alert(
-        "AI补全建议已完成人工确认，最终功能模型已标准化生成。"
+    setSystemStatus(
+        "正在发布人工确认后的最终模型",
+        "running"
     );
+
+
+    let publishSucceeded = false;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/completion/confirm",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify(
+                        finalResult
+                    )
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            const detail =
+                typeof data.detail === "string"
+                    ? data.detail
+                    : data.message;
+
+            throw new Error(
+                detail ||
+                `服务器返回HTTP ${response.status}`
+            );
+
+        }
+
+
+        const publishedResult =
+            data.completion_result &&
+            typeof data.completion_result === "object"
+                ? data.completion_result
+                : finalResult;
+
+
+        appState.finalResult =
+            publishedResult;
+
+        appState.completionReady = false;
+
+        publishSucceeded = true;
+
+
+        setStep(
+            "step-confirm",
+            "completed"
+        );
+
+
+        setStep(
+            "step-result",
+            "completed"
+        );
+
+
+        renderFinalModel(
+            publishedResult
+        );
+
+
+        setSystemStatus(
+            "人工确认完成，最终模型已发布",
+            "confirmed"
+        );
+
+
+        const status =
+            document.getElementById(
+                "confirmationStatus"
+            );
+
+
+        if (status) {
+
+            status.className =
+                "status-tag confirmed";
+
+            status.innerText =
+                "已确认并发布";
+
+        }
+
+
+        alert(
+            "人工确认完成，最终功能模型已成功发布。"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "确认结果发布失败：",
+            error
+        );
+
+
+        renderFinalModel(
+            finalResult
+        );
+
+
+        setSystemStatus(
+            "人工确认结果已生成，但发布失败",
+            "error"
+        );
+
+
+        alert(
+            "人工确认结果已生成，但发布失败：" +
+            error.message +
+            "。修复发布服务后可再次点击确认重试。"
+        );
+
+    }
+
+    finally {
+
+        if (confirmButton) {
+
+            confirmButton.disabled =
+                publishSucceeded;
+
+            confirmButton.innerText =
+                publishSucceeded
+                    ? "✓ 已确认并发布"
+                    : "✓ 重新确认并发布";
+
+        }
+
+    }
 
 }
 
@@ -4213,9 +4368,13 @@ function drawGraphEdges(
 
 
             const labelText =
-                edge.flowObject ||
-                edge.relation_type ||
-                "";
+                type === "control_flow"
+                    ? "控制流"
+                    : type === "data_flow"
+                        ? "数据流"
+                        : type === "dependency"
+                            ? "依赖关系"
+                            : type;
 
 
             if (
@@ -4832,13 +4991,11 @@ function updateStatistics(
 ) {
 
     const functions =
-        data.llm_result
-            ?.missingFunctions || [];
+        appState.functionDecisions;
 
 
     const relations =
-        data.llm_result
-            ?.missingRelations || [];
+        appState.relationDecisions;
 
 
     const functionCount =

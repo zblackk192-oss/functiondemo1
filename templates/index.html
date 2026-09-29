@@ -328,7 +328,7 @@
             <div class="summary-item">
 
                 <span>
-                    AI建议功能
+                    AI功能类建议
                 </span>
 
                 <strong
@@ -379,7 +379,7 @@
         <div class="subsection-title">
 
             <h3>
-                功能点补全建议
+                功能字段补全与缺失功能建议
             </h3>
 
             <div class="batch-actions">
@@ -451,13 +451,14 @@
             <div>
 
                 <strong>
-                    人工确认后生成标准化结果
+                    人工确认后发布标准化结果
                 </strong>
 
                 <p>
                     已接受的功能和关系将进入最终模型；
                     拒绝的AI建议不会进入最终模型。
-                    用户修改后的内容以修改结果为准。
+                    用户修改后的内容以修改结果为准；
+                    只有点击确认后才会推送给下游。
                 </p>
 
             </div>
@@ -468,7 +469,7 @@
                 class="confirm-button"
                 onclick="confirmResult()"
             >
-                ✓ 确认并生成标准化模型
+                ✓ 确认并发布最终模型
             </button>
 
         </div>
@@ -518,7 +519,7 @@
 </div>
 
 
-<script src="/static/app.js?v=20260929-final-model-fix"></script>
+<script src="/static/app.js?v=20260929-decision-state-fix"></script>
 
 
 </body>

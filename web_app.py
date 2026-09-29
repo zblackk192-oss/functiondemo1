@@ -1,8 +1,9 @@
 import time
+from typing import Any, Dict
 
 import config
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -15,6 +16,7 @@ from service.faiss_service import (
 )
 
 from service.completion_service import (
+    build_confirmed_completion_result,
     completion,
     normalize_current_case
 )
@@ -67,6 +69,9 @@ current_case = None
 
 normalized_case = None
 
+# 最近一次尚待人工确认的完整分析结果。
+latest_analysis_result = None
+
 
 # ============================================================
 # 启动时加载知识库和当前案例
@@ -78,6 +83,7 @@ def startup_event():
     global db
     global current_case
     global normalized_case
+    global latest_analysis_result
 
     print()
     print("=" * 60)
@@ -118,6 +124,8 @@ def startup_event():
     normalized_case = normalize_current_case(
         current_case
     )
+
+    latest_analysis_result = None
 
     print()
 
@@ -196,6 +204,7 @@ def run_completion():
     global db
     global current_case
     global normalized_case
+    global latest_analysis_result
 
     # --------------------------------------------------------
     # 检查FAISS
@@ -236,6 +245,8 @@ def run_completion():
         k=3
     )
 
+    latest_analysis_result = result
+
     # ========================================================
     # 2. 保存本地result.json
     # ========================================================
@@ -251,53 +262,22 @@ def run_completion():
     )
 
     # ========================================================
-    # 3. 推送到结果API
+    # 3. 等待人工确认
+    #
+    # 此处绝不能发布。当前completion_result包含全部AI建议，
+    # 用户尚未决定接受、修改或拒绝哪些候选。
     # ========================================================
 
-    try:
+    publish_status = {
+        "enabled": config.RESULT_API_ENABLED,
+        "success": False,
+        "pending_confirmation": True,
+        "message": "等待人工确认后发布"
+    }
 
-        publish_status = publish_result(
-            result,
-            normalized_case
-        )
-
-    except Exception as e:
-
-        # AI补全结果已经生成并写入result.json。
-        # 下游发布失败只记录为独立状态，不能把成功的AI分析接口变成HTTP 500。
-        publish_status = {
-            "enabled": config.RESULT_API_ENABLED,
-            "success": False,
-            "message": str(e)
-        }
-
-        print(
-            "[结果发布] 发布失败，但保留本次AI分析结果"
-        )
-
-        print(
-            f"[结果发布] 详细信息：{e}"
-        )
-
-    if publish_status.get(
-        "success",
-        False
-    ):
-
-        print(
-            "[结果发布] 已成功推送到结果API"
-        )
-
-    else:
-
-        print(
-            "[结果发布] 结果未成功推送"
-        )
-
-        print(
-            f"[结果发布] 详细信息："
-            f"{publish_status.get('message', '')}"
-        )
+    print(
+        "[结果发布] 已暂缓，等待人工确认"
+    )
 
     total_time = (
         time.perf_counter()
@@ -611,6 +591,171 @@ def run_completion():
                 3
             )
         }
+    }
+
+
+# ============================================================
+# 人工确认后发布最终模型
+# ============================================================
+
+@app.post("/api/completion/confirm")
+def confirm_and_publish(
+    payload: Dict[str, Any]
+):
+
+    global current_case
+    global normalized_case
+    global latest_analysis_result
+
+    if latest_analysis_result is None:
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "当前没有等待确认的AI分析结果，"
+                "请先执行AI辅助分析"
+            )
+        )
+
+    if not isinstance(payload, dict):
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_422_UNPROCESSABLE_ENTITY
+            ),
+            detail="确认结果必须是JSON对象"
+        )
+
+    accepted_functions = payload.get(
+        "functions",
+        []
+    )
+
+    accepted_relations = payload.get(
+        "relations",
+        []
+    )
+
+    if not isinstance(accepted_functions, list):
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_422_UNPROCESSABLE_ENTITY
+            ),
+            detail="functions必须是数组"
+        )
+
+    if not isinstance(accepted_relations, list):
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_422_UNPROCESSABLE_ENTITY
+            ),
+            detail="relations必须是数组"
+        )
+
+    confirmed_result = (
+        build_confirmed_completion_result(
+            current_case,
+            accepted_functions,
+            accepted_relations
+        )
+    )
+
+    # result.json继续保留完整解释数据，同时把人工确认前的模型单独保留。
+    confirmed_analysis_result = dict(
+        latest_analysis_result
+    )
+
+    confirmed_analysis_result.setdefault(
+        "proposed_completion_result",
+        latest_analysis_result.get(
+            "completion_result",
+            {
+                "functions": [],
+                "relations": []
+            }
+        )
+    )
+
+    confirmed_analysis_result[
+        "completion_result"
+    ] = confirmed_result
+
+    confirmed_analysis_result[
+        "confirmation"
+    ] = {
+        "status": "confirmed",
+        "published": False
+    }
+
+    save_json(
+        confirmed_analysis_result,
+        config.OUTPUT_PATH
+    )
+
+    try:
+
+        publish_status = publish_result(
+            {
+                "completion_result":
+                confirmed_result
+            },
+            normalized_case
+        )
+
+    except Exception as e:
+
+        publish_status = {
+            "enabled": config.RESULT_API_ENABLED,
+            "success": False,
+            "message": str(e)
+        }
+
+    published = publish_status.get(
+        "success",
+        False
+    )
+
+    confirmed_analysis_result[
+        "confirmation"
+    ] = {
+        "status": "confirmed",
+        "published": published,
+        "publish_status": publish_status
+    }
+
+    latest_analysis_result = (
+        confirmed_analysis_result
+    )
+
+    save_json(
+        latest_analysis_result,
+        config.OUTPUT_PATH
+    )
+
+    if not published:
+
+        return {
+            "success": False,
+            "message": (
+                "人工确认结果已保存，"
+                "但向下游发布失败："
+                f"{publish_status.get('message', '')}"
+            ),
+            "completion_result": confirmed_result,
+            "publish_status": publish_status
+        }
+
+    print(
+        "[结果发布] 人工确认完成，最终模型已推送"
+    )
+
+    return {
+        "success": True,
+        "message": "人工确认结果已成功发布",
+        "completion_result": confirmed_result,
+        "publish_status": publish_status
     }
 
 
