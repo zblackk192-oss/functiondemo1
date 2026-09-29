@@ -140,12 +140,12 @@ def build_eval_case(
     ]
 
     existing_ids = {
-        f["functionId"]
+        f["id"]
         for f in existing_functions
     }
 
     missing_ids = {
-        f["functionId"]
+        f["id"]
         for f in missing_functions
     }
 

@@ -69,17 +69,20 @@ def normalize_function(
         function
     )
 
+    # 兼容旧文件，但标准化结果中不保留旧名称。
+    legacy_id = result.pop("functionId", "")
+
     # --------------------------------------------------------
-    # functionId
+    # id
     # --------------------------------------------------------
 
-    if (
-        not result.get("functionId")
-        and index is not None
-    ):
-        result["functionId"] = (
-            f"F{index:03d}"
-        )
+    if not result.get("id"):
+        if legacy_id:
+            result["id"] = legacy_id
+        elif index is not None:
+            result["id"] = (
+                f"F{index:03d}"
+            )
 
     # --------------------------------------------------------
     # name
@@ -127,6 +130,7 @@ def normalize_function(
 
     for field in [
         "name",
+        "actor",
         "action",
         "object",
         "effect",
@@ -274,18 +278,21 @@ def normalize_relation(
         relation
     )
 
+    # 兼容旧数据，但标准化结果中不保留旧名称。
+    legacy_relation_type = result.pop("type", "")
+
     result["source"] = source
     result["target"] = target
 
-    result["type"] = normalize_text(
+    result["relation_type"] = normalize_text(
         relation.get(
-            "type",
-            "dependency"
+            "relation_type",
+            legacy_relation_type or "dependency"
         )
     )
 
-    if not result["type"]:
-        result["type"] = (
+    if not result["relation_type"]:
+        result["relation_type"] = (
             "dependency"
         )
 
@@ -301,6 +308,11 @@ def normalize_relation(
     )
 
     # --------------------------------------------------------
+    result.setdefault("source_name", "")
+    result.setdefault("target_name", "")
+    result.setdefault("direction", "source_to_target")
+    result.setdefault("evidence", "")
+
     # RAG证据字段
     # --------------------------------------------------------
 
@@ -591,7 +603,7 @@ def relation_key(
 
         normalize_text(
             relation.get(
-                "type",
+                "relation_type",
                 ""
             )
         )
@@ -609,7 +621,7 @@ def function_already_exists(
     """
     判断规则：
 
-    1. functionId相同
+    1. id相同
     2. action + object + effect完全相同
     """
 
@@ -621,7 +633,7 @@ def function_already_exists(
 
     candidate_id = normalize_text(
         candidate.get(
-            "functionId",
+            "id",
             ""
         )
     )
@@ -642,7 +654,7 @@ def function_already_exists(
 
         current_id = normalize_text(
             current.get(
-                "functionId",
+                "id",
                 ""
             )
         )
@@ -690,7 +702,7 @@ def assign_missing_function_ids(
     missing_functions
 ):
     """
-    确保Qwen生成的新功能拥有合法且不冲突的functionId。
+    确保Qwen生成的新功能拥有合法且不冲突的id。
 
     非常重要：
 
@@ -702,7 +714,7 @@ def assign_missing_function_ids(
     existing_ids = {
         normalize_text(
             function.get(
-                "functionId",
+                "id",
                 ""
             )
         )
@@ -713,7 +725,7 @@ def assign_missing_function_ids(
             dict
         )
         and function.get(
-            "functionId"
+            "id"
         )
     }
 
@@ -734,7 +746,7 @@ def assign_missing_function_ids(
 
         function_id = normalize_text(
             normalized.get(
-                "functionId",
+                "id",
                 ""
             )
         )
@@ -762,7 +774,7 @@ def assign_missing_function_ids(
             next_number += 1
 
             normalized[
-                "functionId"
+                "id"
             ] = function_id
 
         existing_ids.add(
@@ -779,6 +791,176 @@ def assign_missing_function_ids(
 # ============================================================
 # Qwen候选过滤
 # ============================================================
+
+UPDATABLE_FUNCTION_FIELDS = {
+    "name", "actor", "action", "object", "effect", "trigger",
+    "condition", "inputs", "outputs", "preconditions",
+    "postconditions", "scenario", "constraint"
+}
+
+LIST_FUNCTION_FIELDS = {
+    "inputs", "outputs", "preconditions", "postconditions"
+}
+
+MISSING_TEXT_VALUES = {"", "未显式说明"}
+GENERIC_ACTOR_VALUES = {"系统", "模块", "控制器"}
+
+
+def is_missing_field_value(value):
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return value.strip() in MISSING_TEXT_VALUES
+    if isinstance(value, (list, dict)):
+        return len(value) == 0
+    return False
+
+
+def normalize_function_update(update, current_function_map):
+    """只允许补已有功能的空字段，不覆盖已有内容。"""
+
+    if not isinstance(update, dict):
+        return None
+
+    function_id = normalize_text(update.get("id", ""))
+    current_function = current_function_map.get(function_id)
+
+    if not function_id or not current_function:
+        return None
+
+    raw_fields = update.get("fields", {})
+    if not isinstance(raw_fields, dict):
+        raw_fields = {}
+
+    completed_fields = {}
+
+    for field in UPDATABLE_FUNCTION_FIELDS:
+        if field not in raw_fields:
+            continue
+        if not is_missing_field_value(current_function.get(field)):
+            continue
+
+        value = raw_fields.get(field)
+        if is_missing_field_value(value):
+            continue
+
+        if field in LIST_FUNCTION_FIELDS:
+            value = normalize_list(value)
+        else:
+            value = str(value).strip()
+
+        if field == "actor" and value in GENERIC_ACTOR_VALUES:
+            continue
+
+        completed_fields[field] = value
+
+    if not completed_fields:
+        return None
+
+    confidence = update.get("confidence", 0.0)
+    try:
+        confidence = float(confidence)
+    except (TypeError, ValueError):
+        confidence = 0.0
+    confidence = max(0.0, min(1.0, confidence))
+
+    if confidence < 0.55:
+        return None
+
+    return {
+        "id": function_id,
+        "fields": completed_fields,
+        "requirementEvidence": update.get("requirementEvidence", ""),
+        "historyEvidence": normalize_list(
+            update.get("historyEvidence", [])
+        ),
+        "evidenceType": update.get(
+            "evidenceType",
+            "requirement_only"
+        ),
+        "reason": update.get("reason", ""),
+        "confidence": confidence
+    }
+
+
+def filter_function_updates(current_functions, raw_updates):
+    if not isinstance(raw_updates, list):
+        raw_updates = []
+
+    current_function_map = {
+        normalize_text(function.get("id", "")): function
+        for function in current_functions
+        if isinstance(function, dict) and function.get("id")
+    }
+
+    update_map = {}
+
+    for update in raw_updates:
+        normalized = normalize_function_update(
+            update,
+            current_function_map
+        )
+        if not normalized:
+            continue
+
+        function_id = normalized["id"]
+        if function_id not in update_map:
+            update_map[function_id] = normalized
+            continue
+
+        old_update = update_map[function_id]
+        combined_fields = dict(old_update["fields"])
+        combined_fields.update(normalized["fields"])
+
+        if normalized["confidence"] > old_update["confidence"]:
+            normalized["fields"] = combined_fields
+            update_map[function_id] = normalized
+        else:
+            old_update["fields"] = combined_fields
+
+    return list(update_map.values())
+
+
+def apply_function_updates(functions, function_updates):
+    """将已通过校验的字段更新应用到已有功能。"""
+
+    update_map = {
+        update.get("id"): update
+        for update in function_updates
+        if isinstance(update, dict) and update.get("id")
+    }
+
+    updated_functions = []
+
+    for function in functions:
+        updated = dict(function)
+        update = update_map.get(updated.get("id"))
+
+        if update:
+            fields = update.get("fields", {})
+            if isinstance(fields, dict):
+                for field, value in fields.items():
+                    if field not in UPDATABLE_FUNCTION_FIELDS:
+                        continue
+                    if not is_missing_field_value(updated.get(field)):
+                        continue
+                    updated[field] = value
+
+            updated.setdefault("fieldCompletionEvidence", [])
+            updated["fieldCompletionEvidence"].append({
+                "fields": list(fields.keys()),
+                "requirementEvidence": update.get(
+                    "requirementEvidence", ""
+                ),
+                "historyEvidence": update.get("historyEvidence", []),
+                "evidenceType": update.get("evidenceType", ""),
+                "reason": update.get("reason", ""),
+                "confidence": update.get("confidence", 0.0)
+            })
+
+        updated_functions.append(updated)
+
+    return updated_functions
 
 def filter_llm_result(
     current_case,
@@ -850,6 +1032,15 @@ def filter_llm_result(
             )
 
     # ========================================================
+    # ========================================================
+    # 已有功能缺失字段候选
+    # ========================================================
+
+    raw_function_updates = llm_result.get("functionUpdates", [])
+    filtered_function_updates = filter_function_updates(
+        normalized_current_functions,
+        raw_function_updates
+    )
     # 2. 当前关系Key
     # ========================================================
 
@@ -910,7 +1101,7 @@ def filter_llm_result(
         ):
             print(
                 "[过滤] Qwen功能点已经存在："
-                f"{normalized.get('functionId', '')} "
+                f"{normalized.get('id', '')} "
                 f"{normalized.get('name', '')}"
             )
 
@@ -953,28 +1144,28 @@ def filter_llm_result(
     current_function_ids = {
         normalize_text(
             function.get(
-                "functionId",
+                "id",
                 ""
             )
         )
         for function
         in normalized_current_functions
         if function.get(
-            "functionId"
+            "id"
         )
     }
 
     missing_function_ids = {
         normalize_text(
             function.get(
-                "functionId",
+                "id",
                 ""
             )
         )
         for function
         in filtered_functions
         if function.get(
-            "functionId"
+            "id"
         )
     }
 
@@ -1090,7 +1281,7 @@ def filter_llm_result(
             print(
                 "[过滤] Qwen关系已经存在："
                 f"{source} -> {target} "
-                f"({normalized.get('type', '')})"
+                f"({normalized.get('relation_type', '')})"
             )
 
             continue
@@ -1123,6 +1314,10 @@ def filter_llm_result(
 
     filtered_result = dict(
         llm_result
+    )
+
+    filtered_result["functionUpdates"] = (
+        filtered_function_updates
     )
 
     filtered_result[
@@ -1166,6 +1361,9 @@ def build_completion_result(
         )
     )
 
+    function_updates = llm_result.get("functionUpdates", [])
+    if not isinstance(function_updates, list):
+        function_updates = []
     missing_functions = (
         llm_result.get(
             "missingFunctions",
@@ -1202,14 +1400,18 @@ def build_completion_result(
                 normalized
             )
 
+    functions = apply_function_updates(
+        functions,
+        function_updates
+    )
     existing_ids = {
         function.get(
-            "functionId"
+            "id"
         )
         for function
         in functions
         if function.get(
-            "functionId"
+            "id"
         )
     }
 
@@ -1226,7 +1428,7 @@ def build_completion_result(
 
         function_id = (
             normalized.get(
-                "functionId"
+                "id"
             )
         )
 
@@ -1248,7 +1450,7 @@ def build_completion_result(
             )
 
             normalized[
-                "functionId"
+                "id"
             ] = function_id
 
         functions.append(
@@ -1288,12 +1490,12 @@ def build_completion_result(
 
     final_function_ids = {
         function.get(
-            "functionId"
+            "id"
         )
         for function
         in functions
         if function.get(
-            "functionId"
+            "id"
         )
     }
 
@@ -1420,12 +1622,12 @@ def build_confirmed_completion_result(
 
     function_map = {
         function.get(
-            "functionId"
+            "id"
         ): function
         for function
         in functions
         if function.get(
-            "functionId"
+            "id"
         )
     }
 
@@ -1442,7 +1644,7 @@ def build_confirmed_completion_result(
 
         function_id = (
             normalized.get(
-                "functionId"
+                "id"
             )
         )
 
@@ -1461,7 +1663,7 @@ def build_confirmed_completion_result(
             )
 
             normalized[
-                "functionId"
+                "id"
             ] = function_id
 
         function_map[
@@ -1474,12 +1676,12 @@ def build_confirmed_completion_result(
 
     final_function_ids = {
         function.get(
-            "functionId"
+            "id"
         )
         for function
         in functions
         if function.get(
-            "functionId"
+            "id"
         )
     }
 
@@ -1645,7 +1847,7 @@ def print_rag_structure_statistics(
         print(
             f"[RAG结构-{index}] "
             f"{data.get('caseId', '')} | "
-            f"{function.get('functionId', '')} "
+            f"{function.get('id', '')} "
             f"{function.get('name', '')} | "
             f"score={item.get('score', 0):.4f} | "
             f"邻居={len(neighbors)} | "
@@ -1741,7 +1943,7 @@ def completion(
     ):
         print(
             f"  - "
-            f"{function.get('functionId', '')} "
+            f"{function.get('id', '')} "
             f"{function.get('name', '')}"
         )
 
@@ -1860,6 +2062,10 @@ def completion(
             raw_llm_result = {}
 
         raw_llm_result.setdefault(
+            "functionUpdates",
+            []
+        )
+        raw_llm_result.setdefault(
             "missingFunctions",
             []
         )
@@ -1868,6 +2074,126 @@ def completion(
             "missingRelations",
             []
         )
+
+        # RAG已经命中历史模式、但模型首轮三个数组全空时，
+        # 不能直接把“空”当作最终结论。用压缩后的高相似模式再复核一次，
+        # 解决长历史字段稀释注意力以及模型过度保守的问题。
+        first_pass_is_empty = not any(
+            isinstance(
+                raw_llm_result.get(key),
+                list
+            )
+            and raw_llm_result.get(key)
+            for key in (
+                "functionUpdates",
+                "missingFunctions",
+                "missingRelations"
+            )
+        )
+
+        if first_pass_is_empty and retrieved:
+            print(
+                "[Qwen复核] RAG命中非空但首轮补全为空，"
+                "启动一次高相似局部模式复核"
+            )
+
+            recovery_prompt = build_completion_prompt(
+                raw_text=normalized_case.get(
+                    "raw_text",
+                    ""
+                ),
+                current_functions=normalized_case.get(
+                    "functions",
+                    []
+                ),
+                current_relations=normalized_case.get(
+                    "relations",
+                    []
+                ),
+                history_functions=retrieved,
+                function_points=normalized_case.get(
+                    "function_points",
+                    []
+                ),
+                events=normalized_case.get(
+                    "events",
+                    []
+                ),
+                recovery_mode=True
+            )
+
+            recovery_response = call_qwen(
+                recovery_prompt
+            )
+
+            recovery_result = parse_llm_json(
+                recovery_response
+            )
+
+            if isinstance(
+                    recovery_result,
+                    dict
+            ):
+                recovery_result.setdefault(
+                    "functionUpdates",
+                    []
+                )
+                recovery_result.setdefault(
+                    "missingFunctions",
+                    []
+                )
+                recovery_result.setdefault(
+                    "missingRelations",
+                    []
+                )
+
+                recovery_has_candidates = any(
+                    isinstance(
+                        recovery_result.get(key),
+                        list
+                    )
+                    and recovery_result.get(key)
+                    for key in (
+                        "functionUpdates",
+                        "missingFunctions",
+                        "missingRelations"
+                    )
+                )
+
+                if recovery_has_candidates:
+                    raw_llm_result = recovery_result
+
+                    print(
+                        "[Qwen复核] 已获得可审查补全候选"
+                    )
+                else:
+                    print(
+                        "[Qwen复核] 复核后仍无有证据候选"
+                    )
+
+        # 大模型即使偶尔返回旧字段名，也在进入结果前统一为最终标准。
+        raw_functions = raw_llm_result.get("missingFunctions", [])
+        raw_relations = raw_llm_result.get("missingRelations", [])
+
+        if not isinstance(raw_functions, list):
+            raw_functions = []
+
+        if not isinstance(raw_relations, list):
+            raw_relations = []
+
+        raw_llm_result["missingFunctions"] = [
+            normalized
+            for index, function in enumerate(raw_functions, start=1)
+            for normalized in [normalize_function(function, index)]
+            if normalized
+        ]
+
+        raw_llm_result["missingRelations"] = [
+            normalized
+            for relation in raw_relations
+            for normalized in [normalize_relation(relation)]
+            if normalized
+        ]
 
     except Exception as e:
 
@@ -1880,6 +2206,7 @@ def completion(
         )
 
         raw_llm_result = {
+            "functionUpdates": [],
             "missingFunctions": [],
             "missingRelations": []
         }
@@ -1891,6 +2218,9 @@ def completion(
 
     print(
         "[Qwen原始结果] "
+        f"字段更新："
+        f"{len(raw_llm_result.get('functionUpdates', []))}"
+        f"，"
         f"功能："
         f"{len(raw_llm_result.get('missingFunctions', []))}"
         f"，关系："
@@ -1931,7 +2261,7 @@ def completion(
     ):
         print(
             "[补全功能] "
-            f"{function.get('functionId', '')} "
+            f"{function.get('id', '')} "
             f"{function.get('name', '')} | "
             f"来源={function.get('evidenceType', '')} | "
             f"confidence={function.get('confidence', 0)}"
@@ -1946,7 +2276,7 @@ def completion(
             f"{relation.get('source', '')}"
             f" -> "
             f"{relation.get('target', '')} | "
-            f"type={relation.get('type', '')} | "
+            f"type={relation.get('relation_type', '')} | "
             f"来源={relation.get('evidenceType', '')} | "
             f"confidence={relation.get('confidence', 0)}"
         )

@@ -32,7 +32,7 @@ def compare_relation(current_case, history_case):
             (
                 r["source"],
                 r["target"],
-                r["type"]
+                r["relation_type"]
             )
         )
 
@@ -43,7 +43,7 @@ def compare_relation(current_case, history_case):
         key = (
             r["source"],
             r["target"],
-            r["type"]
+            r["relation_type"]
         )
 
         if key not in current_relation:

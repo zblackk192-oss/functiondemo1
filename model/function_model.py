@@ -1,16 +1,22 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
 
 class FunctionModel(BaseModel):
-    functionId: str
-    name: str
+    id: str
+    name: str = ""
 
-    action: str
-    object: str
-    effect: str
+    actor: str = ""
+    action: str = ""
+    object: str = ""
+    effect: str = ""
+    trigger: str = ""
+    condition: str = ""
 
-    scenario: str
-    constraint: str
-    trigger: str
+    inputs: list[str] = Field(default_factory=list)
+    outputs: list[str] = Field(default_factory=list)
+    preconditions: list[str] = Field(default_factory=list)
+    postconditions: list[str] = Field(default_factory=list)
 
-    input: list[str]
-    output: list[str]
+    # 当前架构中的扩展字段继续保留。
+    scenario: str = ""
+    constraint: str = ""

@@ -42,15 +42,17 @@ def _compact_function(function):
     )
 
     return {
-        "functionId": function.get(
-            "functionId",
-            ""
+        "id": function.get(
+            "id",
+            function.get("functionId", "")
         ),
 
         "name": function.get(
             "name",
             ""
         ),
+
+        "actor": function.get("actor", ""),
 
         "action": function.get(
             "action",
@@ -101,11 +103,11 @@ def _compact_function(function):
             ""
         ),
 
-        "input": _normalize_list(
+        "inputs": _normalize_list(
             inputs
         ),
 
-        "output": _normalize_list(
+        "outputs": _normalize_list(
             outputs
         )
     }
@@ -130,10 +132,17 @@ def _compact_relation(relation):
             ""
         ),
 
-        "type": relation.get(
-            "type",
-            ""
+        "source_name": relation.get("source_name", ""),
+        "target_name": relation.get("target_name", ""),
+
+        "relation_type": relation.get(
+            "relation_type",
+            relation.get("type", "")
         ),
+
+        "direction": relation.get("direction", "source_to_target"),
+        "confidence": relation.get("confidence", 0.0),
+        "evidence": relation.get("evidence", ""),
 
         "flowObject": relation.get(
             "flowObject",
@@ -376,8 +385,8 @@ def _extract_local_subgraph(
         matched_function = {}
 
     matched_id = matched_function.get(
-        "functionId",
-        ""
+        "id",
+        matched_function.get("functionId", "")
     )
 
     case_functions = data.get(
@@ -402,7 +411,7 @@ def _extract_local_subgraph(
     ):
         case_relations = []
 
-    # functionId -> function
+    # id -> function
     function_map = {}
 
     for function in case_functions:
@@ -414,8 +423,8 @@ def _extract_local_subgraph(
             continue
 
         function_id = function.get(
-            "functionId",
-            ""
+            "id",
+            function.get("functionId", "")
         )
 
         if function_id:
@@ -508,7 +517,8 @@ def _extract_local_subgraph(
 # ============================================================
 
 def _format_retrieval_result(
-    item
+    item,
+    query_function=None
 ):
     """
     将FAISS原始结果转换为RAG结果。
@@ -614,6 +624,12 @@ def _format_retrieval_result(
                 ""
             ),
 
+            "queryFunction": (
+                _compact_function(query_function)
+                if isinstance(query_function, dict)
+                else {}
+            ),
+
             "function": function,
 
             "neighborFunctions":
@@ -673,12 +689,18 @@ def _retrieval_result_key(
         ""
     )
 
+    query_function = data.get("queryFunction", {})
+    if not isinstance(query_function, dict):
+        query_function = {}
+    query_function_id = query_function.get("id", "")
+
     function_id = function.get(
-        "functionId",
-        ""
-    )
+            "id",
+            function.get("functionId", "")
+        )
 
     return (
+        f"{query_function_id}::"
         f"{case_id}::"
         f"{function_id}"
     )
@@ -822,8 +844,8 @@ def retrieve_top_k_cases(
             continue
 
         function_id = function.get(
-            "functionId",
-            ""
+            "id",
+            function.get("functionId", "")
         )
 
         function_name = function.get(
@@ -912,7 +934,8 @@ def retrieve_top_k_cases(
 
             formatted_item = (
                 _format_retrieval_result(
-                    item
+                    item,
+                    query_function=function
                 )
             )
 
@@ -983,7 +1006,7 @@ def retrieve_top_k_cases(
         print(
             f"[RAG-{index}] "
             f"{data.get('caseId', '')} | "
-            f"{function.get('functionId', '')} "
+            f"{function.get('id', '')} "
             f"{function.get('name', '')} | "
             f"score={item.get('score', 0):.4f} | "
             f"邻居={len(neighbors)} | "

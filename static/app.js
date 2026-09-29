@@ -16,7 +16,19 @@ const appState = {
 
     currentRelations: [],
 
+    completionReady: false,
+
+    completionResult: {
+
+        functions: [],
+
+        relations: []
+
+    },
+
     llmResult: {
+
+        functionUpdates: [],
 
         missingFunctions: [],
 
@@ -248,11 +260,11 @@ function normalizeCurrentFunctions(
             return normalizeFunction(
                 {
 
-                    functionId:
-                        event.functionId ||
+                    id:
+                        event.id ||
                         (
                             typeof point === "object"
-                                ? point.functionId
+                                ? point.id
                                 : ""
                         ) ||
                         `F${String(index + 1).padStart(3, "0")}`,
@@ -393,12 +405,17 @@ function normalizeFunction(
 
     return {
 
-        functionId:
+        id:
+            item.id ||
             item.functionId ||
             `F${String(index + 1).padStart(3, "0")}`,
 
         name:
             item.name ||
+            "",
+
+        actor:
+            item.actor ||
             "",
 
         action:
@@ -456,6 +473,24 @@ function normalizeFunction(
         constraint:
             item.constraint ||
             "",
+
+        requirementEvidence:
+            item.requirementEvidence ||
+            "",
+
+        historyEvidence:
+            Array.isArray(item.historyEvidence)
+                ? item.historyEvidence
+                : [],
+
+        evidenceType:
+            item.evidenceType ||
+            "",
+
+        fieldCompletionEvidence:
+            Array.isArray(item.fieldCompletionEvidence)
+                ? item.fieldCompletionEvidence
+                : [],
 
         reason:
             item.reason ||
@@ -544,7 +579,7 @@ function renderCurrentCase(data) {
 
                 <div class="function-id">
                     ${escapeHtml(
-                        item.functionId
+                        item.id
                     )}
                 </div>
 
@@ -621,6 +656,19 @@ async function runCompletion() {
     );
 
 
+    // 每次重新分析都清空上一轮确认状态，避免旧结果被误认为本轮结果。
+    appState.completionReady = false;
+
+    appState.completionResult = {
+        functions: [],
+        relations: []
+    };
+
+    appState.functionDecisions = [];
+
+    appState.relationDecisions = [];
+
+
     try {
 
         const response =
@@ -661,6 +709,13 @@ async function runCompletion() {
 
         appState.llmResult = {
 
+            functionUpdates:
+                Array.isArray(
+                    data.llm_result?.functionUpdates
+                )
+                    ? data.llm_result.functionUpdates
+                    : [],
+
             missingFunctions:
                 Array.isArray(
                     data.llm_result?.missingFunctions
@@ -678,6 +733,25 @@ async function runCompletion() {
         };
 
 
+        appState.completionResult = {
+
+            functions:
+                Array.isArray(
+                    data.completion_result?.functions
+                )
+                    ? data.completion_result.functions
+                    : [],
+
+            relations:
+                Array.isArray(
+                    data.completion_result?.relations
+                )
+                    ? data.completion_result.relations
+                    : []
+
+        };
+
+
         // ----------------------------------------------------
         // 初始化人工决策状态
         // ----------------------------------------------------
@@ -689,6 +763,8 @@ async function runCompletion() {
                     return {
 
                         status: "pending",
+
+                        modified: false,
 
                         function:
                             normalizeFunction(
@@ -709,6 +785,8 @@ async function runCompletion() {
 
                         status: "pending",
 
+                        modified: false,
+
                         relation:
                             normalizeRelation(
                                 item
@@ -718,6 +796,10 @@ async function runCompletion() {
 
                 }
             );
+
+
+        // 只有完整响应已经保存后，才允许进入最终确认。
+        appState.completionReady = true;
 
 
         // ----------------------------------------------------
@@ -1036,7 +1118,7 @@ function renderRetrieval(
                         <strong>
 
                             ${escapeHtml(
-                                functionData.functionId || ""
+                                functionData.id || ""
                             )}
 
                             ${escapeHtml(
@@ -1247,7 +1329,7 @@ function createFunctionSuggestion(
                 <strong>
 
                     ${escapeHtml(
-                        functionData.functionId
+                        functionData.id
                     )}
 
                     ${escapeHtml(
@@ -1295,6 +1377,11 @@ function createFunctionSuggestion(
 
 
         <div class="slot-grid">
+
+            ${renderSlot(
+                "Actor",
+                functionData.actor
+            )}
 
             ${renderSlot(
                 "Action",
@@ -1547,15 +1634,21 @@ function editFunction(
         <div class="edit-grid">
 
             ${createEditInput(
-                "functionId",
+                "id",
                 "功能ID",
-                functionData.functionId
+                functionData.id
             )}
 
             ${createEditInput(
                 "name",
                 "功能名称",
                 functionData.name
+            )}
+
+            ${createEditInput(
+                "actor",
+                "Actor",
+                functionData.actor
             )}
 
             ${createEditInput(
@@ -1772,6 +1865,9 @@ function saveFunctionEdit(
     appState.functionDecisions[index].status =
         "accepted";
 
+    appState.functionDecisions[index].modified =
+        true;
+
 
     renderFunctionSuggestions();
 
@@ -1914,7 +2010,7 @@ function renderRelationSuggestions() {
 
                     <span class="relation-type">
                         ${escapeHtml(
-                            relation.type
+                            relation.relation_type
                         )}
                     </span>
 
@@ -2001,12 +2097,43 @@ function normalizeRelation(
             item.target ||
             "",
 
-        type:
+        source_name:
+            item.source_name ||
+            "",
+
+        target_name:
+            item.target_name ||
+            "",
+
+        relation_type:
+            item.relation_type ||
             item.type ||
             "dependency",
 
+        direction:
+            item.direction ||
+            "source_to_target",
+
         flowObject:
             item.flowObject ||
+            "",
+
+        confidence:
+            Number(
+                item.confidence || 0
+            ),
+
+        evidence:
+            item.evidence ||
+            "",
+
+        historyEvidence:
+            Array.isArray(item.historyEvidence)
+                ? item.historyEvidence
+                : [],
+
+        evidenceType:
+            item.evidenceType ||
             "",
 
         reason:
@@ -2137,9 +2264,9 @@ function editRelation(
             )}
 
             ${createEditInput(
-                "type",
+                "relation_type",
                 "Relation Type",
-                relation.type
+                relation.relation_type
             )}
 
             ${createEditInput(
@@ -2226,6 +2353,9 @@ function saveRelationEdit(
 
     appState.relationDecisions[index].status =
         "accepted";
+
+    appState.relationDecisions[index].modified =
+        true;
 
 
     renderRelationSuggestions();
@@ -2387,10 +2517,210 @@ function updateConfirmationProgress() {
 
 
 // ============================================================
+// 应用已有功能的字段补全
+// ============================================================
+
+function isMissingFunctionValue(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        typeof value === "string"
+    ) {
+
+        const text = value.trim();
+
+        return (
+            text === "" ||
+            text === "未显式说明"
+        );
+
+    }
+
+
+    if (
+        Array.isArray(value)
+    ) {
+
+        return value.length === 0;
+
+    }
+
+
+    return false;
+
+}
+
+
+function applyFunctionUpdates(
+    functions,
+    updates
+) {
+
+    const updatableFields =
+        new Set([
+            "name",
+            "actor",
+            "action",
+            "object",
+            "effect",
+            "trigger",
+            "condition",
+            "inputs",
+            "outputs",
+            "preconditions",
+            "postconditions",
+            "scenario",
+            "constraint"
+        ]);
+
+
+    const updateMap =
+        new Map();
+
+
+    (
+        Array.isArray(updates)
+            ? updates
+            : []
+    ).forEach(
+        function(update) {
+
+            if (
+                update &&
+                typeof update === "object" &&
+                update.id
+            ) {
+
+                updateMap.set(
+                    update.id,
+                    update
+                );
+
+            }
+
+        }
+    );
+
+
+    return (
+        Array.isArray(functions)
+            ? functions
+            : []
+    ).map(
+        function(item, index) {
+
+            const normalized =
+                normalizeFunction(
+                    item,
+                    index
+                );
+
+
+            const update =
+                updateMap.get(
+                    normalized.id
+                );
+
+
+            if (!update) {
+
+                return normalized;
+
+            }
+
+
+            const fields =
+                update.fields &&
+                typeof update.fields === "object"
+                    ? update.fields
+                    : {};
+
+
+            Object.entries(fields).forEach(
+                function([field, value]) {
+
+                    if (
+                        !updatableFields.has(field) ||
+                        !isMissingFunctionValue(
+                            normalized[field]
+                        ) ||
+                        isMissingFunctionValue(value)
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    normalized[field] =
+                        Array.isArray(value)
+                            ? [...value]
+                            : value;
+
+                }
+            );
+
+
+            normalized.fieldCompletionEvidence = [
+                ...normalized.fieldCompletionEvidence,
+                {
+                    fields:
+                        Object.keys(fields),
+
+                    requirementEvidence:
+                        update.requirementEvidence || "",
+
+                    historyEvidence:
+                        Array.isArray(update.historyEvidence)
+                            ? update.historyEvidence
+                            : [],
+
+                    evidenceType:
+                        update.evidenceType || "",
+
+                    reason:
+                        update.reason || "",
+
+                    confidence:
+                        Number(update.confidence || 0)
+                }
+            ];
+
+
+            return normalized;
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // 最终确认
 // ============================================================
 
 function confirmResult() {
+
+    if (!appState.completionReady) {
+
+        alert(
+            "请先完成AI辅助分析，再进行最终确认。"
+        );
+
+        return;
+
+    }
 
     const allDecided =
         [
@@ -2449,17 +2779,63 @@ function confirmResult() {
             );
 
 
+    const updatedCurrentFunctions =
+        applyFunctionUpdates(
+            appState.currentFunctions,
+            appState.llmResult.functionUpdates
+        );
+
+
     // --------------------------------------------------------
     // 3. 标准化
     // --------------------------------------------------------
 
-    const finalResult =
-        standardizeFinalResult(
-            appState.currentFunctions,
-            appState.currentRelations,
-            acceptedFunctions,
-            acceptedRelations
+    const allSuggestionsAccepted =
+        [
+            ...appState.functionDecisions,
+            ...appState.relationDecisions
+        ].every(
+            item =>
+                item.status === "accepted"
         );
+
+
+    const noSuggestionWasEdited =
+        [
+            ...appState.functionDecisions,
+            ...appState.relationDecisions
+        ].every(
+            item =>
+                item.modified !== true
+        );
+
+
+    const serverCompletionAvailable =
+        Array.isArray(
+            appState.completionResult.functions
+        ) &&
+        appState.completionResult.functions.length > 0;
+
+
+    // 全部接受时直接采用后端已经完成合并和校验的completion_result，
+    // 避免前端再次拼装时遗漏字段、功能或关系。
+    // 存在拒绝项时，才按照人工决策重新构建最终模型。
+    const finalResult =
+        allSuggestionsAccepted &&
+        noSuggestionWasEdited &&
+        serverCompletionAvailable
+            ? standardizeFinalResult(
+                appState.completionResult.functions,
+                appState.completionResult.relations,
+                [],
+                []
+            )
+            : standardizeFinalResult(
+                updatedCurrentFunctions,
+                appState.currentRelations,
+                acceptedFunctions,
+                acceptedRelations
+            );
 
 
     appState.finalResult =
@@ -2551,11 +2927,11 @@ function standardizeFinalResult(
 
 
             if (
-                normalized.functionId
+                normalized.id
             ) {
 
                 functionMap.set(
-                    normalized.functionId,
+                    normalized.id,
                     normalized
                 );
 
@@ -2580,11 +2956,11 @@ function standardizeFinalResult(
 
 
             if (
-                normalized.functionId
+                normalized.id
             ) {
 
                 functionMap.set(
-                    normalized.functionId,
+                    normalized.id,
                     normalized
                 );
 
@@ -2674,7 +3050,8 @@ function standardizeFinalResult(
                 [
                     relation.source,
                     relation.target,
-                    relation.type,
+                    relation.relation_type,
+                    relation.direction,
                     relation.flowObject
                 ].join(
                     "|"
@@ -2946,12 +3323,12 @@ function renderFinalModel(
 
 
             node.dataset.id =
-                item.functionId || "";
+                item.id || "";
 
 
             const position =
                 positions[
-                    item.functionId
+                    item.id
                 ];
 
 
@@ -2970,7 +3347,7 @@ function renderFinalModel(
                     <span class="semantic-node-id">
 
                         ${escapeHtml(
-                            item.functionId || ""
+                            item.id || ""
                         )}
 
                     </span>
@@ -2988,6 +3365,20 @@ function renderFinalModel(
 
 
                 <div class="semantic-node-body">
+
+                    <div class="semantic-slot">
+
+                        <span>
+                            Actor
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                item.actor || ""
+                            )}
+                        </strong>
+
+                    </div>
 
                     <div class="semantic-slot">
 
@@ -3124,7 +3515,7 @@ function calculateGraphLayout(
 
 
     const nodeHeight =
-        190;
+        220;
 
 
     const horizontalGap =
@@ -3142,7 +3533,7 @@ function calculateGraphLayout(
         function(item) {
 
             indegree[
-                item.functionId
+                item.id
             ] = 0;
 
         }
@@ -3176,12 +3567,12 @@ function calculateGraphLayout(
             .filter(
                 item =>
                     indegree[
-                        item.functionId
+                        item.id
                     ] === 0
             )
             .map(
                 item =>
-                    item.functionId
+                    item.id
             );
 
 
@@ -3256,7 +3647,7 @@ function calculateGraphLayout(
 
             if (
                 !visited.has(
-                    item.functionId
+                    item.id
                 )
             ) {
 
@@ -3276,7 +3667,7 @@ function calculateGraphLayout(
                 levels[
                     levelIndex
                 ].push(
-                    item.functionId
+                    item.id
                 );
 
             }
@@ -3725,7 +4116,7 @@ function drawGraphEdges(
 
 
             const type =
-                edge.type ||
+                edge.relation_type ||
                 "data_flow";
 
 
@@ -3823,7 +4214,7 @@ function drawGraphEdges(
 
             const labelText =
                 edge.flowObject ||
-                edge.type ||
+                edge.relation_type ||
                 "";
 
 

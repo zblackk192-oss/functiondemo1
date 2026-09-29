@@ -52,7 +52,7 @@ def build_semantic_graph(
             continue
 
         function_id = function.get(
-            "functionId",
+            "id",
             ""
         )
 
@@ -89,7 +89,7 @@ def build_semantic_graph(
             continue
 
         function_id = function.get(
-            "functionId",
+            "id",
             ""
         )
 
@@ -138,7 +138,7 @@ def build_semantic_graph(
         )
 
         relation_type = relation.get(
-            "type",
+            "relation_type",
             ""
         )
 
@@ -168,7 +168,7 @@ def build_semantic_graph(
 
         edge["target"] = target
 
-        edge["type"] = relation_type
+        edge["relation_type"] = relation_type
 
         edge["flowObject"] = flow_object
 
