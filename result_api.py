@@ -34,6 +34,10 @@ RESULT_STORE_PATH = Path(
 
 result_file_lock = threading.Lock()
 
+RESULT_SCHEMA_VERSION = (
+    "input-compatible-v2"
+)
+
 
 # ============================================================
 # FastAPI应用
@@ -42,7 +46,7 @@ result_file_lock = threading.Lock()
 app = FastAPI(
     title="功能补全结果API",
     description="接收功能补全服务的输出，并向下游提供最新结果",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 
@@ -55,9 +59,10 @@ def validate_result(
 ):
 
     required_fields = [
-        "retrieval",
-        "llm_result",
-        "completion_result"
+        "request_id",
+        "status",
+        "result",
+        "error"
     ]
 
     missing_fields = [
@@ -71,58 +76,222 @@ def validate_result(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
-                "message": "补全结果缺少必要字段",
+                "message": "发布结果缺少必要字段",
                 "missing_fields": missing_fields
             }
         )
 
-    completion_result = result.get(
-        "completion_result"
+    payload_result = result.get(
+        "result"
     )
 
     if not isinstance(
-        completion_result,
+        payload_result,
         dict
     ):
 
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                "completion_result必须是JSON对象"
-            )
+            detail="result必须是JSON对象"
         )
 
-    functions = completion_result.get(
-        "functions"
+    function_point_set = payload_result.get(
+        "function_point_set"
     )
 
-    relations = completion_result.get(
+    if not isinstance(
+        function_point_set,
+        dict
+    ):
+
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="result.function_point_set必须是JSON对象"
+        )
+
+    function_set_required_fields = [
+        "raw_text",
+        "function_points",
+        "summary"
+    ]
+
+    missing_function_set_fields = [
+        field
+        for field in function_set_required_fields
+        if field not in function_point_set
+    ]
+
+    if missing_function_set_fields:
+
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "function_point_set缺少必要字段",
+                "missing_fields": missing_function_set_fields
+            }
+        )
+
+    function_points = function_point_set.get(
+        "function_points"
+    )
+
+    relations = payload_result.get(
         "relations"
     )
 
-    if not isinstance(
-        functions,
-        list
-    ):
+    if not isinstance(function_points, list):
 
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
-                "completion_result.functions必须是数组"
+                "result.function_point_set."
+                "function_points必须是数组"
             )
         )
 
-    if not isinstance(
-        relations,
-        list
-    ):
+    if not isinstance(relations, list):
 
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                "completion_result.relations必须是数组"
-            )
+            detail="result.relations必须是数组"
         )
+
+    event_required_fields = {
+        "actor",
+        "action",
+        "object",
+        "effect",
+        "trigger",
+        "condition",
+        "inputs",
+        "outputs",
+        "preconditions",
+        "postconditions"
+    }
+
+    for index, function_point in enumerate(function_points):
+
+        if not isinstance(function_point, dict):
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    "function_points"
+                    f"[{index}]必须是JSON对象"
+                )
+            )
+
+        if not function_point.get("id"):
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    "function_points"
+                    f"[{index}].id不能为空"
+                )
+            )
+
+        event = function_point.get("event")
+
+        if not isinstance(event, dict):
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    "function_points"
+                    f"[{index}].event必须是JSON对象"
+                )
+            )
+
+        missing_event_fields = sorted(
+            event_required_fields.difference(event)
+        )
+
+        if missing_event_fields:
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail={
+                    "message": (
+                        "event缺少必要字段"
+                    ),
+                    "index": index,
+                    "missing_fields": missing_event_fields
+                }
+            )
+
+    relation_required_fields = {
+        "source",
+        "target",
+        "source_name",
+        "target_name",
+        "relation_type",
+        "direction",
+        "confidence",
+        "evidence"
+    }
+
+    for index, relation in enumerate(relations):
+
+        if not isinstance(relation, dict):
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    f"relations[{index}]必须是JSON对象"
+                )
+            )
+
+        missing_relation_fields = sorted(
+            relation_required_fields.difference(relation)
+        )
+
+        if missing_relation_fields:
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail={
+                    "message": (
+                        "relation缺少必要字段"
+                    ),
+                    "index": index,
+                    "missing_fields": missing_relation_fields
+                }
+            )
+
+        if not relation.get("source"):
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    f"relations[{index}].source不能为空"
+                )
+            )
+
+        if not relation.get("target"):
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    f"relations[{index}].target不能为空"
+                )
+            )
 
 
 # ============================================================
@@ -230,6 +399,7 @@ def root():
     return {
         "service": "功能补全结果API",
         "status": "running",
+        "schema_version": RESULT_SCHEMA_VERSION,
         "health_url": "/health",
         "publish_url": "/api/v1/results",
         "latest_result_url": "/api/v1/results/latest"
@@ -245,6 +415,7 @@ def health():
 
     return {
         "status": "ok",
+        "schema_version": RESULT_SCHEMA_VERSION,
         "result_available": (
             RESULT_STORE_PATH.exists()
         ),
@@ -278,19 +449,12 @@ def receive_result(
         ).isoformat()
     )
 
-    record = {
-        "success": True,
-        "result_id": result_id,
-        "published_at": published_at,
-        "result": result
-    }
-
     try:
 
         with result_file_lock:
 
             save_result_record(
-                record
+                result
             )
 
     except OSError as e:
@@ -306,6 +470,7 @@ def receive_result(
     return {
         "success": True,
         "message": "补全结果发布成功",
+        "schema_version": RESULT_SCHEMA_VERSION,
         "result_id": result_id,
         "published_at": published_at
     }

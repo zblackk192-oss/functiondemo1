@@ -251,7 +251,8 @@ def main():
     print("正在向结果API发布补全结果")
 
     publish_status = publish_result(
-        result
+        result,
+        normalized_case
     )
 
     print(

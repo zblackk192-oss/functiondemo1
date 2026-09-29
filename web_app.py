@@ -254,9 +254,30 @@ def run_completion():
     # 3. 推送到结果API
     # ========================================================
 
-    publish_status = publish_result(
-        result
-    )
+    try:
+
+        publish_status = publish_result(
+            result,
+            normalized_case
+        )
+
+    except Exception as e:
+
+        # AI补全结果已经生成并写入result.json。
+        # 下游发布失败只记录为独立状态，不能把成功的AI分析接口变成HTTP 500。
+        publish_status = {
+            "enabled": config.RESULT_API_ENABLED,
+            "success": False,
+            "message": str(e)
+        }
+
+        print(
+            "[结果发布] 发布失败，但保留本次AI分析结果"
+        )
+
+        print(
+            f"[结果发布] 详细信息：{e}"
+        )
 
     if publish_status.get(
         "success",
