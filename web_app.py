@@ -22,6 +22,7 @@ from service.graph_service import (
 )
 
 from service.result_publish_service import (
+    build_published_payload,
     publish_result
 )
 
@@ -63,7 +64,7 @@ current_case = None
 
 normalized_case = None
 
-# 最近一次尚待人工确认的完整分析结果。
+# 最近一次完整分析结果。
 latest_analysis_result = None
 
 
@@ -239,11 +240,16 @@ def run_completion():
     latest_analysis_result = result
 
     # ========================================================
-    # 2. 保存本地result.json
+    # 2. 保存与输入字段一致的最终result.json
     # ========================================================
 
-    save_json(
+    output_result = build_published_payload(
         result,
+        normalized_case
+    )
+
+    save_json(
+        output_result,
         config.OUTPUT_PATH
     )
 
@@ -253,22 +259,29 @@ def run_completion():
     )
 
     # ========================================================
-    # 3. 等待人工确认
-    #
-    # 此处绝不能发布。当前completion_result包含全部AI建议，
-    # 用户尚未决定接受、修改或拒绝哪些候选。
+    # 3. 自动接收并发布全部建议
     # ========================================================
 
-    publish_status = {
-        "enabled": config.RESULT_API_ENABLED,
-        "success": False,
-        "pending_confirmation": True,
-        "message": "等待人工确认后发布"
-    }
+    try:
+
+        publish_status = publish_result(
+            result,
+            normalized_case
+        )
+
+    except Exception as e:
+
+        publish_status = {
+            "enabled": config.RESULT_API_ENABLED,
+            "success": False,
+            "message": str(e)
+        }
 
     print(
-        "[结果发布] 已暂缓，等待人工确认"
+        "[结果发布] 已自动接收全部建议并完成发布处理"
     )
+
+    latest_analysis_result = result
 
     total_time = (
         time.perf_counter()
@@ -586,7 +599,7 @@ def run_completion():
 
 
 # ============================================================
-# 人工确认后发布最终模型
+# 兼容旧客户端的发布接口
 # ============================================================
 
 @app.post("/api/completion/confirm")
@@ -617,12 +630,18 @@ def confirm_and_publish(
             detail="确认结果必须是JSON对象"
         )
 
-    accepted_functions = payload.get(
+    # 自动接收模式下忽略客户端的筛选结果，始终使用全部建议。
+    proposed_result = latest_analysis_result.get(
+        "completion_result",
+        {}
+    )
+
+    accepted_functions = proposed_result.get(
         "functions",
         []
     )
 
-    accepted_relations = payload.get(
+    accepted_relations = proposed_result.get(
         "relations",
         []
     )
@@ -653,7 +672,7 @@ def confirm_and_publish(
         )
     )
 
-    # result.json继续保留完整解释数据，同时把人工确认前的模型单独保留。
+    # 完整分析数据仅保留在内存中，result.json只保存业务结果字段。
     confirmed_analysis_result = dict(
         latest_analysis_result
     )
@@ -676,12 +695,20 @@ def confirm_and_publish(
     confirmed_analysis_result[
         "confirmation"
     ] = {
-        "status": "confirmed",
+        "status": "auto_accepted",
         "published": False
     }
 
+    output_result = build_published_payload(
+        {
+            "completion_result":
+            confirmed_result
+        },
+        normalized_case
+    )
+
     save_json(
-        confirmed_analysis_result,
+        output_result,
         config.OUTPUT_PATH
     )
 
@@ -711,7 +738,7 @@ def confirm_and_publish(
     confirmed_analysis_result[
         "confirmation"
     ] = {
-        "status": "confirmed",
+        "status": "auto_accepted",
         "published": published,
         "publish_status": publish_status
     }
@@ -720,17 +747,12 @@ def confirm_and_publish(
         confirmed_analysis_result
     )
 
-    save_json(
-        latest_analysis_result,
-        config.OUTPUT_PATH
-    )
-
     if not published:
 
         return {
             "success": False,
             "message": (
-                "人工确认结果已保存，"
+                "自动接收结果已保存，"
                 "但向下游发布失败："
                 f"{publish_status.get('message', '')}"
             ),
@@ -739,12 +761,12 @@ def confirm_and_publish(
         }
 
     print(
-        "[结果发布] 人工确认完成，最终模型已推送"
+        "[结果发布] 全部建议已自动接收，最终模型已推送"
     )
 
     return {
         "success": True,
-        "message": "人工确认结果已成功发布",
+        "message": "自动接收结果已成功发布",
         "completion_result": confirmed_result,
         "publish_status": publish_status
     }

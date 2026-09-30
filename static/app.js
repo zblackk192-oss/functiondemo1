@@ -657,7 +657,7 @@ async function runCompletion() {
     );
 
 
-    // 每次重新分析都清空上一轮确认状态，避免旧结果被误认为本轮结果。
+    // 每次重新分析都清空上一轮结果。
     appState.completionReady = false;
 
     appState.completionResult = {
@@ -668,21 +668,6 @@ async function runCompletion() {
     appState.functionDecisions = [];
 
     appState.relationDecisions = [];
-
-    const finalConfirmButton =
-        document.getElementById(
-            "finalConfirmButton"
-        );
-
-    if (finalConfirmButton) {
-
-        finalConfirmButton.disabled = false;
-
-        finalConfirmButton.innerText =
-            "✓ 确认并发布最终模型";
-
-    }
-
 
     let elapsedSeconds = 0;
 
@@ -815,7 +800,7 @@ async function runCompletion() {
 
 
         // ----------------------------------------------------
-        // 初始化人工决策状态
+        // 所有AI建议自动接受，仅保留状态用于建议展示。
         // ----------------------------------------------------
 
         const functionUpdateDecisions =
@@ -850,7 +835,7 @@ async function runCompletion() {
 
                     return {
 
-                        status: "pending",
+                        status: "accepted",
 
                         modified: false,
 
@@ -872,7 +857,7 @@ async function runCompletion() {
 
                     return {
 
-                        status: "pending",
+                        status: "accepted",
 
                         modified: false,
 
@@ -890,8 +875,7 @@ async function runCompletion() {
             );
 
 
-        // 字段补全建议和缺失功能建议必须在本作用域内立即写入全局状态。
-        // 之后的渲染与人工确认都只读取appState.functionDecisions。
+        // 字段补全建议和缺失功能建议立即写入全局状态。
         appState.functionDecisions = [
             ...functionUpdateDecisions,
             ...missingFunctionDecisions
@@ -904,7 +888,7 @@ async function runCompletion() {
 
                     return {
 
-                        status: "pending",
+                        status: "accepted",
 
                         modified: false,
 
@@ -919,8 +903,10 @@ async function runCompletion() {
             );
 
 
-        // 只有完整响应已经保存后，才允许进入最终确认。
-        appState.completionReady = true;
+        appState.completionReady = false;
+
+        appState.finalResult =
+            appState.completionResult;
 
 
         // ----------------------------------------------------
@@ -943,8 +929,8 @@ async function runCompletion() {
         );
 
         setStep(
-            "step-confirm",
-            "active"
+            "step-result",
+            "completed"
         );
 
 
@@ -969,10 +955,37 @@ async function runCompletion() {
         );
 
 
-        setSystemStatus(
-            "AI建议已生成，等待人工确认",
-            "waiting"
+        renderFinalModel(
+            appState.finalResult
         );
+
+
+        const publishStatus =
+            data.publish_status || {};
+
+
+        if (publishStatus.success) {
+
+            setSystemStatus(
+                "全部AI建议已自动接收，最终模型已发布",
+                "confirmed"
+            );
+
+        } else if (publishStatus.enabled) {
+
+            setSystemStatus(
+                "全部AI建议已自动接收并输出，但下游发布失败",
+                "error"
+            );
+
+        } else {
+
+            setSystemStatus(
+                "全部AI建议已自动接收，最终模型已输出",
+                "confirmed"
+            );
+
+        }
 
     }
 
@@ -1039,7 +1052,6 @@ function resetSteps() {
         "step-rag",
         "step-prompt",
         "step-qwen",
-        "step-confirm",
         "step-result"
 
     ].forEach(
@@ -1619,33 +1631,6 @@ function createFunctionSuggestion(
         </div>
 
 
-        <div class="decision-actions">
-
-            <button
-                class="decision-button accept"
-                onclick="acceptFunction(${index})"
-            >
-                ✓ 接受
-            </button>
-
-
-            <button
-                class="decision-button edit"
-                onclick="editFunction(${index})"
-            >
-                ✎ 修改
-            </button>
-
-
-            <button
-                class="decision-button reject"
-                onclick="rejectFunction(${index})"
-            >
-                ✕ 拒绝
-            </button>
-
-        </div>
-
     `;
 
 
@@ -2203,33 +2188,6 @@ function renderRelationSuggestions() {
                 </div>
 
 
-                <div class="decision-actions">
-
-                    <button
-                        class="decision-button accept"
-                        onclick="acceptRelation(${index})"
-                    >
-                        ✓ 接受
-                    </button>
-
-
-                    <button
-                        class="decision-button edit"
-                        onclick="editRelation(${index})"
-                    >
-                        ✎ 修改
-                    </button>
-
-
-                    <button
-                        class="decision-button reject"
-                        onclick="rejectRelation(${index})"
-                    >
-                        ✕ 拒绝
-                    </button>
-
-                </div>
-
             `;
 
 
@@ -2582,7 +2540,7 @@ function rejectAllRelations() {
 
 
 // ============================================================
-// 确认进度
+// 自动接收进度
 // ============================================================
 
 function updateConfirmationProgress() {
@@ -2668,7 +2626,7 @@ function updateConfirmationProgress() {
         );
 
         status.innerText =
-            `待确认 ${total - decided} 项`;
+            `待接收 ${total - decided} 项`;
 
     }
 
@@ -2679,7 +2637,7 @@ function updateConfirmationProgress() {
         );
 
         status.innerText =
-            `已完成 ${accepted} 项接受`;
+            `已自动接收 ${accepted} 项`;
 
     }
 
@@ -3189,7 +3147,7 @@ function standardizeFinalResult(
 
 
     // --------------------------------------------------------
-    // 人工确认后的AI功能
+    // 自动接收后的AI功能
     // --------------------------------------------------------
 
     acceptedFunctions.forEach(
@@ -3434,7 +3392,7 @@ function renderFinalModel(
         </div>
 
         <div>
-            人工确认后标准化
+            自动接收后标准化
         </div>
 
     `;

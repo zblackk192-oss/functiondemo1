@@ -1,808 +1,171 @@
 {
-  "retrieval": [
-    {
-      "match_order": 1,
-      "match_status": "semantic_match",
-      "knowledge_scope": "architecture",
-      "query_terms": [
-        "动力电池温度",
-        "热状态",
-        "冷却",
-        "加热",
-        "温度异常"
+  "request_id": "18bb562ba54841b7afe94958a7cd08de",
+  "status": "success",
+  "result": {
+    "function_point_set": {
+      "raw_text": "新能源汽车动力电池热管理系统需要实时监测电池包温度，并根据温度数据判断电池热状态。当电池温度超过冷却阈值时，系统应启动冷却；当电池温度低于加热阈值时，系统应启动加热；当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息。",
+      "function_points": [
+        {
+          "id": "monitor-battery-temperature",
+          "name": "监测动力电池温度",
+          "event": {
+            "actor": "电池管理系统",
+            "action": "监测",
+            "object": "动力电池温度",
+            "effect": "获得动力电池包内部各测温点的实时温度数据",
+            "trigger": "车辆启动或电池管理系统周期采样触发",
+            "condition": "电池管理系统已上电且温度传感器通信正常",
+            "inputs": [
+              "车辆启动信号",
+              "电芯温度传感器数据",
+              "电池包环境温度数据"
+            ],
+            "outputs": [
+              "电池最高温度",
+              "电池最低温度",
+              "电池平均温度",
+              "电池温差"
+            ],
+            "preconditions": [
+              "电池管理系统正常运行",
+              "温度传感器已完成初始化",
+              "温度采样数据有效"
+            ],
+            "postconditions": [
+              "已获得最新的动力电池温度信息"
+            ]
+          }
+        },
+        {
+          "id": "evaluate-battery-thermal-state",
+          "name": "判断动力电池热状态",
+          "event": {
+            "actor": "电池管理系统",
+            "action": "判断",
+            "object": "动力电池热状态",
+            "effect": "确定动力电池处于正常、过热、过冷或温度异常状态",
+            "trigger": "获得最新的动力电池温度信息",
+            "condition": "电池温度数据有效且热管理阈值已经完成配置",
+            "inputs": [
+              "电池最高温度",
+              "电池最低温度",
+              "电池平均温度",
+              "电池温差",
+              "冷却启动阈值",
+              "加热启动阈值",
+              "温度异常阈值"
+            ],
+            "outputs": [
+              "电池热状态判定结果",
+              "冷却需求",
+              "加热需求",
+              "温度异常标志"
+            ],
+            "preconditions": [
+              "已完成动力电池温度监测",
+              "热管理控制阈值有效"
+            ],
+            "postconditions": [
+              "已确定动力电池当前热状态",
+              "已生成功率热管理需求"
+            ]
+          }
+        },
+        {
+          "id": "control-battery-cooling",
+          "name": "执行动力电池冷却",
+          "event": {
+            "actor": "电池热管理控制器",
+            "action": "冷却",
+            "object": "动力电池包",
+            "effect": "降低动力电池温度并将其维持在允许的工作温度范围内",
+            "trigger": "电池热状态判定结果为过热，或冷却需求有效",
+            "condition": "电池温度高于冷却启动阈值，且冷却系统不存在禁止运行故障",
+            "inputs": [
+              "冷却需求",
+              "电池最高温度",
+              "电池平均温度",
+              "车辆运行状态",
+              "冷却系统状态"
+            ],
+            "outputs": [
+              "冷却控制指令",
+              "冷却液泵控制指令",
+              "冷却风扇控制指令"
+            ],
+            "preconditions": [
+              "已确认动力电池存在冷却需求",
+              "冷却液回路可用",
+              "冷却执行机构正常"
+            ],
+            "postconditions": [
+              "动力电池冷却功能已启动",
+              "电池温度开始下降或保持稳定"
+            ]
+          }
+        },
+        {
+          "id": "control-battery-heating",
+          "name": "执行动力电池加热",
+          "event": {
+            "actor": "电池热管理控制器",
+            "action": "加热",
+            "object": "动力电池包",
+            "effect": "提高动力电池温度并将其恢复到适宜的工作温度范围",
+            "trigger": "电池热状态判定结果为过冷，或加热需求有效",
+            "condition": "电池温度低于加热启动阈值，且加热系统不存在禁止运行故障",
+            "inputs": [
+              "加热需求",
+              "电池最低温度",
+              "电池平均温度",
+              "车辆运行状态",
+              "加热系统状态"
+            ],
+            "outputs": [
+              "加热控制指令",
+              "电池加热器控制指令"
+            ],
+            "preconditions": [
+              "已确认动力电池存在加热需求",
+              "加热装置可用",
+              "动力电池允许执行加热"
+            ],
+            "postconditions": [
+              "动力电池加热功能已启动",
+              "电池温度开始上升"
+            ]
+          }
+        },
+        {
+          "id": "report-battery-thermal-alarm",
+          "name": "上报电池热异常告警",
+          "event": {
+            "actor": "电池管理系统",
+            "action": "发送告警信息",
+            "object": "整车控制器和驾驶员",
+            "effect": "通知整车控制器和驾驶员电池温度异常或存在热失控风险",
+            "trigger": "检测到电池温度异常或存在热失控风险",
+            "condition": "温度异常标志有效或热失控风险评估为高风险",
+            "inputs": [
+              "温度异常标志",
+              "电池热状态判定结果",
+              "电池最高温度"
+            ],
+            "outputs": [
+              "告警信息"
+            ],
+            "preconditions": [
+              "已完成动力电池热状态判断",
+              "通信链路正常"
+            ],
+            "postconditions": [
+              "告警信息已发送至整车控制器和驾驶员"
+            ]
+          }
+        }
       ],
-      "subgraph_id": "SG_BTM_MONITOR_001",
-      "architecture_id": "ARCH_BTM_EV_001",
-      "view_id": "VIEW_BTM_CONTROL_001",
-      "view_type": "control",
-      "view_title": "动力电池热管理控制视角",
-      "case_title": "新能源汽车动力电池液冷热管理架构",
-      "title": "动力电池温度监测与热状态判定",
-      "description": "电池管理系统周期采集电芯和电池包温度，计算最高温度、最低温度、平均温度及温差，并依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志。",
-      "labels": {
-        "functions": [
-          "温度监测",
-          "热状态判定",
-          "冷却需求生成",
-          "加热需求生成"
-        ]
-      },
-      "scenarios": [
-        "车辆运行",
-        "周期采样",
-        "热管理控制"
-      ],
-      "source_path": "cases/ARCH_BTM_EV_001/case.json",
-      "rank": -1.21
+      "summary": "该功能点集合描述新能源汽车动力电池热管理系统从温度监测、热状态判断，到电池冷却、电池加热以及温度异常告警的完整功能链路。"
     },
-    {
-      "match_order": 2,
-      "match_status": "semantic_match",
-      "knowledge_scope": "architecture",
-      "query_terms": [
-        "动力电池温度",
-        "热状态",
-        "冷却",
-        "加热",
-        "温度异常"
-      ],
-      "subgraph_id": "SG_BTM_COOL_002",
-      "architecture_id": "ARCH_BTM_EV_001",
-      "view_id": "VIEW_BTM_FLUID_001",
-      "view_type": "fluid_path",
-      "view_title": "动力电池冷却液回路视角",
-      "case_title": "新能源汽车动力电池液冷热管理架构",
-      "title": "过温工况下的动力电池液冷控制",
-      "description": "当电池最高温度或平均温度超过冷却启动阈值时，热管理控制器输出冷却需求，驱动冷却液泵并根据散热需求联动冷却风扇或制冷回路，使电池温度回落到允许范围。",
-      "labels": {
-        "functions": [
-          "过温判断",
-          "冷却需求生成",
-          "冷却液泵控制",
-          "冷却风扇控制"
-        ]
-      },
-      "scenarios": [
-        "高温运行",
-        "快速充电",
-        "高负载工况"
-      ],
-      "source_path": "cases/ARCH_BTM_EV_001/case.json",
-      "rank": -1.46
-    },
-    {
-      "match_order": 3,
-      "match_status": "semantic_match",
-      "knowledge_scope": "architecture",
-      "query_terms": [
-        "动力电池温度",
-        "热状态",
-        "冷却",
-        "加热",
-        "温度异常"
-      ],
-      "subgraph_id": "SG_BTM_HEAT_003",
-      "architecture_id": "ARCH_BTM_EV_002",
-      "view_id": "VIEW_BTM_MODE_002",
-      "view_type": "operating_mode",
-      "view_title": "低温运行模式视角",
-      "case_title": "纯电动车低温电池预热架构",
-      "title": "低温工况下的动力电池加热控制",
-      "description": "当电池最低温度低于加热启动阈值且加热装置可用时，控制器生成加热需求并驱动电池加热器或利用热泵余热回路提升电池温度，直到达到目标工作温度区间。",
-      "labels": {
-        "functions": [
-          "低温判断",
-          "加热需求生成",
-          "电池加热器控制",
-          "预热退出判断"
-        ]
-      },
-      "scenarios": [
-        "低温启动",
-        "低温充电",
-        "车辆预热"
-      ],
-      "source_path": "cases/ARCH_BTM_EV_002/case.json",
-      "rank": -1.63
-    },
-    {
-      "match_order": 4,
-      "match_status": "semantic_match",
-      "knowledge_scope": "architecture",
-      "query_terms": [
-        "动力电池温度",
-        "热状态",
-        "冷却",
-        "加热",
-        "温度异常"
-      ],
-      "subgraph_id": "SG_BTM_FAULT_004",
-      "architecture_id": "ARCH_BTM_EV_003",
-      "view_id": "VIEW_BTM_SAFETY_001",
-      "view_type": "control",
-      "view_title": "热安全与故障处理视角",
-      "case_title": "动力电池热安全监控架构",
-      "title": "温度异常检测与热失控风险告警",
-      "description": "当检测到电池局部温度异常升高、温差持续扩大或热失控风险标志时，系统生成温度异常告警，并向整车控制器和驾驶员发送告警信息；严重情况下触发降功率、热管理强化或安全处置流程。",
-      "labels": {
-        "functions": [
-          "温度异常检测",
-          "热失控风险识别",
-          "整车控制器告警",
-          "驾驶员告警"
-        ]
-      },
-      "scenarios": [
-        "温度异常",
-        "热失控风险",
-        "故障处置"
-      ],
-      "source_path": "cases/ARCH_BTM_EV_003/case.json",
-      "rank": -1.88
-    },
-    {
-      "match_order": 5,
-      "match_status": "semantic_match",
-      "knowledge_scope": "architecture",
-      "query_terms": [
-        "动力电池温度",
-        "热状态",
-        "冷却",
-        "加热",
-        "温度异常"
-      ],
-      "subgraph_id": "SG_BTM_INTERLOCK_005",
-      "architecture_id": "ARCH_BTM_EV_004",
-      "view_id": "VIEW_BTM_DEP_001",
-      "view_type": "subsystem",
-      "view_title": "热管理功能依赖视角",
-      "case_title": "动力电池热管理功能逻辑架构",
-      "title": "热状态判定与冷却/加热执行联锁关系",
-      "description": "温度监测结果首先进入热状态判定功能；热状态判定输出冷却需求、加热需求和异常标志。冷却需求控制冷却执行链，加热需求控制加热执行链，异常标志进入告警与安全控制链，形成监测—判断—执行—反馈的闭环关系。",
-      "labels": {
-        "relations": [
-          "monitor_to_evaluate",
-          "evaluate_to_cooling",
-          "evaluate_to_heating",
-          "evaluate_to_alarm"
-        ]
-      },
-      "scenarios": [
-        "正常运行",
-        "高温",
-        "低温",
-        "异常"
-      ],
-      "source_path": "cases/ARCH_BTM_EV_004/case.json",
-      "rank": -2.02
-    }
-  ],
-  "llm_result": {
-    "functionUpdates": [
-      {
-        "id": "monitor-battery-temperature",
-        "fields": {
-          "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求",
-          "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度"
-        },
-        "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_MONITOR_001",
-            "architectureId": "ARCH_BTM_EV_001",
-            "viewId": "VIEW_BTM_CONTROL_001",
-            "title": "动力电池温度监测与热状态判定",
-            "rank": -1.21,
-            "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "evaluate-battery-thermal-state",
-        "fields": {
-          "constraint": "热管理控制阈值已完成配置且温度数据有效",
-          "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志"
-        },
-        "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_MONITOR_001",
-            "architectureId": "ARCH_BTM_EV_001",
-            "viewId": "VIEW_BTM_CONTROL_001",
-            "title": "动力电池温度监测与热状态判定",
-            "rank": -1.21,
-            "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "control-battery-cooling",
-        "fields": {
-          "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用",
-          "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却"
-        },
-        "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_COOL_002",
-            "architectureId": "ARCH_BTM_EV_001",
-            "viewId": "VIEW_BTM_FLUID_001",
-            "title": "过温工况下的动力电池液冷控制",
-            "rank": -1.46,
-            "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "control-battery-heating",
-        "fields": {
-          "constraint": "加热系统不存在禁止运行故障且加热装置可用",
-          "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热"
-        },
-        "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_HEAT_003",
-            "architectureId": "ARCH_BTM_EV_002",
-            "viewId": "VIEW_BTM_MODE_002",
-            "title": "低温工况下的动力电池加热控制",
-            "rank": -1.63,
-            "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      }
-    ],
-    "missingFunctions": [
-      {
-        "id": "report-thermal-alarm",
-        "name": "上报电池热异常告警",
-        "actor": "电池管理系统",
-        "action": "上报",
-        "object": "电池温度异常或热失控风险告警信息",
-        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
-        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
-        "condition": "电池管理系统与整车控制器通信链路正常",
-        "inputs": [
-          "温度异常标志",
-          "电池热状态判定结果",
-          "电池最高温度",
-          "电池温差"
-        ],
-        "outputs": [
-          "整车控制器告警信息",
-          "驾驶员告警信息"
-        ],
-        "preconditions": [
-          "已完成动力电池热状态判定",
-          "已识别到温度异常或热失控风险"
-        ],
-        "postconditions": [
-          "告警信息已发送至整车控制器和驾驶员"
-        ],
-        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
-        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
-        "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_FAULT_004",
-            "architectureId": "ARCH_BTM_EV_003",
-            "viewId": "VIEW_BTM_SAFETY_001",
-            "title": "温度异常检测与热失控风险告警",
-            "rank": -1.88,
-            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
-          },
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
-        "confidence": 0.7
-      }
-    ],
-    "missingRelations": [
-      {
-        "source": "evaluate-battery-thermal-state",
-        "target": "report-thermal-alarm",
-        "source_name": "判断动力电池热状态",
-        "target_name": "上报电池热异常告警",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "温度异常标志",
-        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认",
-        "confidence": 0.68
-      }
-    ]
-  },
-  "raw_llm_result": {
-    "functionUpdates": [
-      {
-        "id": "monitor-battery-temperature",
-        "fields": {
-          "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度",
-          "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求"
-        },
-        "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_MONITOR_001",
-            "architectureId": "ARCH_BTM_EV_001",
-            "viewId": "VIEW_BTM_CONTROL_001",
-            "title": "动力电池温度监测与热状态判定",
-            "rank": -1.21,
-            "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "evaluate-battery-thermal-state",
-        "fields": {
-          "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志",
-          "constraint": "热管理控制阈值已完成配置且温度数据有效"
-        },
-        "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_MONITOR_001",
-            "architectureId": "ARCH_BTM_EV_001",
-            "viewId": "VIEW_BTM_CONTROL_001",
-            "title": "动力电池温度监测与热状态判定",
-            "rank": -1.21,
-            "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "control-battery-cooling",
-        "fields": {
-          "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却",
-          "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用"
-        },
-        "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_COOL_002",
-            "architectureId": "ARCH_BTM_EV_001",
-            "viewId": "VIEW_BTM_FLUID_001",
-            "title": "过温工况下的动力电池液冷控制",
-            "rank": -1.46,
-            "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "control-battery-heating",
-        "fields": {
-          "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热",
-          "constraint": "加热系统不存在禁止运行故障且加热装置可用"
-        },
-        "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_HEAT_003",
-            "architectureId": "ARCH_BTM_EV_002",
-            "viewId": "VIEW_BTM_MODE_002",
-            "title": "低温工况下的动力电池加热控制",
-            "rank": -1.63,
-            "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      }
-    ],
-    "missingFunctions": [
-      {
-        "id": "report-thermal-alarm",
-        "name": "上报电池热异常告警",
-        "actor": "电池管理系统",
-        "action": "上报",
-        "object": "电池温度异常或热失控风险告警信息",
-        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
-        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
-        "condition": "电池管理系统与整车控制器通信链路正常",
-        "inputs": [
-          "温度异常标志",
-          "电池热状态判定结果",
-          "电池最高温度",
-          "电池温差"
-        ],
-        "outputs": [
-          "整车控制器告警信息",
-          "驾驶员告警信息"
-        ],
-        "preconditions": [
-          "已完成动力电池热状态判定",
-          "已识别到温度异常或热失控风险"
-        ],
-        "postconditions": [
-          "告警信息已发送至整车控制器和驾驶员"
-        ],
-        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
-        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
-        "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_FAULT_004",
-            "architectureId": "ARCH_BTM_EV_003",
-            "viewId": "VIEW_BTM_SAFETY_001",
-            "title": "温度异常检测与热失控风险告警",
-            "rank": -1.88,
-            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
-          },
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
-        "confidence": 0.7
-      }
-    ],
-    "missingRelations": [
-      {
-        "source": "evaluate-battery-thermal-state",
-        "target": "report-thermal-alarm",
-        "source_name": "判断动力电池热状态",
-        "target_name": "上报电池热异常告警",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "温度异常标志",
-        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认",
-        "confidence": 0.68
-      }
-    ]
-  },
-  "completion_result": {
-    "functions": [
-      {
-        "id": "monitor-battery-temperature",
-        "name": "监测动力电池温度",
-        "actor": "电池管理系统",
-        "action": "监测",
-        "object": "动力电池温度",
-        "effect": "获得动力电池包内部各测温点的实时温度数据",
-        "trigger": "车辆启动或电池管理系统周期采样触发",
-        "condition": "电池管理系统已上电且温度传感器通信正常",
-        "inputs": [
-          "车辆启动信号",
-          "电芯温度传感器数据",
-          "电池包环境温度数据"
-        ],
-        "outputs": [
-          "电池最高温度",
-          "电池最低温度",
-          "电池平均温度",
-          "电池温差"
-        ],
-        "preconditions": [
-          "电池管理系统正常运行",
-          "温度传感器已完成初始化",
-          "温度采样数据有效"
-        ],
-        "postconditions": [
-          "已获得最新的动力电池温度信息"
-        ],
-        "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度",
-        "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_MONITOR_001",
-                "architectureId": "ARCH_BTM_EV_001",
-                "viewId": "VIEW_BTM_CONTROL_001",
-                "title": "动力电池温度监测与热状态判定",
-                "rank": -1.21,
-                "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ],
-        "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "evaluate-battery-thermal-state",
-        "name": "判断动力电池热状态",
-        "actor": "电池管理系统",
-        "action": "判断",
-        "object": "动力电池热状态",
-        "effect": "确定动力电池处于正常、过热、过冷或温度异常状态",
-        "trigger": "获得最新的动力电池温度信息",
-        "condition": "电池温度数据有效且热管理阈值已经完成配置",
-        "inputs": [
-          "电池最高温度",
-          "电池最低温度",
-          "电池平均温度",
-          "电池温差",
-          "冷却启动阈值",
-          "加热启动阈值",
-          "温度异常阈值"
-        ],
-        "outputs": [
-          "电池热状态判定结果",
-          "冷却需求",
-          "加热需求",
-          "温度异常标志"
-        ],
-        "preconditions": [
-          "已完成动力电池温度监测",
-          "热管理控制阈值有效"
-        ],
-        "postconditions": [
-          "已确定动力电池当前热状态",
-          "已生成功率热管理需求"
-        ],
-        "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志",
-        "constraint": "热管理控制阈值已完成配置且温度数据有效",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_MONITOR_001",
-                "architectureId": "ARCH_BTM_EV_001",
-                "viewId": "VIEW_BTM_CONTROL_001",
-                "title": "动力电池温度监测与热状态判定",
-                "rank": -1.21,
-                "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ],
-        "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "control-battery-cooling",
-        "name": "执行动力电池冷却",
-        "actor": "电池热管理控制器",
-        "action": "冷却",
-        "object": "动力电池包",
-        "effect": "降低动力电池温度并将其维持在允许的工作温度范围内",
-        "trigger": "电池热状态判定结果为过热，或冷却需求有效",
-        "condition": "电池温度高于冷却启动阈值，且冷却系统不存在禁止运行故障",
-        "inputs": [
-          "冷却需求",
-          "电池最高温度",
-          "电池平均温度",
-          "车辆运行状态",
-          "冷却系统状态"
-        ],
-        "outputs": [
-          "冷却控制指令",
-          "冷却液泵控制指令",
-          "冷却风扇控制指令"
-        ],
-        "preconditions": [
-          "已确认动力电池存在冷却需求",
-          "冷却液回路可用",
-          "冷却执行机构正常"
-        ],
-        "postconditions": [
-          "动力电池冷却功能已启动",
-          "电池温度开始下降或保持稳定"
-        ],
-        "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却",
-        "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_COOL_002",
-                "architectureId": "ARCH_BTM_EV_001",
-                "viewId": "VIEW_BTM_FLUID_001",
-                "title": "过温工况下的动力电池液冷控制",
-                "rank": -1.46,
-                "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ],
-        "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "control-battery-heating",
-        "name": "执行动力电池加热",
-        "actor": "电池热管理控制器",
-        "action": "加热",
-        "object": "动力电池包",
-        "effect": "提高动力电池温度并将其恢复到适宜的工作温度范围",
-        "trigger": "电池热状态判定结果为过冷，或加热需求有效",
-        "condition": "电池温度低于加热启动阈值，且加热系统不存在禁止运行故障",
-        "inputs": [
-          "加热需求",
-          "电池最低温度",
-          "电池平均温度",
-          "车辆运行状态",
-          "加热系统状态"
-        ],
-        "outputs": [
-          "加热控制指令",
-          "电池加热器控制指令"
-        ],
-        "preconditions": [
-          "已确认动力电池存在加热需求",
-          "加热装置可用",
-          "动力电池允许执行加热"
-        ],
-        "postconditions": [
-          "动力电池加热功能已启动",
-          "电池温度开始上升"
-        ],
-        "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热",
-        "constraint": "加热系统不存在禁止运行故障且加热装置可用",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_HEAT_003",
-                "architectureId": "ARCH_BTM_EV_002",
-                "viewId": "VIEW_BTM_MODE_002",
-                "title": "低温工况下的动力电池加热控制",
-                "rank": -1.63,
-                "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ],
-        "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
-        "confidence": 0.7
-      },
-      {
-        "id": "report-thermal-alarm",
-        "name": "上报电池热异常告警",
-        "actor": "电池管理系统",
-        "action": "上报",
-        "object": "电池温度异常或热失控风险告警信息",
-        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
-        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
-        "condition": "电池管理系统与整车控制器通信链路正常",
-        "inputs": [
-          "温度异常标志",
-          "电池热状态判定结果",
-          "电池最高温度",
-          "电池温差"
-        ],
-        "outputs": [
-          "整车控制器告警信息",
-          "驾驶员告警信息"
-        ],
-        "preconditions": [
-          "已完成动力电池热状态判定",
-          "已识别到温度异常或热失控风险"
-        ],
-        "postconditions": [
-          "告警信息已发送至整车控制器和驾驶员"
-        ],
-        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
-        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
-        "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_FAULT_004",
-            "architectureId": "ARCH_BTM_EV_003",
-            "viewId": "VIEW_BTM_SAFETY_001",
-            "title": "温度异常检测与热失控风险告警",
-            "rank": -1.88,
-            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
-          },
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "fieldCompletionEvidence": [],
-        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
-        "confidence": 0.7
-      }
-    ],
     "relations": [
       {
         "source": "evaluate-battery-thermal-state",
@@ -812,11 +175,7 @@
         "relation_type": "control_flow",
         "direction": "source_to_target",
         "confidence": 0.98,
-        "evidence": "当电池热状态判定为过热并产生冷却需求时，触发动力电池冷却控制。",
-        "flowObject": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": ""
+        "evidence": "当电池热状态判定为过热并产生冷却需求时，触发动力电池冷却控制。"
       },
       {
         "source": "evaluate-battery-thermal-state",
@@ -826,398 +185,19 @@
         "relation_type": "control_flow",
         "direction": "source_to_target",
         "confidence": 0.98,
-        "evidence": "当电池热状态判定为过冷并产生加热需求时，触发动力电池加热控制。",
-        "flowObject": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": ""
+        "evidence": "当电池热状态判定为过冷并产生加热需求时，触发动力电池加热控制。"
       },
       {
         "source": "evaluate-battery-thermal-state",
-        "target": "report-thermal-alarm",
+        "target": "report-battery-thermal-alarm",
         "source_name": "判断动力电池热状态",
         "target_name": "上报电池热异常告警",
         "relation_type": "control_flow",
         "direction": "source_to_target",
-        "flowObject": "温度异常标志",
-        "confidence": 0.68,
-        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认"
+        "confidence": 0.95,
+        "evidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息"
       }
     ]
   },
-  "proposed_completion_result": {
-    "functions": [
-      {
-        "actor": "电池管理系统",
-        "action": "监测",
-        "object": "动力电池温度",
-        "effect": "获得动力电池包内部各测温点的实时温度数据",
-        "trigger": "车辆启动或电池管理系统周期采样触发",
-        "condition": "电池管理系统已上电且温度传感器通信正常",
-        "inputs": [
-          "车辆启动信号",
-          "电芯温度传感器数据",
-          "电池包环境温度数据"
-        ],
-        "outputs": [
-          "电池最高温度",
-          "电池最低温度",
-          "电池平均温度",
-          "电池温差"
-        ],
-        "preconditions": [
-          "电池管理系统正常运行",
-          "温度传感器已完成初始化",
-          "温度采样数据有效"
-        ],
-        "postconditions": [
-          "已获得最新的动力电池温度信息"
-        ],
-        "id": "monitor-battery-temperature",
-        "name": "监测动力电池温度",
-        "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度",
-        "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": "",
-        "confidence": 0.0,
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_MONITOR_001",
-                "architectureId": "ARCH_BTM_EV_001",
-                "viewId": "VIEW_BTM_CONTROL_001",
-                "title": "动力电池温度监测与热状态判定",
-                "rank": -1.21,
-                "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ]
-      },
-      {
-        "actor": "电池管理系统",
-        "action": "判断",
-        "object": "动力电池热状态",
-        "effect": "确定动力电池处于正常、过热、过冷或温度异常状态",
-        "trigger": "获得最新的动力电池温度信息",
-        "condition": "电池温度数据有效且热管理阈值已经完成配置",
-        "inputs": [
-          "电池最高温度",
-          "电池最低温度",
-          "电池平均温度",
-          "电池温差",
-          "冷却启动阈值",
-          "加热启动阈值",
-          "温度异常阈值"
-        ],
-        "outputs": [
-          "电池热状态判定结果",
-          "冷却需求",
-          "加热需求",
-          "温度异常标志"
-        ],
-        "preconditions": [
-          "已完成动力电池温度监测",
-          "热管理控制阈值有效"
-        ],
-        "postconditions": [
-          "已确定动力电池当前热状态",
-          "已生成功率热管理需求"
-        ],
-        "id": "evaluate-battery-thermal-state",
-        "name": "判断动力电池热状态",
-        "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志",
-        "constraint": "热管理控制阈值已完成配置且温度数据有效",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": "",
-        "confidence": 0.0,
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_MONITOR_001",
-                "architectureId": "ARCH_BTM_EV_001",
-                "viewId": "VIEW_BTM_CONTROL_001",
-                "title": "动力电池温度监测与热状态判定",
-                "rank": -1.21,
-                "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ]
-      },
-      {
-        "actor": "电池热管理控制器",
-        "action": "冷却",
-        "object": "动力电池包",
-        "effect": "降低动力电池温度并将其维持在允许的工作温度范围内",
-        "trigger": "电池热状态判定结果为过热，或冷却需求有效",
-        "condition": "电池温度高于冷却启动阈值，且冷却系统不存在禁止运行故障",
-        "inputs": [
-          "冷却需求",
-          "电池最高温度",
-          "电池平均温度",
-          "车辆运行状态",
-          "冷却系统状态"
-        ],
-        "outputs": [
-          "冷却控制指令",
-          "冷却液泵控制指令",
-          "冷却风扇控制指令"
-        ],
-        "preconditions": [
-          "已确认动力电池存在冷却需求",
-          "冷却液回路可用",
-          "冷却执行机构正常"
-        ],
-        "postconditions": [
-          "动力电池冷却功能已启动",
-          "电池温度开始下降或保持稳定"
-        ],
-        "id": "control-battery-cooling",
-        "name": "执行动力电池冷却",
-        "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却",
-        "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": "",
-        "confidence": 0.0,
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_COOL_002",
-                "architectureId": "ARCH_BTM_EV_001",
-                "viewId": "VIEW_BTM_FLUID_001",
-                "title": "过温工况下的动力电池液冷控制",
-                "rank": -1.46,
-                "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ]
-      },
-      {
-        "actor": "电池热管理控制器",
-        "action": "加热",
-        "object": "动力电池包",
-        "effect": "提高动力电池温度并将其恢复到适宜的工作温度范围",
-        "trigger": "电池热状态判定结果为过冷，或加热需求有效",
-        "condition": "电池温度低于加热启动阈值，且加热系统不存在禁止运行故障",
-        "inputs": [
-          "加热需求",
-          "电池最低温度",
-          "电池平均温度",
-          "车辆运行状态",
-          "加热系统状态"
-        ],
-        "outputs": [
-          "加热控制指令",
-          "电池加热器控制指令"
-        ],
-        "preconditions": [
-          "已确认动力电池存在加热需求",
-          "加热装置可用",
-          "动力电池允许执行加热"
-        ],
-        "postconditions": [
-          "动力电池加热功能已启动",
-          "电池温度开始上升"
-        ],
-        "id": "control-battery-heating",
-        "name": "执行动力电池加热",
-        "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热",
-        "constraint": "加热系统不存在禁止运行故障且加热装置可用",
-        "requirementEvidence": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": "",
-        "confidence": 0.0,
-        "fieldCompletionEvidence": [
-          {
-            "fields": [
-              "constraint",
-              "scenario"
-            ],
-            "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
-            "historyEvidence": [
-              {
-                "subgraphId": "SG_BTM_HEAT_003",
-                "architectureId": "ARCH_BTM_EV_002",
-                "viewId": "VIEW_BTM_MODE_002",
-                "title": "低温工况下的动力电池加热控制",
-                "rank": -1.63,
-                "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
-              }
-            ],
-            "evidenceType": "requirement_and_history",
-            "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
-            "confidence": 0.7
-          }
-        ]
-      },
-      {
-        "id": "report-thermal-alarm",
-        "name": "上报电池热异常告警",
-        "actor": "电池管理系统",
-        "action": "上报",
-        "object": "电池温度异常或热失控风险告警信息",
-        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
-        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
-        "condition": "电池管理系统与整车控制器通信链路正常",
-        "inputs": [
-          "温度异常标志",
-          "电池热状态判定结果",
-          "电池最高温度",
-          "电池温差"
-        ],
-        "outputs": [
-          "整车控制器告警信息",
-          "驾驶员告警信息"
-        ],
-        "preconditions": [
-          "已完成动力电池热状态判定",
-          "已识别到温度异常或热失控风险"
-        ],
-        "postconditions": [
-          "告警信息已发送至整车控制器和驾驶员"
-        ],
-        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
-        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
-        "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_FAULT_004",
-            "architectureId": "ARCH_BTM_EV_003",
-            "viewId": "VIEW_BTM_SAFETY_001",
-            "title": "温度异常检测与热失控风险告警",
-            "rank": -1.88,
-            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
-          },
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
-        "confidence": 0.7
-      }
-    ],
-    "relations": [
-      {
-        "source": "evaluate-battery-thermal-state",
-        "target": "control-battery-cooling",
-        "source_name": "判断动力电池热状态",
-        "target_name": "执行动力电池冷却",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "confidence": 0.98,
-        "evidence": "当电池热状态判定为过热并产生冷却需求时，触发动力电池冷却控制。",
-        "flowObject": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": ""
-      },
-      {
-        "source": "evaluate-battery-thermal-state",
-        "target": "control-battery-heating",
-        "source_name": "判断动力电池热状态",
-        "target_name": "执行动力电池加热",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "confidence": 0.98,
-        "evidence": "当电池热状态判定为过冷并产生加热需求时，触发动力电池加热控制。",
-        "flowObject": "",
-        "historyEvidence": [],
-        "evidenceType": "",
-        "reason": ""
-      },
-      {
-        "source": "evaluate-battery-thermal-state",
-        "target": "report-thermal-alarm",
-        "source_name": "判断动力电池热状态",
-        "target_name": "上报电池热异常告警",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "温度异常标志",
-        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
-        "historyEvidence": [
-          {
-            "subgraphId": "SG_BTM_INTERLOCK_005",
-            "architectureId": "ARCH_BTM_EV_004",
-            "viewId": "VIEW_BTM_DEP_001",
-            "title": "热状态判定与冷却/加热执行联锁关系",
-            "rank": -2.02,
-            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
-          }
-        ],
-        "evidenceType": "requirement_and_history",
-        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认",
-        "confidence": 0.68
-      }
-    ]
-  },
-  "confirmation": {
-    "status": "confirmed",
-    "published": true,
-    "publish_status": {
-      "enabled": true,
-      "success": true,
-      "api_url": "https://function-result-api.onrender.com/api/v1/results",
-      "response": {
-        "success": true,
-        "message": "补全结果发布成功",
-        "schema_version": "input-compatible-v2",
-        "result_id": "b755353a2ebf4244a2e4c5c9bc69a17f",
-        "published_at": "2026-09-30T01:05:36.839032+00:00"
-      }
-    }
-  }
+  "error": null
 }

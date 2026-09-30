@@ -201,39 +201,12 @@
 
 
             <div
-                id="step-confirm"
-                class="pipeline-step"
-            >
-
-                <div class="step-number">
-                    4
-                </div>
-
-                <div>
-                    <strong>
-                        人工确认
-                    </strong>
-
-                    <small>
-                        接受 / 拒绝 / 修改
-                    </small>
-                </div>
-
-            </div>
-
-
-            <div class="arrow">
-                →
-            </div>
-
-
-            <div
                 id="step-result"
                 class="pipeline-step"
             >
 
                 <div class="step-number">
-                    5
+                    4
                 </div>
 
                 <div>
@@ -308,16 +281,16 @@
                 </h2>
 
                 <p class="section-description">
-                    AI仅提供候选补全结果，最终模型由用户确认后生成。
+                    AI补全建议将全部自动接收，并直接生成最终模型。
                 </p>
 
             </div>
 
             <span
                 id="confirmationStatus"
-                class="status-tag pending"
+                class="status-tag confirmed"
             >
-                待人工确认
+                自动接收
             </span>
 
         </div>
@@ -358,7 +331,7 @@
             <div class="summary-item">
 
                 <span>
-                    当前确认进度
+                    自动接收进度
                 </span>
 
                 <strong
@@ -382,24 +355,6 @@
                 功能字段补全与缺失功能建议
             </h3>
 
-            <div class="batch-actions">
-
-                <button
-                    class="small-button accept"
-                    onclick="acceptAllFunctions()"
-                >
-                    全部接受
-                </button>
-
-                <button
-                    class="small-button reject"
-                    onclick="rejectAllFunctions()"
-                >
-                    全部拒绝
-                </button>
-
-            </div>
-
         </div>
 
 
@@ -417,62 +372,12 @@
                 功能关联关系补全建议
             </h3>
 
-            <div class="batch-actions">
-
-                <button
-                    class="small-button accept"
-                    onclick="acceptAllRelations()"
-                >
-                    全部接受
-                </button>
-
-                <button
-                    class="small-button reject"
-                    onclick="rejectAllRelations()"
-                >
-                    全部拒绝
-                </button>
-
-            </div>
-
         </div>
 
 
         <div id="relationResults">
         </div>
 
-
-        <!-- ------------------------------------------------- -->
-        <!-- 最终确认 -->
-        <!-- ------------------------------------------------- -->
-
-        <div class="confirmation-panel">
-
-            <div>
-
-                <strong>
-                    人工确认后发布标准化结果
-                </strong>
-
-                <p>
-                    已接受的功能和关系将进入最终模型；
-                    拒绝的AI建议不会进入最终模型。
-                    用户修改后的内容以修改结果为准；
-                    只有点击确认后才会推送给下游。
-                </p>
-
-            </div>
-
-
-            <button
-                id="finalConfirmButton"
-                class="confirm-button"
-                onclick="confirmResult()"
-            >
-                ✓ 确认并发布最终模型
-            </button>
-
-        </div>
 
     </section>
 
@@ -495,7 +400,7 @@
                 </h2>
 
                 <p class="section-description">
-                    以下内容为人工确认并标准化后的最终模型。
+                    以下内容为自动接收全部AI建议并标准化后的最终模型。
                 </p>
 
             </div>
@@ -504,7 +409,7 @@
                 id="finalModelStatus"
                 class="status-tag confirmed"
             >
-                已确认
+                已自动生成
             </span>
 
         </div>

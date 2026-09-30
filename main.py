@@ -23,16 +23,13 @@ from service.completion_service import (
     normalize_current_case
 )
 
-from service.user_confirm_service import (
-    confirm_completion
-)
-
 from service.graph_service import (
     build_semantic_graph,
     save_semantic_graph
 )
 
 from service.result_publish_service import (
+    build_published_payload,
     publish_result
 )
 
@@ -56,7 +53,7 @@ def main():
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【1/8】检查知识库API配置")
+    print("【1/7】检查知识库API配置")
 
     if not config.KNOWLEDGE_API_URL:
         raise RuntimeError(
@@ -82,7 +79,7 @@ def main():
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【2/8】读取当前设计输入")
+    print("【2/7】读取当前设计输入")
 
     current_case = load_current_case()
 
@@ -122,7 +119,7 @@ def main():
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【3/8】知识库API检索 + Qwen补全")
+    print("【3/7】知识库API检索 + Qwen补全")
 
     result = completion(
         current_case,
@@ -135,7 +132,7 @@ def main():
     )
 
     print(
-        f"\n[耗时] 【3/8】知识库检索+Qwen总耗时："
+        f"\n[耗时] 【3/7】知识库检索+Qwen总耗时："
         f"{step_time:.3f}秒"
     )
 
@@ -146,7 +143,7 @@ def main():
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【4/8】获取Qwen结果")
+    print("【4/7】获取Qwen结果")
 
     llm_result = result.get(
         "llm_result",
@@ -174,16 +171,21 @@ def main():
     )
 
     # ==================================================
-    # 5. 保存AI原始结果
+    # 5. 保存与输入字段一致的最终结果
     # ==================================================
 
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【5/8】保存AI补全结果")
+    print("【5/7】保存最终补全结果")
+
+    output_result = build_published_payload(
+        result,
+        normalized_case
+    )
 
     save_json(
-        result,
+        output_result,
         config.OUTPUT_PATH
     )
 
@@ -193,51 +195,21 @@ def main():
     )
 
     print(
-        f"[耗时] 保存result.json："
+        f"[耗时] 保存精简result.json："
         f"{step_time:.3f}秒"
     )
 
     # ==================================================
-    # 6. 用户确认
+    # 6. 自动接收并发布全部建议
     # ==================================================
 
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【6/8】用户确认")
-
-    if not confirm_completion(
-        llm_result
-    ):
-
-        step_time = (
-            time.perf_counter()
-            - step_start_time
-        )
-
-        print(
-            f"[耗时] 用户确认阶段："
-            f"{step_time:.3f}秒"
-        )
-
-        print(
-            "\n用户拒绝补全"
-        )
-
-        return
-
-    step_time = (
-        time.perf_counter()
-        - step_start_time
-    )
+    print("【6/7】自动接收并发布全部建议")
 
     print(
-        f"[耗时] 用户确认阶段："
-        f"{step_time:.3f}秒"
-    )
-
-    print(
-        "\n用户确认Qwen补全建议"
+        "\n已自动接收Qwen的全部补全建议"
     )
 
     # ==================================================
@@ -247,9 +219,29 @@ def main():
     print()
     print("正在向结果API发布补全结果")
 
-    publish_status = publish_result(
-        result,
-        normalized_case
+    try:
+
+        publish_status = publish_result(
+            result,
+            normalized_case
+        )
+
+    except Exception as e:
+
+        publish_status = {
+            "enabled": config.RESULT_API_ENABLED,
+            "success": False,
+            "message": str(e)
+        }
+
+    step_time = (
+        time.perf_counter()
+        - step_start_time
+    )
+
+    print(
+        f"[耗时] 自动接收与发布阶段："
+        f"{step_time:.3f}秒"
     )
 
     print(
@@ -257,13 +249,13 @@ def main():
         f"{publish_status.get('success', False)}"
     )
     # ==================================================
-    # 7. 获取最终标准化模型
+    # 7. 获取最终标准化模型并构建功能语义图
     # ==================================================
 
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【7/8】获取最终标准化模型")
+    print("【7/7】获取最终标准化模型")
 
     completion_result = result.get(
         "completion_result",
@@ -304,13 +296,13 @@ def main():
     )
 
     # ==================================================
-    # 8. 构建功能语义图
+    # 构建功能语义图
     # ==================================================
 
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【8/8】构建功能语义图")
+    print("构建功能语义图")
 
     # --------------------------------------------------
     # 当前已有功能
