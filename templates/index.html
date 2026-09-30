@@ -41,7 +41,7 @@
             </h1>
 
             <p>
-                基于RAG + BGE + FAISS + Qwen
+                基于知识库API + FTS5 + Qwen
                 的汽车系统功能点及关联关系补全
             </p>
 
@@ -130,11 +130,11 @@
 
                 <div>
                     <strong>
-                        BGE + FAISS
+                        知识库API
                     </strong>
 
                     <small>
-                        RAG检索
+                        FTS5检索
                     </small>
                 </div>
 
@@ -255,7 +255,7 @@
 
 
     <!-- ================================================= -->
-    <!-- RAG -->
+    <!-- 知识库检索 -->
     <!-- ================================================= -->
 
     <section
@@ -266,11 +266,11 @@
         <div class="section-title">
 
             <h2>
-                ③ RAG检索结果
+                ③ 知识库检索结果
             </h2>
 
             <span class="tag">
-                Top-K
+                API Top-K
             </span>
 
         </div>
@@ -278,7 +278,7 @@
 
         <div class="info-banner">
 
-            RAG检索结果作为Qwen补全的历史参考依据，
+            知识库API返回的架构子图作为Qwen补全的证据，
             不直接写入最终功能模型。
 
         </div>
@@ -519,7 +519,7 @@
 </div>
 
 
-<script src="/static/app.js?v=20260929-decision-state-fix"></script>
+<script src="/static/app.js?v=20261001-qwen-timeout-v1"></script>
 
 
 </body>

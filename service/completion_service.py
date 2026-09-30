@@ -1,5 +1,7 @@
 import time
 
+import config
+
 from service.retrieval_service import retrieve_top_k_cases
 from service.prompt_service import build_completion_prompt
 from service.llm_service import call_qwen
@@ -1765,27 +1767,15 @@ def build_confirmed_completion_result(
 
 
 # ============================================================
-# RAG统计
+# 知识库检索统计
 # ============================================================
 
 def print_rag_structure_statistics(
     retrieved
 ):
     """
-    检查新版RAG是否真的携带历史关系。
-
-    如果这里一直显示：
-        邻居=0
-        关系=0
-
-    则说明：
-        1. 没重新建库；
-        或
-        2. 历史案例本身没有relations。
+    打印知识库API返回的架构子图摘要。
     """
-
-    total_neighbors = 0
-    total_relations = 0
 
     for index, item in enumerate(
         retrieved,
@@ -1798,66 +1788,18 @@ def print_rag_structure_statistics(
         ):
             continue
 
-        data = item.get(
-            "data",
-            {}
-        )
-
-        if not isinstance(
-            data,
-            dict
-        ):
-            continue
-
-        function = data.get(
-            "function",
-            {}
-        )
-
-        neighbors = data.get(
-            "neighborFunctions",
-            []
-        )
-
-        relations = data.get(
-            "relatedRelations",
-            []
-        )
-
-        if not isinstance(
-            neighbors,
-            list
-        ):
-            neighbors = []
-
-        if not isinstance(
-            relations,
-            list
-        ):
-            relations = []
-
-        total_neighbors += len(
-            neighbors
-        )
-
-        total_relations += len(
-            relations
-        )
-
         print(
-            f"[RAG结构-{index}] "
-            f"{data.get('caseId', '')} | "
-            f"{function.get('id', '')} "
-            f"{function.get('name', '')} | "
-            f"score={item.get('score', 0):.4f} | "
-            f"邻居={len(neighbors)} | "
-            f"关系={len(relations)}"
+            f"[知识库结构-{index}] "
+            f"{item.get('subgraph_id', '')} | "
+            f"{item.get('architecture_id', '')} | "
+            f"{item.get('title', '')} | "
+            f"view={item.get('view_type', '')} | "
+            f"rank={item.get('rank', 0.0)}"
         )
 
     print(
-        "[RAG结构统计] "
-        f"历史邻居功能：{total_neighbors}，"
-        f"历史关系：{total_relations}"
+        "[知识库结构统计] "
+        f"架构子图命中：{len(retrieved)}"
     )
 
 
@@ -1867,11 +1809,11 @@ def print_rag_structure_statistics(
 
 def completion(
     current_case,
-    db,
-    k=3
+    db=None,
+    k=None
 ):
     """
-    RAG + Qwen功能点及关联关系补全。
+    知识库API + Qwen功能点及关联关系补全。
 
     新流程：
 
@@ -1879,13 +1821,9 @@ def completion(
             +
         当前设计
             ↓
-        BGE + FAISS Top-K
+        知识库POST /api/query + FTS5
             ↓
-        历史命中功能
-            +
-        历史邻居功能
-            +
-        历史关联关系
+        架构子图matches
             ↓
         证据化Prompt
             ↓
@@ -1948,7 +1886,7 @@ def completion(
         )
 
     # ========================================================
-    # 2. RAG检索
+    # 2. 知识库API检索
     # ========================================================
 
     start = time.perf_counter()
@@ -1956,22 +1894,26 @@ def completion(
     retrieved = retrieve_top_k_cases(
         normalized_case,
         db,
-        k=k
+        k=(
+            config.KNOWLEDGE_API_TOP_K
+            if k is None
+            else k
+        )
     )
 
     print(
-        f"[耗时] RAG检索阶段："
+        f"[耗时] 知识库API检索阶段："
         f"{time.perf_counter() - start:.3f}秒"
     )
 
     print(
-        f"[RAG] 检索结果数量："
+        f"[知识库API] 检索结果数量："
         f"{len(retrieved)}"
     )
 
     # --------------------------------------------------------
     # 非常重要：
-    # 检查历史局部子图是否真的进入retrieval
+    # 检查架构子图是否真的进入retrieval
     # --------------------------------------------------------
 
     print_rag_structure_statistics(
@@ -1987,15 +1929,7 @@ def completion(
     # --------------------------------------------------------
     # 关键修改：
     #
-    # 不再提取孤立function。
-    #
-    # 直接把完整retrieved交给prompt_service。
-    #
-    # 每一个item内部应包含：
-    #
-    # function
-    # neighborFunctions
-    # relatedRelations
+    # 直接把知识库API标准化后的matches交给prompt_service。
     # --------------------------------------------------------
 
     prompt = build_completion_prompt(
@@ -2033,7 +1967,7 @@ def completion(
     )
 
     print(
-        f"[RAG] Prompt历史参考案例数量："
+        f"[知识库API] Prompt架构子图数量："
         f"{len(retrieved)}"
     )
 
@@ -2075,9 +2009,9 @@ def completion(
             []
         )
 
-        # RAG已经命中历史模式、但模型首轮三个数组全空时，
-        # 不能直接把“空”当作最终结论。用压缩后的高相似模式再复核一次，
-        # 解决长历史字段稀释注意力以及模型过度保守的问题。
+        # 知识库已经命中架构子图、但模型首轮三个数组全空时，
+        # 不能直接把“空”当作最终结论。用排序靠前的子图再复核一次，
+        # 解决知识文本稀释注意力以及模型过度保守的问题。
         first_pass_is_empty = not any(
             isinstance(
                 raw_llm_result.get(key),
@@ -2091,10 +2025,14 @@ def completion(
             )
         )
 
-        if first_pass_is_empty and retrieved:
+        if (
+            config.QWEN_EMPTY_RESULT_RECHECK_ENABLED
+            and first_pass_is_empty
+            and retrieved
+        ):
             print(
-                "[Qwen复核] RAG命中非空但首轮补全为空，"
-                "启动一次高相似局部模式复核"
+                "[Qwen复核] 知识库命中非空但首轮补全为空，"
+                "启动一次架构子图复核"
             )
 
             recovery_prompt = build_completion_prompt(

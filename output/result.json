@@ -1,2750 +1,180 @@
 {
   "retrieval": [
     {
-      "score": 0.8376815319061279,
-      "data": {
-        "caseId": "CASE001",
-        "queryFunction": {
-          "id": "evaluate-battery-thermal-state",
-          "name": "判断动力电池热状态",
-          "actor": "电池管理系统",
-          "action": "判断",
-          "object": "动力电池热状态",
-          "effect": "确定动力电池处于正常、过热、过冷或温度异常状态",
-          "trigger": "获得最新的动力电池温度信息",
-          "condition": "电池温度数据有效且热管理阈值已经完成配置",
-          "preconditions": [
-            "已完成动力电池温度监测",
-            "热管理控制阈值有效"
-          ],
-          "postconditions": [
-            "已确定动力电池当前热状态",
-            "已生成功率热管理需求"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "电池最高温度",
-            "电池最低温度",
-            "电池平均温度",
-            "电池温差",
-            "冷却启动阈值",
-            "加热启动阈值",
-            "温度异常阈值"
-          ],
-          "outputs": [
-            "电池热状态判定结果",
-            "冷却需求",
-            "加热需求",
-            "温度异常标志"
-          ]
-        },
-        "function": {
-          "id": "F004",
-          "name": "热管理",
-          "actor": "",
-          "action": "管理",
-          "object": "电池热状态",
-          "effect": "维持电池温度在安全范围",
-          "trigger": "温度超出阈值",
-          "condition": "电池温度异常",
-          "preconditions": [
-            "温度传感器正常"
-          ],
-          "postconditions": [
-            "电池温度恢复正常"
-          ],
-          "scenario": "电池温度异常",
-          "constraint": "需要热管理系统支持",
-          "inputs": [
-            "控制策略",
-            "环境温度",
-            "温度数据",
-            "温度传感器数据"
-          ],
-          "outputs": [
-            "热管理控制指令"
-          ],
-          "rawstatements": "管理 电池热状态 维持电池温度在安全范围 温度超出阈值 电池温度异常 控制策略 环境温度 温度数据 温度传感器数据 热管理控制指令 温度传感器正常 电池温度恢复正常 电池温度异常 需要热管理系统支持"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F002",
-            "name": "电池状态监测",
-            "actor": "",
-            "action": "监测",
-            "object": "电池状态",
-            "effect": "获取电池当前剩余电量百分比，为能量管理和充放电控制提供依据",
-            "trigger": "电池运行过程中",
-            "condition": "电池处于工作状态",
-            "preconditions": [
-              "传感器正常工作"
-            ],
-            "postconditions": [
-              "电池状态信息已获取"
-            ],
-            "scenario": "电池正常运行",
-            "constraint": "需要传感器支持",
-            "inputs": [
-              "电池电流",
-              "循环次数",
-              "微型传感器信号",
-              "历史充放电数据",
-              "异常状态信息",
-              "电池模型参数",
-              "退化指标",
-              "温度历史",
-              "特征参数",
-              "标称内阻",
-              "历史运行数据",
-              "先验分布",
-              "电化学阻抗谱数据",
-              "充放电曲线特征",
-              "温度传感器信号",
-              "标称容量",
-              "电压电流温度实时数据",
-              "温度传感器数据",
-              "电池模型",
-              "温度信号",
-              "电池温度",
-              "老化后容量",
-              "内阻",
-              "电流信号",
-              "控制策略",
-              "电池性能数据",
-              "电池容量",
-              "校准参数",
-              "电池电压",
-              "老化后内阻",
-              "电压信号"
-            ],
-            "outputs": [
-              "电池状态信息",
-              "故障类型",
-              "SOH值",
-              "严重程度评估",
-              "退化趋势预测",
-              "电池健康诊断结果",
-              "估计置信度",
-              "内阻估计值",
-              "实时SOC估计值",
-              "容量估计值",
-              "温度变化趋势",
-              "安全控制指令",
-              "SOH百分比值",
-              "SOH估计值",
-              "健康诊断结果",
-              "SOC估计值",
-              "温度变化值",
-              "内部实时温度",
-              "健康状态后验分布",
-              "表面温度值",
-              "老化趋势预测"
-            ]
-          },
-          {
-            "id": "F019",
-            "name": "快速加热策略开发",
-            "actor": "",
-            "action": "开发",
-            "object": "快速加热策略",
-            "effect": "实现低温下快速加热",
-            "trigger": "低温环境",
-            "condition": "需要快速加热",
-            "preconditions": [
-              "低温模型已建立"
-            ],
-            "postconditions": [
-              "快速加热策略已开发"
-            ],
-            "scenario": "低温环境运行",
-            "constraint": "需要低温模型支持",
-            "inputs": [
-              "低温电-热模型",
-              "加热需求"
-            ],
-            "outputs": [
-              "快速加热策略"
-            ]
-          },
-          {
-            "id": "F007",
-            "name": "内部温度估计",
-            "actor": "",
-            "action": "估计",
-            "object": "电池内部温度",
-            "effect": "在未知冷却条件下估计圆柱形电池内部的温度分布",
-            "trigger": "电池运行过程中",
-            "condition": "无法直接测量内部温度",
-            "preconditions": [
-              "热模型已建立"
-            ],
-            "postconditions": [
-              "内部温度已获取"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "需要准确的热模型",
-            "inputs": [
-              "电池电流",
-              "电流",
-              "校准模型",
-              "循环次数",
-              "降阶热模型",
-              "电化学信号",
-              "正弦激励电流",
-              "当前电池温度",
-              "目标温度",
-              "模型参数",
-              "充放电电流",
-              "充放电电压曲线",
-              "频率响应",
-              "传感器校准参数",
-              "热模型参数",
-              "阻抗谱数据",
-              "热电偶信号",
-              "相位差",
-              "环境温度",
-              "温度数据",
-              "表面温度",
-              "电热模型参数",
-              "电压",
-              "校准参数",
-              "电池电压",
-              "电池表面温度",
-              "阻抗数据",
-              "感应电压",
-              "运行条件",
-              "可用加热功率"
-            ],
-            "outputs": [
-              "估计置信度",
-              "温度预测值",
-              "测量时间戳",
-              "估计误差",
-              "加热控制信号",
-              "内部温度分布",
-              "内部温度值",
-              "内部温度估计值",
-              "SOC估计值",
-              "容量衰减率",
-              "温度上升速率",
-              "核心温度估计值",
-              "内部温度实时估计值",
-              "温度梯度",
-              "温度分布数据",
-              "SOC和温度估计值",
-              "瞬时内部温度值",
-              "当前最大容量值"
-            ]
-          },
-          {
-            "id": "F016",
-            "name": "热生成评估",
-            "actor": "",
-            "action": "评估",
-            "object": "电池热生成",
-            "effect": "量化电池热生成",
-            "trigger": "电池运行过程中",
-            "condition": "需要热管理",
-            "preconditions": [
-              "热生成模型已建立"
-            ],
-            "postconditions": [
-              "热生成量已评估"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "需要准确的热生成模型",
-            "inputs": [
-              "电流",
-              "电压",
-              "内阻",
-              "运行条件",
-              "电-热耦合模型"
-            ],
-            "outputs": [
-              "热生成量"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F002",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度变化趋势"
-          },
-          {
-            "source": "F007",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "内部温度分布"
-          },
-          {
-            "source": "F016",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "热生成量"
-          },
-          {
-            "source": "F019",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "快速加热策略"
-          }
+      "match_order": 1,
+      "match_status": "semantic_match",
+      "knowledge_scope": "architecture",
+      "query_terms": [
+        "动力电池温度",
+        "热状态",
+        "冷却",
+        "加热",
+        "温度异常"
+      ],
+      "subgraph_id": "SG_BTM_MONITOR_001",
+      "architecture_id": "ARCH_BTM_EV_001",
+      "view_id": "VIEW_BTM_CONTROL_001",
+      "view_type": "control",
+      "view_title": "动力电池热管理控制视角",
+      "case_title": "新能源汽车动力电池液冷热管理架构",
+      "title": "动力电池温度监测与热状态判定",
+      "description": "电池管理系统周期采集电芯和电池包温度，计算最高温度、最低温度、平均温度及温差，并依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志。",
+      "labels": {
+        "functions": [
+          "温度监测",
+          "热状态判定",
+          "冷却需求生成",
+          "加热需求生成"
         ]
-      }
+      },
+      "scenarios": [
+        "车辆运行",
+        "周期采样",
+        "热管理控制"
+      ],
+      "source_path": "cases/ARCH_BTM_EV_001/case.json",
+      "rank": -1.21
     },
     {
-      "score": 0.837552011013031,
-      "data": {
-        "caseId": "CASE002",
-        "queryFunction": {
-          "id": "control-battery-heating",
-          "name": "执行动力电池加热",
-          "actor": "电池热管理控制器",
-          "action": "加热",
-          "object": "动力电池包",
-          "effect": "提高动力电池温度并将其恢复到适宜的工作温度范围",
-          "trigger": "电池热状态判定结果为过冷，或加热需求有效",
-          "condition": "电池温度低于加热启动阈值，且加热系统不存在禁止运行故障",
-          "preconditions": [
-            "已确认动力电池存在加热需求",
-            "加热装置可用",
-            "动力电池允许执行加热"
-          ],
-          "postconditions": [
-            "动力电池加热功能已启动",
-            "电池温度开始上升"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "加热需求",
-            "电池最低温度",
-            "电池平均温度",
-            "车辆运行状态",
-            "加热系统状态"
-          ],
-          "outputs": [
-            "加热控制指令",
-            "电池加热器控制指令"
-          ]
-        },
-        "function": {
-          "id": "F080",
-          "name": "低温加热控制",
-          "actor": "",
-          "action": "控制",
-          "object": "电池加热过程",
-          "effect": "在低温环境下提升电池温度，改善性能和延长寿命",
-          "trigger": "电池温度低于低温阈值",
-          "condition": "电池处于低温环境",
-          "preconditions": [
-            "加热装置可用",
-            "电池状态允许加热"
-          ],
-          "postconditions": [
-            "电池温度已提升",
-            "加热过程已记录"
-          ],
-          "scenario": "分析低温对锂离子电池性能和老化的影响，并制定加热策略",
-          "constraint": "加热速率和均匀性需满足安全要求",
-          "inputs": [
-            "电池温度",
-            "环境温度",
-            "加热策略参数"
-          ],
-          "outputs": [
-            "加热控制信号",
-            "加热功率指令"
-          ],
-          "rawstatements": "控制 电池加热过程 在低温环境下提升电池温度，改善性能和延长寿命 电池温度低于低温阈值 电池处于低温环境 电池温度 环境温度 加热策略参数 加热控制信号 加热功率指令 加热装置可用 电池状态允许加热 电池温度已提升 加热过程已记录 分析低温对锂离子电池性能和老化的影响，并制定加热策略 加热速率和均匀性需满足安全要求"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F041",
-            "name": "液冷系统热管理",
-            "actor": "",
-            "action": "管理",
-            "object": "电池热状态",
-            "effect": "通过液冷板对电池进行冷却或加热，维持电池在最佳温度范围",
-            "trigger": "温度超出目标范围",
-            "condition": "液冷系统可用",
-            "preconditions": [
-              "液冷板已安装",
-              "冷却液循环系统正常"
-            ],
-            "postconditions": [
-              "电池温度维持在目标范围内"
-            ],
-            "scenario": "Smart Fortwo电池包顶部安装液冷板进行液体冷却热管理",
-            "constraint": "需防止冷却液泄漏至电气部分",
-            "inputs": [
-              "电池温度分布",
-              "冷却液温度"
-            ],
-            "outputs": [
-              "液冷系统控制信号"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F080",
-            "target": "F041",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "control_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "加热控制信号"
-          }
+      "match_order": 2,
+      "match_status": "semantic_match",
+      "knowledge_scope": "architecture",
+      "query_terms": [
+        "动力电池温度",
+        "热状态",
+        "冷却",
+        "加热",
+        "温度异常"
+      ],
+      "subgraph_id": "SG_BTM_COOL_002",
+      "architecture_id": "ARCH_BTM_EV_001",
+      "view_id": "VIEW_BTM_FLUID_001",
+      "view_type": "fluid_path",
+      "view_title": "动力电池冷却液回路视角",
+      "case_title": "新能源汽车动力电池液冷热管理架构",
+      "title": "过温工况下的动力电池液冷控制",
+      "description": "当电池最高温度或平均温度超过冷却启动阈值时，热管理控制器输出冷却需求，驱动冷却液泵并根据散热需求联动冷却风扇或制冷回路，使电池温度回落到允许范围。",
+      "labels": {
+        "functions": [
+          "过温判断",
+          "冷却需求生成",
+          "冷却液泵控制",
+          "冷却风扇控制"
         ]
-      }
+      },
+      "scenarios": [
+        "高温运行",
+        "快速充电",
+        "高负载工况"
+      ],
+      "source_path": "cases/ARCH_BTM_EV_001/case.json",
+      "rank": -1.46
     },
     {
-      "score": 0.8290574550628662,
-      "data": {
-        "caseId": "CASE002",
-        "queryFunction": {
-          "id": "control-battery-cooling",
-          "name": "执行动力电池冷却",
-          "actor": "电池热管理控制器",
-          "action": "冷却",
-          "object": "动力电池包",
-          "effect": "降低动力电池温度并将其维持在允许的工作温度范围内",
-          "trigger": "电池热状态判定结果为过热，或冷却需求有效",
-          "condition": "电池温度高于冷却启动阈值，且冷却系统不存在禁止运行故障",
-          "preconditions": [
-            "已确认动力电池存在冷却需求",
-            "冷却液回路可用",
-            "冷却执行机构正常"
-          ],
-          "postconditions": [
-            "动力电池冷却功能已启动",
-            "电池温度开始下降或保持稳定"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "冷却需求",
-            "电池最高温度",
-            "电池平均温度",
-            "车辆运行状态",
-            "冷却系统状态"
-          ],
-          "outputs": [
-            "冷却控制指令",
-            "冷却液泵控制指令",
-            "冷却风扇控制指令"
-          ]
-        },
-        "function": {
-          "id": "F041",
-          "name": "液冷系统热管理",
-          "actor": "",
-          "action": "管理",
-          "object": "电池热状态",
-          "effect": "通过液冷板对电池进行冷却或加热，维持电池在最佳温度范围",
-          "trigger": "温度超出目标范围",
-          "condition": "液冷系统可用",
-          "preconditions": [
-            "液冷板已安装",
-            "冷却液循环系统正常"
-          ],
-          "postconditions": [
-            "电池温度维持在目标范围内"
-          ],
-          "scenario": "Smart Fortwo电池包顶部安装液冷板进行液体冷却热管理",
-          "constraint": "需防止冷却液泄漏至电气部分",
-          "inputs": [
-            "电池温度分布",
-            "冷却液温度"
-          ],
-          "outputs": [
-            "液冷系统控制信号"
-          ],
-          "rawstatements": "管理 电池热状态 通过液冷板对电池进行冷却或加热，维持电池在最佳温度范围 温度超出目标范围 液冷系统可用 电池温度分布 冷却液温度 液冷系统控制信号 液冷板已安装 冷却液循环系统正常 电池温度维持在目标范围内 Smart Fortwo电池包顶部安装液冷板进行液体冷却热管理 需防止冷却液泄漏至电气部分"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F080",
-            "name": "低温加热控制",
-            "actor": "",
-            "action": "控制",
-            "object": "电池加热过程",
-            "effect": "在低温环境下提升电池温度，改善性能和延长寿命",
-            "trigger": "电池温度低于低温阈值",
-            "condition": "电池处于低温环境",
-            "preconditions": [
-              "加热装置可用",
-              "电池状态允许加热"
-            ],
-            "postconditions": [
-              "电池温度已提升",
-              "加热过程已记录"
-            ],
-            "scenario": "分析低温对锂离子电池性能和老化的影响，并制定加热策略",
-            "constraint": "加热速率和均匀性需满足安全要求",
-            "inputs": [
-              "电池温度",
-              "环境温度",
-              "加热策略参数"
-            ],
-            "outputs": [
-              "加热控制信号",
-              "加热功率指令"
-            ]
-          },
-          {
-            "id": "F033",
-            "name": "冷却风扇控制",
-            "actor": "",
-            "action": "控制",
-            "object": "冷却风扇",
-            "effect": "控制风扇运转以排出电池包内热空气，维持适宜工作温度",
-            "trigger": "温度超过阈值或空调系统联动",
-            "condition": "风扇电机和驱动电路正常",
-            "preconditions": [
-              "风扇已安装",
-              "驱动电路正常"
-            ],
-            "postconditions": [
-              "电池包内热空气被排出"
-            ],
-            "scenario": "i-MiEV电池包使用风扇将空调冷却空气引导通过电池模块并排出",
-            "constraint": "风扇噪音和功耗需控制在可接受范围",
-            "inputs": [
-              "电池温度数据",
-              "冷却需求"
-            ],
-            "outputs": [
-              "风扇控制信号"
-            ]
-          },
-          {
-            "id": "F009",
-            "name": "温度监控",
-            "actor": "",
-            "action": "监控",
-            "object": "外围部件温度",
-            "effect": "监控接触器、熔断器、母排等部件温度",
-            "trigger": "周期性触发",
-            "condition": "系统处于高功率运行状态",
-            "preconditions": [
-              "温度传感器已安装",
-              "传感器连接正常"
-            ],
-            "postconditions": [
-              "温度数据可用"
-            ],
-            "scenario": "在高功率运行时监控关键部件温度防止过热",
-            "constraint": "传感器布置需覆盖关键热点位置",
-            "inputs": [
-              "温度传感器信号"
-            ],
-            "outputs": [
-              "温度数据"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F009",
-            "target": "F041",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度数据"
-          },
-          {
-            "source": "F033",
-            "target": "F041",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "control_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "风扇控制信号"
-          },
-          {
-            "source": "F041",
-            "target": "F033",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "control_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "液冷系统控制信号"
-          },
-          {
-            "source": "F080",
-            "target": "F041",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "control_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "加热控制信号"
-          }
+      "match_order": 3,
+      "match_status": "semantic_match",
+      "knowledge_scope": "architecture",
+      "query_terms": [
+        "动力电池温度",
+        "热状态",
+        "冷却",
+        "加热",
+        "温度异常"
+      ],
+      "subgraph_id": "SG_BTM_HEAT_003",
+      "architecture_id": "ARCH_BTM_EV_002",
+      "view_id": "VIEW_BTM_MODE_002",
+      "view_type": "operating_mode",
+      "view_title": "低温运行模式视角",
+      "case_title": "纯电动车低温电池预热架构",
+      "title": "低温工况下的动力电池加热控制",
+      "description": "当电池最低温度低于加热启动阈值且加热装置可用时，控制器生成加热需求并驱动电池加热器或利用热泵余热回路提升电池温度，直到达到目标工作温度区间。",
+      "labels": {
+        "functions": [
+          "低温判断",
+          "加热需求生成",
+          "电池加热器控制",
+          "预热退出判断"
         ]
-      }
+      },
+      "scenarios": [
+        "低温启动",
+        "低温充电",
+        "车辆预热"
+      ],
+      "source_path": "cases/ARCH_BTM_EV_002/case.json",
+      "rank": -1.63
     },
     {
-      "score": 0.8238011002540588,
-      "data": {
-        "caseId": "CASE001",
-        "queryFunction": {
-          "id": "monitor-battery-temperature",
-          "name": "监测动力电池温度",
-          "actor": "电池管理系统",
-          "action": "监测",
-          "object": "动力电池温度",
-          "effect": "获得动力电池包内部各测温点的实时温度数据",
-          "trigger": "车辆启动或电池管理系统周期采样触发",
-          "condition": "电池管理系统已上电且温度传感器通信正常",
-          "preconditions": [
-            "电池管理系统正常运行",
-            "温度传感器已完成初始化",
-            "温度采样数据有效"
-          ],
-          "postconditions": [
-            "已获得最新的动力电池温度信息"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "车辆启动信号",
-            "电芯温度传感器数据",
-            "电池包环境温度数据"
-          ],
-          "outputs": [
-            "电池最高温度",
-            "电池最低温度",
-            "电池平均温度",
-            "电池温差"
-          ]
-        },
-        "function": {
-          "id": "F004",
-          "name": "热管理",
-          "actor": "",
-          "action": "管理",
-          "object": "电池热状态",
-          "effect": "维持电池温度在安全范围",
-          "trigger": "温度超出阈值",
-          "condition": "电池温度异常",
-          "preconditions": [
-            "温度传感器正常"
-          ],
-          "postconditions": [
-            "电池温度恢复正常"
-          ],
-          "scenario": "电池温度异常",
-          "constraint": "需要热管理系统支持",
-          "inputs": [
-            "控制策略",
-            "环境温度",
-            "温度数据",
-            "温度传感器数据"
-          ],
-          "outputs": [
-            "热管理控制指令"
-          ],
-          "rawstatements": "管理 电池热状态 维持电池温度在安全范围 温度超出阈值 电池温度异常 控制策略 环境温度 温度数据 温度传感器数据 热管理控制指令 温度传感器正常 电池温度恢复正常 电池温度异常 需要热管理系统支持"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F002",
-            "name": "电池状态监测",
-            "actor": "",
-            "action": "监测",
-            "object": "电池状态",
-            "effect": "获取电池当前剩余电量百分比，为能量管理和充放电控制提供依据",
-            "trigger": "电池运行过程中",
-            "condition": "电池处于工作状态",
-            "preconditions": [
-              "传感器正常工作"
-            ],
-            "postconditions": [
-              "电池状态信息已获取"
-            ],
-            "scenario": "电池正常运行",
-            "constraint": "需要传感器支持",
-            "inputs": [
-              "电池电流",
-              "循环次数",
-              "微型传感器信号",
-              "历史充放电数据",
-              "异常状态信息",
-              "电池模型参数",
-              "退化指标",
-              "温度历史",
-              "特征参数",
-              "标称内阻",
-              "历史运行数据",
-              "先验分布",
-              "电化学阻抗谱数据",
-              "充放电曲线特征",
-              "温度传感器信号",
-              "标称容量",
-              "电压电流温度实时数据",
-              "温度传感器数据",
-              "电池模型",
-              "温度信号",
-              "电池温度",
-              "老化后容量",
-              "内阻",
-              "电流信号",
-              "控制策略",
-              "电池性能数据",
-              "电池容量",
-              "校准参数",
-              "电池电压",
-              "老化后内阻",
-              "电压信号"
-            ],
-            "outputs": [
-              "电池状态信息",
-              "故障类型",
-              "SOH值",
-              "严重程度评估",
-              "退化趋势预测",
-              "电池健康诊断结果",
-              "估计置信度",
-              "内阻估计值",
-              "实时SOC估计值",
-              "容量估计值",
-              "温度变化趋势",
-              "安全控制指令",
-              "SOH百分比值",
-              "SOH估计值",
-              "健康诊断结果",
-              "SOC估计值",
-              "温度变化值",
-              "内部实时温度",
-              "健康状态后验分布",
-              "表面温度值",
-              "老化趋势预测"
-            ]
-          },
-          {
-            "id": "F019",
-            "name": "快速加热策略开发",
-            "actor": "",
-            "action": "开发",
-            "object": "快速加热策略",
-            "effect": "实现低温下快速加热",
-            "trigger": "低温环境",
-            "condition": "需要快速加热",
-            "preconditions": [
-              "低温模型已建立"
-            ],
-            "postconditions": [
-              "快速加热策略已开发"
-            ],
-            "scenario": "低温环境运行",
-            "constraint": "需要低温模型支持",
-            "inputs": [
-              "低温电-热模型",
-              "加热需求"
-            ],
-            "outputs": [
-              "快速加热策略"
-            ]
-          },
-          {
-            "id": "F007",
-            "name": "内部温度估计",
-            "actor": "",
-            "action": "估计",
-            "object": "电池内部温度",
-            "effect": "在未知冷却条件下估计圆柱形电池内部的温度分布",
-            "trigger": "电池运行过程中",
-            "condition": "无法直接测量内部温度",
-            "preconditions": [
-              "热模型已建立"
-            ],
-            "postconditions": [
-              "内部温度已获取"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "需要准确的热模型",
-            "inputs": [
-              "电池电流",
-              "电流",
-              "校准模型",
-              "循环次数",
-              "降阶热模型",
-              "电化学信号",
-              "正弦激励电流",
-              "当前电池温度",
-              "目标温度",
-              "模型参数",
-              "充放电电流",
-              "充放电电压曲线",
-              "频率响应",
-              "传感器校准参数",
-              "热模型参数",
-              "阻抗谱数据",
-              "热电偶信号",
-              "相位差",
-              "环境温度",
-              "温度数据",
-              "表面温度",
-              "电热模型参数",
-              "电压",
-              "校准参数",
-              "电池电压",
-              "电池表面温度",
-              "阻抗数据",
-              "感应电压",
-              "运行条件",
-              "可用加热功率"
-            ],
-            "outputs": [
-              "估计置信度",
-              "温度预测值",
-              "测量时间戳",
-              "估计误差",
-              "加热控制信号",
-              "内部温度分布",
-              "内部温度值",
-              "内部温度估计值",
-              "SOC估计值",
-              "容量衰减率",
-              "温度上升速率",
-              "核心温度估计值",
-              "内部温度实时估计值",
-              "温度梯度",
-              "温度分布数据",
-              "SOC和温度估计值",
-              "瞬时内部温度值",
-              "当前最大容量值"
-            ]
-          },
-          {
-            "id": "F016",
-            "name": "热生成评估",
-            "actor": "",
-            "action": "评估",
-            "object": "电池热生成",
-            "effect": "量化电池热生成",
-            "trigger": "电池运行过程中",
-            "condition": "需要热管理",
-            "preconditions": [
-              "热生成模型已建立"
-            ],
-            "postconditions": [
-              "热生成量已评估"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "需要准确的热生成模型",
-            "inputs": [
-              "电流",
-              "电压",
-              "内阻",
-              "运行条件",
-              "电-热耦合模型"
-            ],
-            "outputs": [
-              "热生成量"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F002",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度变化趋势"
-          },
-          {
-            "source": "F007",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "内部温度分布"
-          },
-          {
-            "source": "F016",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "热生成量"
-          },
-          {
-            "source": "F019",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "快速加热策略"
-          }
+      "match_order": 4,
+      "match_status": "semantic_match",
+      "knowledge_scope": "architecture",
+      "query_terms": [
+        "动力电池温度",
+        "热状态",
+        "冷却",
+        "加热",
+        "温度异常"
+      ],
+      "subgraph_id": "SG_BTM_FAULT_004",
+      "architecture_id": "ARCH_BTM_EV_003",
+      "view_id": "VIEW_BTM_SAFETY_001",
+      "view_type": "control",
+      "view_title": "热安全与故障处理视角",
+      "case_title": "动力电池热安全监控架构",
+      "title": "温度异常检测与热失控风险告警",
+      "description": "当检测到电池局部温度异常升高、温差持续扩大或热失控风险标志时，系统生成温度异常告警，并向整车控制器和驾驶员发送告警信息；严重情况下触发降功率、热管理强化或安全处置流程。",
+      "labels": {
+        "functions": [
+          "温度异常检测",
+          "热失控风险识别",
+          "整车控制器告警",
+          "驾驶员告警"
         ]
-      }
+      },
+      "scenarios": [
+        "温度异常",
+        "热失控风险",
+        "故障处置"
+      ],
+      "source_path": "cases/ARCH_BTM_EV_003/case.json",
+      "rank": -1.88
     },
     {
-      "score": 0.8160298466682434,
-      "data": {
-        "caseId": "CASE002",
-        "queryFunction": {
-          "id": "monitor-battery-temperature",
-          "name": "监测动力电池温度",
-          "actor": "电池管理系统",
-          "action": "监测",
-          "object": "动力电池温度",
-          "effect": "获得动力电池包内部各测温点的实时温度数据",
-          "trigger": "车辆启动或电池管理系统周期采样触发",
-          "condition": "电池管理系统已上电且温度传感器通信正常",
-          "preconditions": [
-            "电池管理系统正常运行",
-            "温度传感器已完成初始化",
-            "温度采样数据有效"
-          ],
-          "postconditions": [
-            "已获得最新的动力电池温度信息"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "车辆启动信号",
-            "电芯温度传感器数据",
-            "电池包环境温度数据"
-          ],
-          "outputs": [
-            "电池最高温度",
-            "电池最低温度",
-            "电池平均温度",
-            "电池温差"
-          ]
-        },
-        "function": {
-          "id": "F079",
-          "name": "内部温度瞬时测量",
-          "actor": "",
-          "action": "测量",
-          "object": "电池内部温度",
-          "effect": "实时获取锂离子电池内部温度分布",
-          "trigger": "测量指令触发",
-          "condition": "电池处于工作状态",
-          "preconditions": [
-            "内部温度测量装置正常",
-            "测量系统已校准"
-          ],
-          "postconditions": [
-            "内部温度已获取",
-            "数据已记录"
-          ],
-          "scenario": "对锂离子可充电电池内部温度进行瞬时测量",
-          "constraint": "测量响应速度和精度需满足要求",
-          "inputs": [
-            "内部温度传感信号",
-            "测量激励"
-          ],
-          "outputs": [
-            "内部温度值",
-            "温度分布数据"
-          ],
-          "rawstatements": "测量 电池内部温度 实时获取锂离子电池内部温度分布 测量指令触发 电池处于工作状态 内部温度传感信号 测量激励 内部温度值 温度分布数据 内部温度测量装置正常 测量系统已校准 内部温度已获取 数据已记录 对锂离子可充电电池内部温度进行瞬时测量 测量响应速度和精度需满足要求"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F009",
-            "name": "温度监控",
-            "actor": "",
-            "action": "监控",
-            "object": "外围部件温度",
-            "effect": "监控接触器、熔断器、母排等部件温度",
-            "trigger": "周期性触发",
-            "condition": "系统处于高功率运行状态",
-            "preconditions": [
-              "温度传感器已安装",
-              "传感器连接正常"
-            ],
-            "postconditions": [
-              "温度数据可用"
-            ],
-            "scenario": "在高功率运行时监控关键部件温度防止过热",
-            "constraint": "传感器布置需覆盖关键热点位置",
-            "inputs": [
-              "温度传感器信号"
-            ],
-            "outputs": [
-              "温度数据"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F079",
-            "target": "F009",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "内部温度值"
-          }
+      "match_order": 5,
+      "match_status": "semantic_match",
+      "knowledge_scope": "architecture",
+      "query_terms": [
+        "动力电池温度",
+        "热状态",
+        "冷却",
+        "加热",
+        "温度异常"
+      ],
+      "subgraph_id": "SG_BTM_INTERLOCK_005",
+      "architecture_id": "ARCH_BTM_EV_004",
+      "view_id": "VIEW_BTM_DEP_001",
+      "view_type": "subsystem",
+      "view_title": "热管理功能依赖视角",
+      "case_title": "动力电池热管理功能逻辑架构",
+      "title": "热状态判定与冷却/加热执行联锁关系",
+      "description": "温度监测结果首先进入热状态判定功能；热状态判定输出冷却需求、加热需求和异常标志。冷却需求控制冷却执行链，加热需求控制加热执行链，异常标志进入告警与安全控制链，形成监测—判断—执行—反馈的闭环关系。",
+      "labels": {
+        "relations": [
+          "monitor_to_evaluate",
+          "evaluate_to_cooling",
+          "evaluate_to_heating",
+          "evaluate_to_alarm"
         ]
-      }
-    },
-    {
-      "score": 0.8116511702537537,
-      "data": {
-        "caseId": "CASE002",
-        "queryFunction": {
-          "id": "monitor-battery-temperature",
-          "name": "监测动力电池温度",
-          "actor": "电池管理系统",
-          "action": "监测",
-          "object": "动力电池温度",
-          "effect": "获得动力电池包内部各测温点的实时温度数据",
-          "trigger": "车辆启动或电池管理系统周期采样触发",
-          "condition": "电池管理系统已上电且温度传感器通信正常",
-          "preconditions": [
-            "电池管理系统正常运行",
-            "温度传感器已完成初始化",
-            "温度采样数据有效"
-          ],
-          "postconditions": [
-            "已获得最新的动力电池温度信息"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "车辆启动信号",
-            "电芯温度传感器数据",
-            "电池包环境温度数据"
-          ],
-          "outputs": [
-            "电池最高温度",
-            "电池最低温度",
-            "电池平均温度",
-            "电池温差"
-          ]
-        },
-        "function": {
-          "id": "F001",
-          "name": "温度采集",
-          "actor": "",
-          "action": "采集",
-          "object": "电池温度",
-          "effect": "获取电池电压、温度等原始信号，为后续处理提供数据基础",
-          "trigger": "周期性触发或事件触发",
-          "condition": "电池处于充电、放电或存储状态",
-          "preconditions": [
-            "温度传感器已校准",
-            "传感器连接正常"
-          ],
-          "postconditions": [
-            "温度数据可用"
-          ],
-          "scenario": "电池管理系统需要监控电池温度以防止过热或过冷",
-          "constraint": "传感器精度和响应时间需满足系统要求",
-          "inputs": [
-            "温度通道数据",
-            "电压传感器信号",
-            "温度传感器信号",
-            "I2C/SMBus通信数据",
-            "电芯电压信号",
-            "NTC/PTC传感器信号",
-            "电流传感器信号"
-          ],
-          "outputs": [
-            "数字化原始信号数据",
-            "过温/欠温告警",
-            "电压数据",
-            "电流数据",
-            "温度报警信号",
-            "温度数值",
-            "温度值",
-            "温度数据"
-          ],
-          "rawstatements": "采集 电池温度 获取电池电压、温度等原始信号，为后续处理提供数据基础 周期性触发或事件触发 电池处于充电、放电或存储状态 温度通道数据 电压传感器信号 温度传感器信号 I2C/SMBus通信数据 电芯电压信号 NTC/PTC传感器信号 电流传感器信号 数字化原始信号数据 过温/欠温告警 电压数据 电流数据 温度报警信号 温度数值 温度值 温度数据 温度传感器已校准 传感器连接正常 温度数据可用 电池管理系统需要监控电池温度以防止过热或过冷 传感器精度和响应时间需满足系统要求"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F004",
-            "name": "电磁干扰滤波",
-            "actor": "",
-            "action": "滤除",
-            "object": "电磁干扰信号",
-            "effect": "提高传感器数据采集的准确性",
-            "trigger": "持续执行",
-            "condition": "存在电磁干扰",
-            "preconditions": [
-              "滤波器件已安装",
-              "滤波参数已配置"
-            ],
-            "postconditions": [
-              "信号质量提高"
-            ],
-            "scenario": "在强电磁干扰环境下保证BMS数据采集的可靠性",
-            "constraint": "滤波器件需靠近传感器测量路径安装",
-            "inputs": [
-              "传感器信号",
-              "干扰信号"
-            ],
-            "outputs": [
-              "滤波后的信号"
-            ]
-          },
-          {
-            "id": "F025",
-            "name": "信号滤波",
-            "actor": "",
-            "action": "滤波",
-            "object": "采集信号",
-            "effect": "去除采集信号中的噪声和干扰，提高信号质量",
-            "trigger": "信号采集后自动执行",
-            "condition": "滤波算法已配置",
-            "preconditions": [
-              "原始信号已采集",
-              "滤波参数已配置"
-            ],
-            "postconditions": [
-              "滤波后数据可供后续处理"
-            ],
-            "scenario": "BMS从控模块对采集的电压和温度信号进行数字滤波处理",
-            "constraint": "滤波延迟需在可接受范围内",
-            "inputs": [
-              "原始采集信号"
-            ],
-            "outputs": [
-              "滤波后的信号"
-            ]
-          },
-          {
-            "id": "F031",
-            "name": "电流传感测量",
-            "actor": "",
-            "action": "测量",
-            "object": "电池包总电流",
-            "effect": "获取电池包充放电总电流，用于SOC估计和过流保护",
-            "trigger": "周期性触发",
-            "condition": "电流传感器正常工作",
-            "preconditions": [
-              "LEM电流传感器已安装并校准",
-              "信号调理电路正常"
-            ],
-            "postconditions": [
-              "电流数据可供SOC估计和保护判断"
-            ],
-            "scenario": "使用LEM电流传感器测量i-MiEV电池包总电流",
-            "constraint": "测量范围和精度需满足系统要求",
-            "inputs": [
-              "激励信号",
-              "电流传感器输出信号",
-              "分流电阻或霍尔传感器",
-              "NTC/PTC热敏电阻或数字温度传感器",
-              "电化学阻抗谱数据"
-            ],
-            "outputs": [
-              "电池包总电流值",
-              "电池温度估计值",
-              "阻抗谱特征",
-              "电流数值",
-              "温度数值"
-            ]
-          },
-          {
-            "id": "F034",
-            "name": "电池模块温度监测",
-            "actor": "",
-            "action": "监测",
-            "object": "电池模块温度",
-            "effect": "获取电池模块多个位置的温度信息，用于热管理和安全保护",
-            "trigger": "周期性触发",
-            "condition": "温度传感器正常连接",
-            "preconditions": [
-              "温度传感器已安装",
-              "采集通道正常"
-            ],
-            "postconditions": [
-              "温度数据可用于热管理和保护决策"
-            ],
-            "scenario": "i-MiEV每个CMU上的三个温度传感器监测模块温度分布",
-            "constraint": "传感器位置和数量需覆盖关键热点",
-            "inputs": [
-              "温度传感器信号（NTC/PTC/热电偶）",
-              "多个温度传感器信号"
-            ],
-            "outputs": [
-              "温度梯度",
-              "超温报警标志",
-              "各测点温度值"
-            ]
-          },
-          {
-            "id": "F017",
-            "name": "温度传感器电气隔离",
-            "actor": "",
-            "action": "隔离",
-            "object": "温度传感器信号",
-            "effect": "将热传感器信号进行电气隔离，防止高压故障通过传感器线路进入低压区域",
-            "trigger": "系统设计和硬件实现阶段",
-            "condition": "温度传感器位于高压区域",
-            "preconditions": [
-              "隔离器件已安装",
-              "传感器正确连接"
-            ],
-            "postconditions": [
-              "温度信号安全传输至低压处理系统"
-            ],
-            "scenario": "对电池包内所有温度传感器实施电气隔离保护",
-            "constraint": "隔离不得影响温度测量精度",
-            "inputs": [
-              "高压侧温度传感器信号"
-            ],
-            "outputs": [
-              "隔离后的温度信号"
-            ]
-          },
-          {
-            "id": "F069",
-            "name": "物理量采集",
-            "actor": "",
-            "action": "采集",
-            "object": "物理量",
-            "effect": "获取电池系统运行所需的电压、电流、温度等基础数据",
-            "trigger": "周期性触发",
-            "condition": "BMS处于工作状态",
-            "preconditions": [
-              "传感器和ADC模块正常工作"
-            ],
-            "postconditions": [
-              "物理量数据已数字化并可供后续算法使用"
-            ],
-            "scenario": "BMS通过模拟前端（AFE）和ADC对电池单体电压、总电压、电流和温度进行周期性采集，为状态估计和保护决策提供数据基础",
-            "constraint": "采集精度和采样率需满足应用需求",
-            "inputs": [
-              "传感器信号",
-              "模拟前端信号"
-            ],
-            "outputs": [
-              "电压值",
-              "电流值",
-              "温度值"
-            ]
-          },
-          {
-            "id": "F008",
-            "name": "库仑计数",
-            "actor": "",
-            "action": "积分",
-            "object": "电池电流",
-            "effect": "通过电流积分计算电池充放电容量",
-            "trigger": "周期性触发",
-            "condition": "电池处于充放电状态",
-            "preconditions": [
-              "电流数据准确",
-              "初始SOC已知"
-            ],
-            "postconditions": [
-              "容量数据可用"
-            ],
-            "scenario": "用于动态SOC估计，跟踪电池充放电过程",
-            "constraint": "需考虑电流传感器的漂移和偏移误差",
-            "inputs": [
-              "电流数据",
-              "时间数据"
-            ],
-            "outputs": [
-              "累计容量值"
-            ]
-          },
-          {
-            "id": "F046",
-            "name": "温度非线性校正",
-            "actor": "",
-            "action": "校正",
-            "object": "温度测量值",
-            "effect": "将非线性电压-温度关系转换为准确温度值",
-            "trigger": "每次温度采样后",
-            "condition": "使用NTC/PTC等非线性温度传感器",
-            "preconditions": [
-              "查找表已根据传感器特性标定并存储"
-            ],
-            "postconditions": [
-              "获得线性化的准确温度数据"
-            ],
-            "scenario": "在数字处理链（如智能单体控制板）中实现查找表，将NTC传感器的非线性电压-温度关系转换为正确温度值",
-            "constraint": "查找表需覆盖传感器全工作温度范围（-50°C至150°C）；需足够精度以减小插值误差",
-            "inputs": [
-              "ADC采样的电压值",
-              "查找表（Look-up Table）"
-            ],
-            "outputs": [
-              "校正后的温度值"
-            ]
-          },
-          {
-            "id": "F002",
-            "name": "SOC状态估计",
-            "actor": "",
-            "action": "估计",
-            "object": "电池荷电状态",
-            "effect": "计算电池当前剩余电量百分比，为用户提供电量信息",
-            "trigger": "周期性触发",
-            "condition": "电池处于工作状态",
-            "preconditions": [
-              "电压、电流、温度数据可用",
-              "算法参数已配置"
-            ],
-            "postconditions": [
-              "SOC值可用"
-            ],
-            "scenario": "电池管理系统需要准确估计电池SOC以提供可靠的续航里程信息",
-            "constraint": "估计精度受电压精度和电流积分误差影响",
-            "inputs": [
-              "电压数据",
-              "电流",
-              "电压",
-              "电池模型参数",
-              "电流数据",
-              "SOH",
-              "SOC",
-              "温度数据",
-              "电流测量值（库仑计数）",
-              "温度",
-              "电压测量值"
-            ],
-            "outputs": [
-              "SOC估计值",
-              "SOC值",
-              "SOC百分比值",
-              "可用功率或SOF指标"
-            ]
-          },
-          {
-            "id": "F010",
-            "name": "电芯电压精确测量",
-            "actor": "",
-            "action": "测量",
-            "object": "电芯电压",
-            "effect": "实时获取每个电芯的电压状态，确保电芯工作在安全电压范围内",
-            "trigger": "系统上电或周期性触发",
-            "condition": "主测量芯片正常工作",
-            "preconditions": [
-              "BMS系统已上电",
-              "测量芯片与电芯正确连接"
-            ],
-            "postconditions": [
-              "电压数据可供后续处理使用"
-            ],
-            "scenario": "BMS主芯片对串联电芯进行高精度电压采集",
-            "constraint": "测量精度需满足系统安全要求",
-            "inputs": [
-              "电芯电压模拟信号",
-              "温度传感器信号",
-              "多路电芯电压信号",
-              "单电芯电压信号",
-              "电流检测电阻电压信号",
-              "分压电阻网络",
-              "电池单体连接线路",
-              "滤波器",
-              "ADC",
-              "阻抗转换器"
-            ],
-            "outputs": [
-              "单体电压数值",
-              "高分辨率电压数字值",
-              "电芯温度值",
-              "各电芯电压数字值",
-              "电池包总电压数值",
-              "电芯电流值",
-              "电芯电压值"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F001",
-            "target": "F002",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电压数据"
-          },
-          {
-            "source": "F001",
-            "target": "F002",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电流数据"
-          },
-          {
-            "source": "F001",
-            "target": "F002",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度数据"
-          },
-          {
-            "source": "F001",
-            "target": "F008",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电流数据"
-          },
-          {
-            "source": "F001",
-            "target": "F010",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电芯电压信号"
-          },
-          {
-            "source": "F001",
-            "target": "F010",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度传感器信号"
-          },
-          {
-            "source": "F001",
-            "target": "F031",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电流传感器信号"
-          },
-          {
-            "source": "F001",
-            "target": "F034",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度传感器信号"
-          },
-          {
-            "source": "F001",
-            "target": "F069",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "传感器信号"
-          },
-          {
-            "source": "F004",
-            "target": "F001",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "滤波后的信号"
-          },
-          {
-            "source": "F017",
-            "target": "F001",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "隔离后的温度信号"
-          },
-          {
-            "source": "F025",
-            "target": "F001",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "滤波后的信号"
-          },
-          {
-            "source": "F046",
-            "target": "F001",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "校正后的温度值"
-          },
-          {
-            "source": "F069",
-            "target": "F001",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电压值"
-          },
-          {
-            "source": "F069",
-            "target": "F001",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电流值"
-          },
-          {
-            "source": "F069",
-            "target": "F001",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度值"
-          }
-        ]
-      }
-    },
-    {
-      "score": 0.8070484399795532,
-      "data": {
-        "caseId": "CASE002",
-        "queryFunction": {
-          "id": "control-battery-cooling",
-          "name": "执行动力电池冷却",
-          "actor": "电池热管理控制器",
-          "action": "冷却",
-          "object": "动力电池包",
-          "effect": "降低动力电池温度并将其维持在允许的工作温度范围内",
-          "trigger": "电池热状态判定结果为过热，或冷却需求有效",
-          "condition": "电池温度高于冷却启动阈值，且冷却系统不存在禁止运行故障",
-          "preconditions": [
-            "已确认动力电池存在冷却需求",
-            "冷却液回路可用",
-            "冷却执行机构正常"
-          ],
-          "postconditions": [
-            "动力电池冷却功能已启动",
-            "电池温度开始下降或保持稳定"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "冷却需求",
-            "电池最高温度",
-            "电池平均温度",
-            "车辆运行状态",
-            "冷却系统状态"
-          ],
-          "outputs": [
-            "冷却控制指令",
-            "冷却液泵控制指令",
-            "冷却风扇控制指令"
-          ]
-        },
-        "function": {
-          "id": "F033",
-          "name": "冷却风扇控制",
-          "actor": "",
-          "action": "控制",
-          "object": "冷却风扇",
-          "effect": "控制风扇运转以排出电池包内热空气，维持适宜工作温度",
-          "trigger": "温度超过阈值或空调系统联动",
-          "condition": "风扇电机和驱动电路正常",
-          "preconditions": [
-            "风扇已安装",
-            "驱动电路正常"
-          ],
-          "postconditions": [
-            "电池包内热空气被排出"
-          ],
-          "scenario": "i-MiEV电池包使用风扇将空调冷却空气引导通过电池模块并排出",
-          "constraint": "风扇噪音和功耗需控制在可接受范围",
-          "inputs": [
-            "电池温度数据",
-            "冷却需求"
-          ],
-          "outputs": [
-            "风扇控制信号"
-          ],
-          "rawstatements": "控制 冷却风扇 控制风扇运转以排出电池包内热空气，维持适宜工作温度 温度超过阈值或空调系统联动 风扇电机和驱动电路正常 电池温度数据 冷却需求 风扇控制信号 风扇已安装 驱动电路正常 电池包内热空气被排出 i-MiEV电池包使用风扇将空调冷却空气引导通过电池模块并排出 风扇噪音和功耗需控制在可接受范围"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F041",
-            "name": "液冷系统热管理",
-            "actor": "",
-            "action": "管理",
-            "object": "电池热状态",
-            "effect": "通过液冷板对电池进行冷却或加热，维持电池在最佳温度范围",
-            "trigger": "温度超出目标范围",
-            "condition": "液冷系统可用",
-            "preconditions": [
-              "液冷板已安装",
-              "冷却液循环系统正常"
-            ],
-            "postconditions": [
-              "电池温度维持在目标范围内"
-            ],
-            "scenario": "Smart Fortwo电池包顶部安装液冷板进行液体冷却热管理",
-            "constraint": "需防止冷却液泄漏至电气部分",
-            "inputs": [
-              "电池温度分布",
-              "冷却液温度"
-            ],
-            "outputs": [
-              "液冷系统控制信号"
-            ]
-          },
-          {
-            "id": "F009",
-            "name": "温度监控",
-            "actor": "",
-            "action": "监控",
-            "object": "外围部件温度",
-            "effect": "监控接触器、熔断器、母排等部件温度",
-            "trigger": "周期性触发",
-            "condition": "系统处于高功率运行状态",
-            "preconditions": [
-              "温度传感器已安装",
-              "传感器连接正常"
-            ],
-            "postconditions": [
-              "温度数据可用"
-            ],
-            "scenario": "在高功率运行时监控关键部件温度防止过热",
-            "constraint": "传感器布置需覆盖关键热点位置",
-            "inputs": [
-              "温度传感器信号"
-            ],
-            "outputs": [
-              "温度数据"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F009",
-            "target": "F033",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度数据"
-          },
-          {
-            "source": "F033",
-            "target": "F041",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "control_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "风扇控制信号"
-          },
-          {
-            "source": "F041",
-            "target": "F033",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "control_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "液冷系统控制信号"
-          }
-        ]
-      }
-    },
-    {
-      "score": 0.7986948490142822,
-      "data": {
-        "caseId": "CASE001",
-        "queryFunction": {
-          "id": "evaluate-battery-thermal-state",
-          "name": "判断动力电池热状态",
-          "actor": "电池管理系统",
-          "action": "判断",
-          "object": "动力电池热状态",
-          "effect": "确定动力电池处于正常、过热、过冷或温度异常状态",
-          "trigger": "获得最新的动力电池温度信息",
-          "condition": "电池温度数据有效且热管理阈值已经完成配置",
-          "preconditions": [
-            "已完成动力电池温度监测",
-            "热管理控制阈值有效"
-          ],
-          "postconditions": [
-            "已确定动力电池当前热状态",
-            "已生成功率热管理需求"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "电池最高温度",
-            "电池最低温度",
-            "电池平均温度",
-            "电池温差",
-            "冷却启动阈值",
-            "加热启动阈值",
-            "温度异常阈值"
-          ],
-          "outputs": [
-            "电池热状态判定结果",
-            "冷却需求",
-            "加热需求",
-            "温度异常标志"
-          ]
-        },
-        "function": {
-          "id": "F046",
-          "name": "电池热动态参数在线辨识",
-          "actor": "",
-          "action": "辨识",
-          "object": "电池热动态参数",
-          "effect": "在线辨识圆柱形锂电池的集总热动态参数",
-          "trigger": "充放电过程中周期性触发",
-          "condition": "电池处于激励状态",
-          "preconditions": [
-            "电池处于充放电状态",
-            "温度传感器正常"
-          ],
-          "postconditions": [
-            "参数更新至热模型",
-            "支持核心温度估计"
-          ],
-          "scenario": "在线辨识电池热动态参数，适应老化和环境变化对热特性的影响",
-          "constraint": "辨识收敛时间<60秒，参数变化率限制在±20%以内",
-          "inputs": [
-            "电流",
-            "电压",
-            "表面温度",
-            "环境温度"
-          ],
-          "outputs": [
-            "热阻参数",
-            "热容参数",
-            "时间常数"
-          ],
-          "rawstatements": "辨识 电池热动态参数 在线辨识圆柱形锂电池的集总热动态参数 充放电过程中周期性触发 电池处于激励状态 电流 电压 表面温度 环境温度 热阻参数 热容参数 时间常数 电池处于充放电状态 温度传感器正常 参数更新至热模型 支持核心温度估计 在线辨识电池热动态参数，适应老化和环境变化对热特性的影响 辨识收敛时间<60秒，参数变化率限制在±20%以内"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F017",
-            "name": "热传递建模",
-            "actor": "",
-            "action": "建模",
-            "object": "电池热传递",
-            "effect": "建立圆柱形电池的集总参数电热耦合模型",
-            "trigger": "电池建模阶段",
-            "condition": "需要热管理",
-            "preconditions": [
-              "热传递参数已获取"
-            ],
-            "postconditions": [
-              "热传递模型已建立"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "计算复杂度高",
-            "inputs": [
-              "热传导系数",
-              "热容量",
-              "材料热物性",
-              "电池几何参数",
-              "电热测试数据"
-            ],
-            "outputs": [
-              "电热模型参数",
-              "热传递模型",
-              "模型方程"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F046",
-            "target": "F017",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "热阻参数"
-          }
-        ]
-      }
-    },
-    {
-      "score": 0.7716789841651917,
-      "data": {
-        "caseId": "CASE001",
-        "queryFunction": {
-          "id": "evaluate-battery-thermal-state",
-          "name": "判断动力电池热状态",
-          "actor": "电池管理系统",
-          "action": "判断",
-          "object": "动力电池热状态",
-          "effect": "确定动力电池处于正常、过热、过冷或温度异常状态",
-          "trigger": "获得最新的动力电池温度信息",
-          "condition": "电池温度数据有效且热管理阈值已经完成配置",
-          "preconditions": [
-            "已完成动力电池温度监测",
-            "热管理控制阈值有效"
-          ],
-          "postconditions": [
-            "已确定动力电池当前热状态",
-            "已生成功率热管理需求"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "电池最高温度",
-            "电池最低温度",
-            "电池平均温度",
-            "电池温差",
-            "冷却启动阈值",
-            "加热启动阈值",
-            "温度异常阈值"
-          ],
-          "outputs": [
-            "电池热状态判定结果",
-            "冷却需求",
-            "加热需求",
-            "温度异常标志"
-          ]
-        },
-        "function": {
-          "id": "F007",
-          "name": "内部温度估计",
-          "actor": "",
-          "action": "估计",
-          "object": "电池内部温度",
-          "effect": "在未知冷却条件下估计圆柱形电池内部的温度分布",
-          "trigger": "电池运行过程中",
-          "condition": "无法直接测量内部温度",
-          "preconditions": [
-            "热模型已建立"
-          ],
-          "postconditions": [
-            "内部温度已获取"
-          ],
-          "scenario": "电池热管理",
-          "constraint": "需要准确的热模型",
-          "inputs": [
-            "电池电流",
-            "电流",
-            "校准模型",
-            "循环次数",
-            "降阶热模型",
-            "电化学信号",
-            "正弦激励电流",
-            "当前电池温度",
-            "目标温度",
-            "模型参数",
-            "充放电电流",
-            "充放电电压曲线",
-            "频率响应",
-            "传感器校准参数",
-            "热模型参数",
-            "阻抗谱数据",
-            "热电偶信号",
-            "相位差",
-            "环境温度",
-            "温度数据",
-            "表面温度",
-            "电热模型参数",
-            "电压",
-            "校准参数",
-            "电池电压",
-            "电池表面温度",
-            "阻抗数据",
-            "感应电压",
-            "运行条件",
-            "可用加热功率"
-          ],
-          "outputs": [
-            "估计置信度",
-            "温度预测值",
-            "测量时间戳",
-            "估计误差",
-            "加热控制信号",
-            "内部温度分布",
-            "内部温度值",
-            "内部温度估计值",
-            "SOC估计值",
-            "容量衰减率",
-            "温度上升速率",
-            "核心温度估计值",
-            "内部温度实时估计值",
-            "温度梯度",
-            "温度分布数据",
-            "SOC和温度估计值",
-            "瞬时内部温度值",
-            "当前最大容量值"
-          ],
-          "rawstatements": "估计 电池内部温度 在未知冷却条件下估计圆柱形电池内部的温度分布 电池运行过程中 无法直接测量内部温度 电池电流 电流 校准模型 循环次数 降阶热模型 电化学信号 正弦激励电流 当前电池温度 目标温度 模型参数 充放电电流 充放电电压曲线 频率响应 传感器校准参数 热模型参数 阻抗谱数据 热电偶信号 相位差 环境温度 温度数据 表面温度 电热模型参数 电压 校准参数 电池电压 电池表面温度 阻抗数据 感应电压 运行条件 可用加热功率 估计置信度 温度预测值 测量时间戳 估计误差 加热控制信号 内部温度分布 内部温度值 内部温度估计值 SOC估计值 容量衰减率 温度上升速率 核心温度估计值 内部温度实时估计值 温度梯度 温度分布数据 SOC和温度估计值 瞬时内部温度值 当前最大容量值 热模型已建立 内部温度已获取 电池热管理 需要准确的热模型"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F004",
-            "name": "热管理",
-            "actor": "",
-            "action": "管理",
-            "object": "电池热状态",
-            "effect": "维持电池温度在安全范围",
-            "trigger": "温度超出阈值",
-            "condition": "电池温度异常",
-            "preconditions": [
-              "温度传感器正常"
-            ],
-            "postconditions": [
-              "电池温度恢复正常"
-            ],
-            "scenario": "电池温度异常",
-            "constraint": "需要热管理系统支持",
-            "inputs": [
-              "控制策略",
-              "环境温度",
-              "温度数据",
-              "温度传感器数据"
-            ],
-            "outputs": [
-              "热管理控制指令"
-            ]
-          },
-          {
-            "id": "F048",
-            "name": "电池碳负极热行为监测",
-            "actor": "",
-            "action": "监测",
-            "object": "碳负极动态热行为",
-            "effect": "利用四探针技术监测锂电池碳负极的动态热行为",
-            "trigger": "充放电过程中持续触发",
-            "condition": "四探针测量系统已安装",
-            "preconditions": [
-              "探针已正确安装",
-              "信号采集系统正常"
-            ],
-            "postconditions": [
-              "热行为数据输入至分析模块",
-              "支持安全评估"
-            ],
-            "scenario": "利用四探针技术实时监测锂电池碳负极的热行为变化",
-            "constraint": "空间分辨率<1mm，时间分辨率<100ms",
-            "inputs": [
-              "四探针电压信号",
-              "电流信号",
-              "温度参考"
-            ],
-            "outputs": [
-              "负极温度变化",
-              "热行为特征"
-            ]
-          },
-          {
-            "id": "F049",
-            "name": "基于非零截距频率的电池温度确定",
-            "actor": "",
-            "action": "确定",
-            "object": "电池整体温度",
-            "effect": "利用非零截距频率方法准确确定锂电池的整体温度",
-            "trigger": "周期性触发",
-            "condition": "阻抗测量系统可用",
-            "preconditions": [
-              "频率-温度关系已标定",
-              "阻抗测量精度满足要求"
-            ],
-            "postconditions": [
-              "温度值更新至BMS",
-              "支持热管理"
-            ],
-            "scenario": "利用非零截距频率方法准确确定锂电池整体温度",
-            "constraint": "温度分辨率<0.5°C，测量时间<5秒",
-            "inputs": [
-              "阻抗谱数据",
-              "非零截距频率值",
-              "校准参数"
-            ],
-            "outputs": [
-              "电池整体温度值",
-              "测量精度评估"
-            ]
-          },
-          {
-            "id": "F017",
-            "name": "热传递建模",
-            "actor": "",
-            "action": "建模",
-            "object": "电池热传递",
-            "effect": "建立圆柱形电池的集总参数电热耦合模型",
-            "trigger": "电池建模阶段",
-            "condition": "需要热管理",
-            "preconditions": [
-              "热传递参数已获取"
-            ],
-            "postconditions": [
-              "热传递模型已建立"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "计算复杂度高",
-            "inputs": [
-              "热传导系数",
-              "热容量",
-              "材料热物性",
-              "电池几何参数",
-              "电热测试数据"
-            ],
-            "outputs": [
-              "电热模型参数",
-              "热传递模型",
-              "模型方程"
-            ]
-          },
-          {
-            "id": "F024",
-            "name": "CC-CV充电曲线优化",
-            "actor": "",
-            "action": "优化",
-            "object": "CC-CV充电曲线",
-            "effect": "使用M-BBO方法实现充电速度、能量转换效率和温度变化的理想权衡",
-            "trigger": "充电策略更新请求",
-            "condition": "优化算法可用",
-            "preconditions": [
-              "电池模型可用",
-              "优化算法就绪"
-            ],
-            "postconditions": [
-              "充电性能提升"
-            ],
-            "scenario": "基于成本函数的CC-CV充电优化",
-            "constraint": "计算资源需满足实时性要求",
-            "inputs": [
-              "电池内部温度",
-              "温度上升目标",
-              "充电时间",
-              "能量转换效率目标",
-              "充电速度目标",
-              "能量损耗目标",
-              "能量损耗",
-              "温度变化目标",
-              "充电时间目标"
-            ],
-            "outputs": [
-              "最优CC-CV充电模式",
-              "关键电流区间",
-              "最优CC-CV充电参数"
-            ]
-          },
-          {
-            "id": "F018",
-            "name": "温度梯度捕获",
-            "actor": "",
-            "action": "捕获",
-            "object": "温度梯度",
-            "effect": "获取温度分布信息",
-            "trigger": "电池运行过程中",
-            "condition": "需要温度分布信息",
-            "preconditions": [
-              "一维热模型已建立"
-            ],
-            "postconditions": [
-              "温度梯度已捕获"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "需要一维热模型",
-            "inputs": [
-              "一维热模型数据"
-            ],
-            "outputs": [
-              "温度梯度信息"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F007",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "内部温度分布"
-          },
-          {
-            "source": "F007",
-            "target": "F024",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "内部温度值"
-          },
-          {
-            "source": "F017",
-            "target": "F007",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电热模型参数"
-          },
-          {
-            "source": "F018",
-            "target": "F007",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度梯度信息"
-          },
-          {
-            "source": "F048",
-            "target": "F007",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "负极温度变化"
-          },
-          {
-            "source": "F049",
-            "target": "F007",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "电池整体温度值"
-          }
-        ]
-      }
-    },
-    {
-      "score": 0.7372912168502808,
-      "data": {
-        "caseId": "CASE001",
-        "queryFunction": {
-          "id": "control-battery-heating",
-          "name": "执行动力电池加热",
-          "actor": "电池热管理控制器",
-          "action": "加热",
-          "object": "动力电池包",
-          "effect": "提高动力电池温度并将其恢复到适宜的工作温度范围",
-          "trigger": "电池热状态判定结果为过冷，或加热需求有效",
-          "condition": "电池温度低于加热启动阈值，且加热系统不存在禁止运行故障",
-          "preconditions": [
-            "已确认动力电池存在加热需求",
-            "加热装置可用",
-            "动力电池允许执行加热"
-          ],
-          "postconditions": [
-            "动力电池加热功能已启动",
-            "电池温度开始上升"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "加热需求",
-            "电池最低温度",
-            "电池平均温度",
-            "车辆运行状态",
-            "加热系统状态"
-          ],
-          "outputs": [
-            "加热控制指令",
-            "电池加热器控制指令"
-          ]
-        },
-        "function": {
-          "id": "F004",
-          "name": "热管理",
-          "actor": "",
-          "action": "管理",
-          "object": "电池热状态",
-          "effect": "维持电池温度在安全范围",
-          "trigger": "温度超出阈值",
-          "condition": "电池温度异常",
-          "preconditions": [
-            "温度传感器正常"
-          ],
-          "postconditions": [
-            "电池温度恢复正常"
-          ],
-          "scenario": "电池温度异常",
-          "constraint": "需要热管理系统支持",
-          "inputs": [
-            "控制策略",
-            "环境温度",
-            "温度数据",
-            "温度传感器数据"
-          ],
-          "outputs": [
-            "热管理控制指令"
-          ],
-          "rawstatements": "管理 电池热状态 维持电池温度在安全范围 温度超出阈值 电池温度异常 控制策略 环境温度 温度数据 温度传感器数据 热管理控制指令 温度传感器正常 电池温度恢复正常 电池温度异常 需要热管理系统支持"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F002",
-            "name": "电池状态监测",
-            "actor": "",
-            "action": "监测",
-            "object": "电池状态",
-            "effect": "获取电池当前剩余电量百分比，为能量管理和充放电控制提供依据",
-            "trigger": "电池运行过程中",
-            "condition": "电池处于工作状态",
-            "preconditions": [
-              "传感器正常工作"
-            ],
-            "postconditions": [
-              "电池状态信息已获取"
-            ],
-            "scenario": "电池正常运行",
-            "constraint": "需要传感器支持",
-            "inputs": [
-              "电池电流",
-              "循环次数",
-              "微型传感器信号",
-              "历史充放电数据",
-              "异常状态信息",
-              "电池模型参数",
-              "退化指标",
-              "温度历史",
-              "特征参数",
-              "标称内阻",
-              "历史运行数据",
-              "先验分布",
-              "电化学阻抗谱数据",
-              "充放电曲线特征",
-              "温度传感器信号",
-              "标称容量",
-              "电压电流温度实时数据",
-              "温度传感器数据",
-              "电池模型",
-              "温度信号",
-              "电池温度",
-              "老化后容量",
-              "内阻",
-              "电流信号",
-              "控制策略",
-              "电池性能数据",
-              "电池容量",
-              "校准参数",
-              "电池电压",
-              "老化后内阻",
-              "电压信号"
-            ],
-            "outputs": [
-              "电池状态信息",
-              "故障类型",
-              "SOH值",
-              "严重程度评估",
-              "退化趋势预测",
-              "电池健康诊断结果",
-              "估计置信度",
-              "内阻估计值",
-              "实时SOC估计值",
-              "容量估计值",
-              "温度变化趋势",
-              "安全控制指令",
-              "SOH百分比值",
-              "SOH估计值",
-              "健康诊断结果",
-              "SOC估计值",
-              "温度变化值",
-              "内部实时温度",
-              "健康状态后验分布",
-              "表面温度值",
-              "老化趋势预测"
-            ]
-          },
-          {
-            "id": "F019",
-            "name": "快速加热策略开发",
-            "actor": "",
-            "action": "开发",
-            "object": "快速加热策略",
-            "effect": "实现低温下快速加热",
-            "trigger": "低温环境",
-            "condition": "需要快速加热",
-            "preconditions": [
-              "低温模型已建立"
-            ],
-            "postconditions": [
-              "快速加热策略已开发"
-            ],
-            "scenario": "低温环境运行",
-            "constraint": "需要低温模型支持",
-            "inputs": [
-              "低温电-热模型",
-              "加热需求"
-            ],
-            "outputs": [
-              "快速加热策略"
-            ]
-          },
-          {
-            "id": "F007",
-            "name": "内部温度估计",
-            "actor": "",
-            "action": "估计",
-            "object": "电池内部温度",
-            "effect": "在未知冷却条件下估计圆柱形电池内部的温度分布",
-            "trigger": "电池运行过程中",
-            "condition": "无法直接测量内部温度",
-            "preconditions": [
-              "热模型已建立"
-            ],
-            "postconditions": [
-              "内部温度已获取"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "需要准确的热模型",
-            "inputs": [
-              "电池电流",
-              "电流",
-              "校准模型",
-              "循环次数",
-              "降阶热模型",
-              "电化学信号",
-              "正弦激励电流",
-              "当前电池温度",
-              "目标温度",
-              "模型参数",
-              "充放电电流",
-              "充放电电压曲线",
-              "频率响应",
-              "传感器校准参数",
-              "热模型参数",
-              "阻抗谱数据",
-              "热电偶信号",
-              "相位差",
-              "环境温度",
-              "温度数据",
-              "表面温度",
-              "电热模型参数",
-              "电压",
-              "校准参数",
-              "电池电压",
-              "电池表面温度",
-              "阻抗数据",
-              "感应电压",
-              "运行条件",
-              "可用加热功率"
-            ],
-            "outputs": [
-              "估计置信度",
-              "温度预测值",
-              "测量时间戳",
-              "估计误差",
-              "加热控制信号",
-              "内部温度分布",
-              "内部温度值",
-              "内部温度估计值",
-              "SOC估计值",
-              "容量衰减率",
-              "温度上升速率",
-              "核心温度估计值",
-              "内部温度实时估计值",
-              "温度梯度",
-              "温度分布数据",
-              "SOC和温度估计值",
-              "瞬时内部温度值",
-              "当前最大容量值"
-            ]
-          },
-          {
-            "id": "F016",
-            "name": "热生成评估",
-            "actor": "",
-            "action": "评估",
-            "object": "电池热生成",
-            "effect": "量化电池热生成",
-            "trigger": "电池运行过程中",
-            "condition": "需要热管理",
-            "preconditions": [
-              "热生成模型已建立"
-            ],
-            "postconditions": [
-              "热生成量已评估"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "需要准确的热生成模型",
-            "inputs": [
-              "电流",
-              "电压",
-              "内阻",
-              "运行条件",
-              "电-热耦合模型"
-            ],
-            "outputs": [
-              "热生成量"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F002",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "温度变化趋势"
-          },
-          {
-            "source": "F007",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "内部温度分布"
-          },
-          {
-            "source": "F016",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "热生成量"
-          },
-          {
-            "source": "F019",
-            "target": "F004",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "快速加热策略"
-          }
-        ]
-      }
-    },
-    {
-      "score": 0.7296037077903748,
-      "data": {
-        "caseId": "CASE001",
-        "queryFunction": {
-          "id": "control-battery-heating",
-          "name": "执行动力电池加热",
-          "actor": "电池热管理控制器",
-          "action": "加热",
-          "object": "动力电池包",
-          "effect": "提高动力电池温度并将其恢复到适宜的工作温度范围",
-          "trigger": "电池热状态判定结果为过冷，或加热需求有效",
-          "condition": "电池温度低于加热启动阈值，且加热系统不存在禁止运行故障",
-          "preconditions": [
-            "已确认动力电池存在加热需求",
-            "加热装置可用",
-            "动力电池允许执行加热"
-          ],
-          "postconditions": [
-            "动力电池加热功能已启动",
-            "电池温度开始上升"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "加热需求",
-            "电池最低温度",
-            "电池平均温度",
-            "车辆运行状态",
-            "加热系统状态"
-          ],
-          "outputs": [
-            "加热控制指令",
-            "电池加热器控制指令"
-          ]
-        },
-        "function": {
-          "id": "F046",
-          "name": "电池热动态参数在线辨识",
-          "actor": "",
-          "action": "辨识",
-          "object": "电池热动态参数",
-          "effect": "在线辨识圆柱形锂电池的集总热动态参数",
-          "trigger": "充放电过程中周期性触发",
-          "condition": "电池处于激励状态",
-          "preconditions": [
-            "电池处于充放电状态",
-            "温度传感器正常"
-          ],
-          "postconditions": [
-            "参数更新至热模型",
-            "支持核心温度估计"
-          ],
-          "scenario": "在线辨识电池热动态参数，适应老化和环境变化对热特性的影响",
-          "constraint": "辨识收敛时间<60秒，参数变化率限制在±20%以内",
-          "inputs": [
-            "电流",
-            "电压",
-            "表面温度",
-            "环境温度"
-          ],
-          "outputs": [
-            "热阻参数",
-            "热容参数",
-            "时间常数"
-          ],
-          "rawstatements": "辨识 电池热动态参数 在线辨识圆柱形锂电池的集总热动态参数 充放电过程中周期性触发 电池处于激励状态 电流 电压 表面温度 环境温度 热阻参数 热容参数 时间常数 电池处于充放电状态 温度传感器正常 参数更新至热模型 支持核心温度估计 在线辨识电池热动态参数，适应老化和环境变化对热特性的影响 辨识收敛时间<60秒，参数变化率限制在±20%以内"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F017",
-            "name": "热传递建模",
-            "actor": "",
-            "action": "建模",
-            "object": "电池热传递",
-            "effect": "建立圆柱形电池的集总参数电热耦合模型",
-            "trigger": "电池建模阶段",
-            "condition": "需要热管理",
-            "preconditions": [
-              "热传递参数已获取"
-            ],
-            "postconditions": [
-              "热传递模型已建立"
-            ],
-            "scenario": "电池热管理",
-            "constraint": "计算复杂度高",
-            "inputs": [
-              "热传导系数",
-              "热容量",
-              "材料热物性",
-              "电池几何参数",
-              "电热测试数据"
-            ],
-            "outputs": [
-              "电热模型参数",
-              "热传递模型",
-              "模型方程"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F046",
-            "target": "F017",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "data_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "热阻参数"
-          }
-        ]
-      }
-    },
-    {
-      "score": 0.7234885692596436,
-      "data": {
-        "caseId": "CASE002",
-        "queryFunction": {
-          "id": "control-battery-cooling",
-          "name": "执行动力电池冷却",
-          "actor": "电池热管理控制器",
-          "action": "冷却",
-          "object": "动力电池包",
-          "effect": "降低动力电池温度并将其维持在允许的工作温度范围内",
-          "trigger": "电池热状态判定结果为过热，或冷却需求有效",
-          "condition": "电池温度高于冷却启动阈值，且冷却系统不存在禁止运行故障",
-          "preconditions": [
-            "已确认动力电池存在冷却需求",
-            "冷却液回路可用",
-            "冷却执行机构正常"
-          ],
-          "postconditions": [
-            "动力电池冷却功能已启动",
-            "电池温度开始下降或保持稳定"
-          ],
-          "scenario": "",
-          "constraint": "",
-          "inputs": [
-            "冷却需求",
-            "电池最高温度",
-            "电池平均温度",
-            "车辆运行状态",
-            "冷却系统状态"
-          ],
-          "outputs": [
-            "冷却控制指令",
-            "冷却液泵控制指令",
-            "冷却风扇控制指令"
-          ]
-        },
-        "function": {
-          "id": "F080",
-          "name": "低温加热控制",
-          "actor": "",
-          "action": "控制",
-          "object": "电池加热过程",
-          "effect": "在低温环境下提升电池温度，改善性能和延长寿命",
-          "trigger": "电池温度低于低温阈值",
-          "condition": "电池处于低温环境",
-          "preconditions": [
-            "加热装置可用",
-            "电池状态允许加热"
-          ],
-          "postconditions": [
-            "电池温度已提升",
-            "加热过程已记录"
-          ],
-          "scenario": "分析低温对锂离子电池性能和老化的影响，并制定加热策略",
-          "constraint": "加热速率和均匀性需满足安全要求",
-          "inputs": [
-            "电池温度",
-            "环境温度",
-            "加热策略参数"
-          ],
-          "outputs": [
-            "加热控制信号",
-            "加热功率指令"
-          ],
-          "rawstatements": "控制 电池加热过程 在低温环境下提升电池温度，改善性能和延长寿命 电池温度低于低温阈值 电池处于低温环境 电池温度 环境温度 加热策略参数 加热控制信号 加热功率指令 加热装置可用 电池状态允许加热 电池温度已提升 加热过程已记录 分析低温对锂离子电池性能和老化的影响，并制定加热策略 加热速率和均匀性需满足安全要求"
-        },
-        "neighborFunctions": [
-          {
-            "id": "F041",
-            "name": "液冷系统热管理",
-            "actor": "",
-            "action": "管理",
-            "object": "电池热状态",
-            "effect": "通过液冷板对电池进行冷却或加热，维持电池在最佳温度范围",
-            "trigger": "温度超出目标范围",
-            "condition": "液冷系统可用",
-            "preconditions": [
-              "液冷板已安装",
-              "冷却液循环系统正常"
-            ],
-            "postconditions": [
-              "电池温度维持在目标范围内"
-            ],
-            "scenario": "Smart Fortwo电池包顶部安装液冷板进行液体冷却热管理",
-            "constraint": "需防止冷却液泄漏至电气部分",
-            "inputs": [
-              "电池温度分布",
-              "冷却液温度"
-            ],
-            "outputs": [
-              "液冷系统控制信号"
-            ]
-          }
-        ],
-        "relatedRelations": [
-          {
-            "source": "F080",
-            "target": "F041",
-            "source_name": "",
-            "target_name": "",
-            "relation_type": "control_flow",
-            "direction": "source_to_target",
-            "confidence": 0.0,
-            "evidence": "",
-            "flowObject": "加热控制信号"
-          }
-        ]
-      }
+      },
+      "scenarios": [
+        "正常运行",
+        "高温",
+        "低温",
+        "异常"
+      ],
+      "source_path": "cases/ARCH_BTM_EV_004/case.json",
+      "rank": -2.02
     }
   ],
   "llm_result": {
@@ -2752,321 +182,142 @@
       {
         "id": "monitor-battery-temperature",
         "fields": {
-          "constraint": "温度传感器采样周期和精度需满足热管理控制要求，通信链路需可靠",
-          "scenario": "车辆启动后或电池管理系统运行期间，持续监测动力电池包内部各测温点温度"
+          "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求",
+          "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度"
         },
         "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F001",
-            "neighborFunctionId": "",
-            "similarity": 0.8116511702537537,
-            "matchedPattern": "温度采集功能包含scenario和constraint定义"
+            "subgraphId": "SG_BTM_MONITOR_001",
+            "architectureId": "ARCH_BTM_EV_001",
+            "viewId": "VIEW_BTM_CONTROL_001",
+            "title": "动力电池温度监测与热状态判定",
+            "rank": -1.21,
+            "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求明确要求实时监测电池包温度，历史案例F001也定义了场景和约束字段，据此补全",
-        "confidence": 0.9
+        "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "evaluate-battery-thermal-state",
         "fields": {
-          "constraint": "热管理阈值参数需预先标定且有效，判定逻辑需覆盖正常、过热、过冷和异常状态",
-          "scenario": "获得最新电池温度数据后判断当前热状态并生成冷却、加热或异常标志"
+          "constraint": "热管理控制阈值已完成配置且温度数据有效",
+          "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志"
         },
-        "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热",
+        "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
         "historyEvidence": [
           {
-            "caseId": "CASE001",
-            "matchedFunctionId": "F004",
-            "neighborFunctionId": "",
-            "similarity": 0.8376815319061279,
-            "matchedPattern": "热管理功能包含scenario和constraint定义"
+            "subgraphId": "SG_BTM_MONITOR_001",
+            "architectureId": "ARCH_BTM_EV_001",
+            "viewId": "VIEW_BTM_CONTROL_001",
+            "title": "动力电池温度监测与热状态判定",
+            "rank": -1.21,
+            "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求描述了基于阈值的判断场景，历史案例F004提供了类似功能的场景和约束参考",
-        "confidence": 0.9
+        "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "control-battery-cooling",
         "fields": {
-          "constraint": "冷却系统无禁止运行故障，冷却速率需防止电池温差过大",
-          "scenario": "电池温度超过冷却阈值时启动冷却系统降低电池温度"
+          "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用",
+          "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却"
         },
         "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理包含scenario和constraint定义"
-          },
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F033",
-            "neighborFunctionId": "",
-            "similarity": 0.8070484399795532,
-            "matchedPattern": "冷却风扇控制包含噪音和功耗约束"
+            "subgraphId": "SG_BTM_COOL_002",
+            "architectureId": "ARCH_BTM_EV_001",
+            "viewId": "VIEW_BTM_FLUID_001",
+            "title": "过温工况下的动力电池液冷控制",
+            "rank": -1.46,
+            "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求明确冷却触发场景，历史案例F041和F033提供了冷却相关约束参考",
-        "confidence": 0.9
+        "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "control-battery-heating",
         "fields": {
-          "constraint": "加热速率和均匀性需满足安全要求，防止局部过热",
-          "scenario": "电池温度低于加热阈值时启动加热系统提升电池温度至适宜范围"
+          "constraint": "加热系统不存在禁止运行故障且加热装置可用",
+          "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热"
         },
         "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F080",
-            "neighborFunctionId": "",
-            "similarity": 0.837552011013031,
-            "matchedPattern": "低温加热控制包含加热速率和均匀性约束"
+            "subgraphId": "SG_BTM_HEAT_003",
+            "architectureId": "ARCH_BTM_EV_002",
+            "viewId": "VIEW_BTM_MODE_002",
+            "title": "低温工况下的动力电池加热控制",
+            "rank": -1.63,
+            "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求描述加热触发场景，历史案例F080明确给出了加热速率和均匀性的安全约束",
-        "confidence": 0.92
+        "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       }
     ],
     "missingFunctions": [
       {
-        "id": "execute-cooling-fan-operation",
-        "name": "执行冷却风扇运转",
-        "actor": "冷却风扇驱动器",
-        "action": "运转",
-        "object": "冷却风扇",
-        "effect": "驱动风扇旋转排出电池包内热空气以辅助散热",
-        "trigger": "接收到冷却风扇控制指令",
-        "condition": "风扇电机和驱动电路正常且无机械卡滞",
-        "inputs": [
-          "冷却风扇控制指令"
-        ],
-        "outputs": [
-          "风扇实际转速",
-          "风扇运行状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的冷却风扇控制指令",
-          "风扇硬件自检通过"
-        ],
-        "postconditions": [
-          "冷却风扇按指令转速运行",
-          "电池包散热气流建立"
-        ],
-        "scenario": "电池冷却过程中风扇接收控制指令并执行物理转动散热",
-        "constraint": "风扇噪音和功耗需控制在可接受范围内，响应延迟需满足热管理时序要求",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理的邻居冷却风扇控制作为下游执行器功能存在"
-          },
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F033",
-            "neighborFunctionId": "",
-            "similarity": 0.8070484399795532,
-            "matchedPattern": "冷却风扇控制直接匹配，action=控制,object=冷却风扇,effect=排出热空气"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-cooling输出冷却风扇控制指令仅完成决策阶段(Rule 12)，历史模式在两个案例中一致显示冷却风扇控制作为独立执行器功能存在(Rule 8)。action(运转vs控制)和effect(物理排热vs生成指令)与现有功能不等价(Rule 13)。单案例迁移但多pattern一致支持，confidence不超过0.78",
-        "confidence": 0.77
-      },
-      {
-        "id": "execute-coolant-pump-operation",
-        "name": "执行冷却液泵运转",
-        "actor": "冷却液泵驱动器",
-        "action": "运转",
-        "object": "冷却液泵",
-        "effect": "驱动冷却液在回路中循环流动以带走电池热量",
-        "trigger": "接收到冷却液泵控制指令",
-        "condition": "冷却液泵电机正常且管路无堵塞泄漏",
-        "inputs": [
-          "冷却液泵控制指令"
-        ],
-        "outputs": [
-          "泵实际流量",
-          "泵运行状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的冷却液泵控制指令",
-          "冷却液回路阀门已开启"
-        ],
-        "postconditions": [
-          "冷却液泵按指令运行",
-          "冷却液在回路中循环流动"
-        ],
-        "scenario": "电池冷却过程中冷却液泵接收指令驱动冷却液循环散热",
-        "constraint": "泵的流量和压力需满足散热需求，运行噪音需可控",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理作为冷却执行层功能，其邻居包含具体执行器控制"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-cooling输出冷却液泵控制指令仅完成决策(Rule 12)，历史F041(action=管理,object=电池热状态)为上层协调功能，其下游需独立执行器功能。虽无直接泵执行邻居匹配，但基于Rule 12架构粒度原则和F041液冷管理模式推断需独立泵执行功能。单案例间接推断，confidence较低",
-        "confidence": 0.62
-      },
-      {
-        "id": "execute-battery-heater-operation",
-        "name": "执行电池加热器工作",
-        "actor": "电池加热器驱动器",
-        "action": "加热",
-        "object": "电池加热元件",
-        "effect": "将电能转化为热能对电池包进行物理加热",
-        "trigger": "接收到电池加热器控制指令",
-        "condition": "加热器硬件正常且无短路断路故障",
-        "inputs": [
-          "电池加热器控制指令"
-        ],
-        "outputs": [
-          "加热器实际功率",
-          "加热器工作状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的电池加热器控制指令",
-          "加热器电气连接正常"
-        ],
-        "postconditions": [
-          "电池加热器按指令功率工作",
-          "电池开始吸收热量升温"
-        ],
-        "scenario": "电池加热过程中加热器接收指令执行物理加热动作",
-        "constraint": "加热功率需受控以防止局部过热，绝缘性能需满足高压安全要求",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F080",
-            "neighborFunctionId": "F041",
-            "similarity": 0.837552011013031,
-            "matchedPattern": "低温加热控制输出加热控制信号给下游执行功能"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-heating输出电池加热器控制指令仅完成决策(Rule 12)，历史F080(action=控制,object=电池加热过程)为控制层功能，其输出加热控制信号指向下游执行。需独立加热器物理执行功能。单案例迁移，confidence不超过0.78",
-        "confidence": 0.72
-      },
-      {
         "id": "report-thermal-alarm",
         "name": "上报电池热异常告警",
         "actor": "电池管理系统",
-        "action": "发送",
-        "object": "热异常告警信息",
-        "effect": "向整车控制器和驾驶员通知电池温度异常或热失控风险",
-        "trigger": "温度异常标志有效或检测到热失控风险",
-        "condition": "告警通信通道可用且电池管理系统正常运行",
+        "action": "上报",
+        "object": "电池温度异常或热失控风险告警信息",
+        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
+        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
+        "condition": "电池管理系统与整车控制器通信链路正常",
         "inputs": [
           "温度异常标志",
           "电池热状态判定结果",
-          "电池最高温度"
+          "电池最高温度",
+          "电池温差"
         ],
         "outputs": [
-          "发送至整车控制器的告警报文",
-          "驾驶员告警提示信号"
+          "整车控制器告警信息",
+          "驾驶员告警信息"
         ],
         "preconditions": [
-          "已完成动力电池热状态判断",
-          "确认存在温度异常或热失控风险"
+          "已完成动力电池热状态判定",
+          "已识别到温度异常或热失控风险"
         ],
         "postconditions": [
-          "告警信息已成功发送至整车控制器",
-          "驾驶员端已显示或播报告警提示"
+          "告警信息已发送至整车控制器和驾驶员"
         ],
-        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警",
-        "constraint": "告警信息传输延迟需满足功能安全要求，告警等级需准确反映风险程度",
+        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
+        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
         "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-        "historyEvidence": [],
-        "evidenceType": "requirement_only",
-        "reason": "需求明确要求在温度异常或热失控风险时发送告警信息给VCU和驾驶员。当前evaluate-battery-thermal-state仅输出温度异常标志(判断阶段)，不包含告警上报动作(Rule 11)。告警上报是独立的架构职责阶段，尚未建模",
-        "confidence": 0.95
+        "historyEvidence": [
+          {
+            "subgraphId": "SG_BTM_FAULT_004",
+            "architectureId": "ARCH_BTM_EV_003",
+            "viewId": "VIEW_BTM_SAFETY_001",
+            "title": "温度异常检测与热失控风险告警",
+            "rank": -1.88,
+            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
+          },
+          {
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
+          }
+        ],
+        "evidenceType": "requirement_and_history",
+        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
+        "confidence": 0.7
       }
     ],
     "missingRelations": [
-      {
-        "source": "control-battery-cooling",
-        "target": "execute-cooling-fan-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却风扇运转",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "冷却风扇控制指令",
-        "evidence": "上层冷却控制功能输出冷却风扇控制指令，驱动下游风扇执行器运转",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F041到F033存在control_flow关系，对应当前冷却控制到风扇执行的上下游控制流",
-        "confidence": 0.76
-      },
-      {
-        "source": "control-battery-cooling",
-        "target": "execute-coolant-pump-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却液泵运转",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "冷却液泵控制指令",
-        "evidence": "上层冷却控制功能输出冷却液泵控制指令，驱动下游泵执行器运转",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "基于Rule 12架构粒度原则和历史F041到执行器的control_flow模式，冷却控制需连接到泵执行功能",
-        "confidence": 0.6
-      },
-      {
-        "source": "control-battery-heating",
-        "target": "execute-battery-heater-operation",
-        "source_name": "执行动力电池加热",
-        "target_name": "执行电池加热器工作",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "电池加热器控制指令",
-        "evidence": "上层加热控制功能输出电池加热器控制指令，驱动下游加热器执行工作",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F080",
-            "target": "F041",
-            "relation_type": "control_flow",
-            "similarity": 0.837552011013031
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F080到F041存在control_flow关系，对应加热控制到下游执行的控制流模式",
-        "confidence": 0.7
-      },
       {
         "source": "evaluate-battery-thermal-state",
         "target": "report-thermal-alarm",
@@ -3075,11 +326,20 @@
         "relation_type": "control_flow",
         "direction": "source_to_target",
         "flowObject": "温度异常标志",
-        "evidence": "热状态判断产生温度异常标志后触发告警上报流程",
-        "historyEvidence": [],
-        "evidenceType": "requirement_only",
-        "reason": "需求明确当检测到温度异常或热失控风险时发送告警，evaluate-battery-thermal-state输出温度异常标志，应作为report-thermal-alarm的触发源",
-        "confidence": 0.93
+        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
+        "historyEvidence": [
+          {
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
+          }
+        ],
+        "evidenceType": "requirement_and_history",
+        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认",
+        "confidence": 0.68
       }
     ]
   },
@@ -3088,321 +348,142 @@
       {
         "id": "monitor-battery-temperature",
         "fields": {
-          "scenario": "车辆启动后或电池管理系统运行期间，持续监测动力电池包内部各测温点温度",
-          "constraint": "温度传感器采样周期和精度需满足热管理控制要求，通信链路需可靠"
+          "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度",
+          "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求"
         },
         "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F001",
-            "neighborFunctionId": "",
-            "similarity": 0.8116511702537537,
-            "matchedPattern": "温度采集功能包含scenario和constraint定义"
+            "subgraphId": "SG_BTM_MONITOR_001",
+            "architectureId": "ARCH_BTM_EV_001",
+            "viewId": "VIEW_BTM_CONTROL_001",
+            "title": "动力电池温度监测与热状态判定",
+            "rank": -1.21,
+            "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求明确要求实时监测电池包温度，历史案例F001也定义了场景和约束字段，据此补全",
-        "confidence": 0.9
+        "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "evaluate-battery-thermal-state",
         "fields": {
-          "scenario": "获得最新电池温度数据后判断当前热状态并生成冷却、加热或异常标志",
-          "constraint": "热管理阈值参数需预先标定且有效，判定逻辑需覆盖正常、过热、过冷和异常状态"
+          "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志",
+          "constraint": "热管理控制阈值已完成配置且温度数据有效"
         },
-        "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热",
+        "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
         "historyEvidence": [
           {
-            "caseId": "CASE001",
-            "matchedFunctionId": "F004",
-            "neighborFunctionId": "",
-            "similarity": 0.8376815319061279,
-            "matchedPattern": "热管理功能包含scenario和constraint定义"
+            "subgraphId": "SG_BTM_MONITOR_001",
+            "architectureId": "ARCH_BTM_EV_001",
+            "viewId": "VIEW_BTM_CONTROL_001",
+            "title": "动力电池温度监测与热状态判定",
+            "rank": -1.21,
+            "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求描述了基于阈值的判断场景，历史案例F004提供了类似功能的场景和约束参考",
-        "confidence": 0.9
+        "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "control-battery-cooling",
         "fields": {
-          "scenario": "电池温度超过冷却阈值时启动冷却系统降低电池温度",
-          "constraint": "冷却系统无禁止运行故障，冷却速率需防止电池温差过大"
+          "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却",
+          "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用"
         },
         "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理包含scenario和constraint定义"
-          },
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F033",
-            "neighborFunctionId": "",
-            "similarity": 0.8070484399795532,
-            "matchedPattern": "冷却风扇控制包含噪音和功耗约束"
+            "subgraphId": "SG_BTM_COOL_002",
+            "architectureId": "ARCH_BTM_EV_001",
+            "viewId": "VIEW_BTM_FLUID_001",
+            "title": "过温工况下的动力电池液冷控制",
+            "rank": -1.46,
+            "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求明确冷却触发场景，历史案例F041和F033提供了冷却相关约束参考",
-        "confidence": 0.9
+        "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "control-battery-heating",
         "fields": {
-          "scenario": "电池温度低于加热阈值时启动加热系统提升电池温度至适宜范围",
-          "constraint": "加热速率和均匀性需满足安全要求，防止局部过热"
+          "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热",
+          "constraint": "加热系统不存在禁止运行故障且加热装置可用"
         },
         "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F080",
-            "neighborFunctionId": "",
-            "similarity": 0.837552011013031,
-            "matchedPattern": "低温加热控制包含加热速率和均匀性约束"
+            "subgraphId": "SG_BTM_HEAT_003",
+            "architectureId": "ARCH_BTM_EV_002",
+            "viewId": "VIEW_BTM_MODE_002",
+            "title": "低温工况下的动力电池加热控制",
+            "rank": -1.63,
+            "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
           }
         ],
         "evidenceType": "requirement_and_history",
-        "reason": "需求描述加热触发场景，历史案例F080明确给出了加热速率和均匀性的安全约束",
-        "confidence": 0.92
+        "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       }
     ],
     "missingFunctions": [
       {
-        "id": "execute-cooling-fan-operation",
-        "name": "执行冷却风扇运转",
-        "actor": "冷却风扇驱动器",
-        "action": "运转",
-        "object": "冷却风扇",
-        "effect": "驱动风扇旋转排出电池包内热空气以辅助散热",
-        "trigger": "接收到冷却风扇控制指令",
-        "condition": "风扇电机和驱动电路正常且无机械卡滞",
-        "inputs": [
-          "冷却风扇控制指令"
-        ],
-        "outputs": [
-          "风扇实际转速",
-          "风扇运行状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的冷却风扇控制指令",
-          "风扇硬件自检通过"
-        ],
-        "postconditions": [
-          "冷却风扇按指令转速运行",
-          "电池包散热气流建立"
-        ],
-        "scenario": "电池冷却过程中风扇接收控制指令并执行物理转动散热",
-        "constraint": "风扇噪音和功耗需控制在可接受范围内，响应延迟需满足热管理时序要求",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理的邻居冷却风扇控制作为下游执行器功能存在"
-          },
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F033",
-            "neighborFunctionId": "",
-            "similarity": 0.8070484399795532,
-            "matchedPattern": "冷却风扇控制直接匹配，action=控制,object=冷却风扇,effect=排出热空气"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-cooling输出冷却风扇控制指令仅完成决策阶段(Rule 12)，历史模式在两个案例中一致显示冷却风扇控制作为独立执行器功能存在(Rule 8)。action(运转vs控制)和effect(物理排热vs生成指令)与现有功能不等价(Rule 13)。单案例迁移但多pattern一致支持，confidence不超过0.78",
-        "confidence": 0.77
-      },
-      {
-        "id": "execute-coolant-pump-operation",
-        "name": "执行冷却液泵运转",
-        "actor": "冷却液泵驱动器",
-        "action": "运转",
-        "object": "冷却液泵",
-        "effect": "驱动冷却液在回路中循环流动以带走电池热量",
-        "trigger": "接收到冷却液泵控制指令",
-        "condition": "冷却液泵电机正常且管路无堵塞泄漏",
-        "inputs": [
-          "冷却液泵控制指令"
-        ],
-        "outputs": [
-          "泵实际流量",
-          "泵运行状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的冷却液泵控制指令",
-          "冷却液回路阀门已开启"
-        ],
-        "postconditions": [
-          "冷却液泵按指令运行",
-          "冷却液在回路中循环流动"
-        ],
-        "scenario": "电池冷却过程中冷却液泵接收指令驱动冷却液循环散热",
-        "constraint": "泵的流量和压力需满足散热需求，运行噪音需可控",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理作为冷却执行层功能，其邻居包含具体执行器控制"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-cooling输出冷却液泵控制指令仅完成决策(Rule 12)，历史F041(action=管理,object=电池热状态)为上层协调功能，其下游需独立执行器功能。虽无直接泵执行邻居匹配，但基于Rule 12架构粒度原则和F041液冷管理模式推断需独立泵执行功能。单案例间接推断，confidence较低",
-        "confidence": 0.62
-      },
-      {
-        "id": "execute-battery-heater-operation",
-        "name": "执行电池加热器工作",
-        "actor": "电池加热器驱动器",
-        "action": "加热",
-        "object": "电池加热元件",
-        "effect": "将电能转化为热能对电池包进行物理加热",
-        "trigger": "接收到电池加热器控制指令",
-        "condition": "加热器硬件正常且无短路断路故障",
-        "inputs": [
-          "电池加热器控制指令"
-        ],
-        "outputs": [
-          "加热器实际功率",
-          "加热器工作状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的电池加热器控制指令",
-          "加热器电气连接正常"
-        ],
-        "postconditions": [
-          "电池加热器按指令功率工作",
-          "电池开始吸收热量升温"
-        ],
-        "scenario": "电池加热过程中加热器接收指令执行物理加热动作",
-        "constraint": "加热功率需受控以防止局部过热，绝缘性能需满足高压安全要求",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F080",
-            "neighborFunctionId": "F041",
-            "similarity": 0.837552011013031,
-            "matchedPattern": "低温加热控制输出加热控制信号给下游执行功能"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-heating输出电池加热器控制指令仅完成决策(Rule 12)，历史F080(action=控制,object=电池加热过程)为控制层功能，其输出加热控制信号指向下游执行。需独立加热器物理执行功能。单案例迁移，confidence不超过0.78",
-        "confidence": 0.72
-      },
-      {
         "id": "report-thermal-alarm",
         "name": "上报电池热异常告警",
         "actor": "电池管理系统",
-        "action": "发送",
-        "object": "热异常告警信息",
-        "effect": "向整车控制器和驾驶员通知电池温度异常或热失控风险",
-        "trigger": "温度异常标志有效或检测到热失控风险",
-        "condition": "告警通信通道可用且电池管理系统正常运行",
+        "action": "上报",
+        "object": "电池温度异常或热失控风险告警信息",
+        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
+        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
+        "condition": "电池管理系统与整车控制器通信链路正常",
         "inputs": [
           "温度异常标志",
           "电池热状态判定结果",
-          "电池最高温度"
+          "电池最高温度",
+          "电池温差"
         ],
         "outputs": [
-          "发送至整车控制器的告警报文",
-          "驾驶员告警提示信号"
+          "整车控制器告警信息",
+          "驾驶员告警信息"
         ],
         "preconditions": [
-          "已完成动力电池热状态判断",
-          "确认存在温度异常或热失控风险"
+          "已完成动力电池热状态判定",
+          "已识别到温度异常或热失控风险"
         ],
         "postconditions": [
-          "告警信息已成功发送至整车控制器",
-          "驾驶员端已显示或播报告警提示"
+          "告警信息已发送至整车控制器和驾驶员"
         ],
-        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警",
-        "constraint": "告警信息传输延迟需满足功能安全要求，告警等级需准确反映风险程度",
+        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
+        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
         "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-        "historyEvidence": [],
-        "evidenceType": "requirement_only",
-        "reason": "需求明确要求在温度异常或热失控风险时发送告警信息给VCU和驾驶员。当前evaluate-battery-thermal-state仅输出温度异常标志(判断阶段)，不包含告警上报动作(Rule 11)。告警上报是独立的架构职责阶段，尚未建模",
-        "confidence": 0.95
+        "historyEvidence": [
+          {
+            "subgraphId": "SG_BTM_FAULT_004",
+            "architectureId": "ARCH_BTM_EV_003",
+            "viewId": "VIEW_BTM_SAFETY_001",
+            "title": "温度异常检测与热失控风险告警",
+            "rank": -1.88,
+            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
+          },
+          {
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
+          }
+        ],
+        "evidenceType": "requirement_and_history",
+        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
+        "confidence": 0.7
       }
     ],
     "missingRelations": [
-      {
-        "source": "control-battery-cooling",
-        "target": "execute-cooling-fan-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却风扇运转",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "冷却风扇控制指令",
-        "evidence": "上层冷却控制功能输出冷却风扇控制指令，驱动下游风扇执行器运转",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F041到F033存在control_flow关系，对应当前冷却控制到风扇执行的上下游控制流",
-        "confidence": 0.76
-      },
-      {
-        "source": "control-battery-cooling",
-        "target": "execute-coolant-pump-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却液泵运转",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "冷却液泵控制指令",
-        "evidence": "上层冷却控制功能输出冷却液泵控制指令，驱动下游泵执行器运转",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "基于Rule 12架构粒度原则和历史F041到执行器的control_flow模式，冷却控制需连接到泵执行功能",
-        "confidence": 0.6
-      },
-      {
-        "source": "control-battery-heating",
-        "target": "execute-battery-heater-operation",
-        "source_name": "执行动力电池加热",
-        "target_name": "执行电池加热器工作",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "电池加热器控制指令",
-        "evidence": "上层加热控制功能输出电池加热器控制指令，驱动下游加热器执行工作",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F080",
-            "target": "F041",
-            "relation_type": "control_flow",
-            "similarity": 0.837552011013031
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F080到F041存在control_flow关系，对应加热控制到下游执行的控制流模式",
-        "confidence": 0.7
-      },
       {
         "source": "evaluate-battery-thermal-state",
         "target": "report-thermal-alarm",
@@ -3411,11 +492,20 @@
         "relation_type": "control_flow",
         "direction": "source_to_target",
         "flowObject": "温度异常标志",
-        "evidence": "热状态判断产生温度异常标志后触发告警上报流程",
-        "historyEvidence": [],
-        "evidenceType": "requirement_only",
-        "reason": "需求明确当检测到温度异常或热失控风险时发送告警，evaluate-battery-thermal-state输出温度异常标志，应作为report-thermal-alarm的触发源",
-        "confidence": 0.93
+        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
+        "historyEvidence": [
+          {
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
+          }
+        ],
+        "evidenceType": "requirement_and_history",
+        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认",
+        "confidence": 0.68
       }
     ]
   },
@@ -3449,8 +539,8 @@
         "postconditions": [
           "已获得最新的动力电池温度信息"
         ],
-        "scenario": "车辆启动后或电池管理系统运行期间，持续监测动力电池包内部各测温点温度",
-        "constraint": "温度传感器采样周期和精度需满足热管理控制要求，通信链路需可靠",
+        "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度",
+        "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -3463,20 +553,21 @@
             "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
             "historyEvidence": [
               {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F001",
-                "neighborFunctionId": "",
-                "similarity": 0.8116511702537537,
-                "matchedPattern": "温度采集功能包含scenario和constraint定义"
+                "subgraphId": "SG_BTM_MONITOR_001",
+                "architectureId": "ARCH_BTM_EV_001",
+                "viewId": "VIEW_BTM_CONTROL_001",
+                "title": "动力电池温度监测与热状态判定",
+                "rank": -1.21,
+                "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求明确要求实时监测电池包温度，历史案例F001也定义了场景和约束字段，据此补全",
-            "confidence": 0.9
+            "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ],
-        "reason": "需求明确要求实时监测电池包温度，历史案例F001也定义了场景和约束字段，据此补全",
-        "confidence": 0.9
+        "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "evaluate-battery-thermal-state",
@@ -3510,8 +601,8 @@
           "已确定动力电池当前热状态",
           "已生成功率热管理需求"
         ],
-        "scenario": "获得最新电池温度数据后判断当前热状态并生成冷却、加热或异常标志",
-        "constraint": "热管理阈值参数需预先标定且有效，判定逻辑需覆盖正常、过热、过冷和异常状态",
+        "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志",
+        "constraint": "热管理控制阈值已完成配置且温度数据有效",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -3521,23 +612,24 @@
               "constraint",
               "scenario"
             ],
-            "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热",
+            "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
             "historyEvidence": [
               {
-                "caseId": "CASE001",
-                "matchedFunctionId": "F004",
-                "neighborFunctionId": "",
-                "similarity": 0.8376815319061279,
-                "matchedPattern": "热管理功能包含scenario和constraint定义"
+                "subgraphId": "SG_BTM_MONITOR_001",
+                "architectureId": "ARCH_BTM_EV_001",
+                "viewId": "VIEW_BTM_CONTROL_001",
+                "title": "动力电池温度监测与热状态判定",
+                "rank": -1.21,
+                "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求描述了基于阈值的判断场景，历史案例F004提供了类似功能的场景和约束参考",
-            "confidence": 0.9
+            "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ],
-        "reason": "需求描述了基于阈值的判断场景，历史案例F004提供了类似功能的场景和约束参考",
-        "confidence": 0.9
+        "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "control-battery-cooling",
@@ -3569,8 +661,8 @@
           "动力电池冷却功能已启动",
           "电池温度开始下降或保持稳定"
         ],
-        "scenario": "电池温度超过冷却阈值时启动冷却系统降低电池温度",
-        "constraint": "冷却系统无禁止运行故障，冷却速率需防止电池温差过大",
+        "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却",
+        "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -3583,27 +675,21 @@
             "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
             "historyEvidence": [
               {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F041",
-                "neighborFunctionId": "",
-                "similarity": 0.8290574550628662,
-                "matchedPattern": "液冷系统热管理包含scenario和constraint定义"
-              },
-              {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F033",
-                "neighborFunctionId": "",
-                "similarity": 0.8070484399795532,
-                "matchedPattern": "冷却风扇控制包含噪音和功耗约束"
+                "subgraphId": "SG_BTM_COOL_002",
+                "architectureId": "ARCH_BTM_EV_001",
+                "viewId": "VIEW_BTM_FLUID_001",
+                "title": "过温工况下的动力电池液冷控制",
+                "rank": -1.46,
+                "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求明确冷却触发场景，历史案例F041和F033提供了冷却相关约束参考",
-            "confidence": 0.9
+            "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ],
-        "reason": "需求明确冷却触发场景，历史案例F041和F033提供了冷却相关约束参考",
-        "confidence": 0.9
+        "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
         "id": "control-battery-heating",
@@ -3634,8 +720,8 @@
           "动力电池加热功能已启动",
           "电池温度开始上升"
         ],
-        "scenario": "电池温度低于加热阈值时启动加热系统提升电池温度至适宜范围",
-        "constraint": "加热速率和均匀性需满足安全要求，防止局部过热",
+        "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热",
+        "constraint": "加热系统不存在禁止运行故障且加热装置可用",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -3648,150 +734,73 @@
             "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
             "historyEvidence": [
               {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F080",
-                "neighborFunctionId": "",
-                "similarity": 0.837552011013031,
-                "matchedPattern": "低温加热控制包含加热速率和均匀性约束"
+                "subgraphId": "SG_BTM_HEAT_003",
+                "architectureId": "ARCH_BTM_EV_002",
+                "viewId": "VIEW_BTM_MODE_002",
+                "title": "低温工况下的动力电池加热控制",
+                "rank": -1.63,
+                "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求描述加热触发场景，历史案例F080明确给出了加热速率和均匀性的安全约束",
-            "confidence": 0.92
+            "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ],
-        "reason": "需求描述加热触发场景，历史案例F080明确给出了加热速率和均匀性的安全约束",
-        "confidence": 0.92
+        "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
+        "confidence": 0.7
       },
       {
-        "id": "execute-cooling-fan-operation",
-        "name": "执行冷却风扇运转",
-        "actor": "冷却风扇驱动器",
-        "action": "运转",
-        "object": "冷却风扇",
-        "effect": "驱动风扇旋转排出电池包内热空气以辅助制热",
-        "trigger": "接收到冷却风扇控制指令",
-        "condition": "风扇电机和驱动电路正常且无机械卡滞",
+        "id": "report-thermal-alarm",
+        "name": "上报电池热异常告警",
+        "actor": "电池管理系统",
+        "action": "上报",
+        "object": "电池温度异常或热失控风险告警信息",
+        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
+        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
+        "condition": "电池管理系统与整车控制器通信链路正常",
         "inputs": [
-          "冷却风扇控制指令"
+          "温度异常标志",
+          "电池热状态判定结果",
+          "电池最高温度",
+          "电池温差"
         ],
         "outputs": [
-          "风扇实际转速",
-          "风扇运行状态反馈"
+          "整车控制器告警信息",
+          "驾驶员告警信息"
         ],
         "preconditions": [
-          "已收到有效的冷却风扇控制指令",
-          "风扇硬件自检通过"
+          "已完成动力电池热状态判定",
+          "已识别到温度异常或热失控风险"
         ],
         "postconditions": [
-          "冷却风扇按指令转速运行",
-          "电池包散热气流建立"
+          "告警信息已发送至整车控制器和驾驶员"
         ],
-        "scenario": "电池冷却过程中风扇接收控制指令并执行物理转动散热",
-        "constraint": "风扇噪音和功耗需控制在可接受范围内，响应延迟需满足热管理时序要求",
-        "requirementEvidence": "",
+        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
+        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
+        "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理的邻居冷却风扇控制作为下游执行器功能存在"
+            "subgraphId": "SG_BTM_FAULT_004",
+            "architectureId": "ARCH_BTM_EV_003",
+            "viewId": "VIEW_BTM_SAFETY_001",
+            "title": "温度异常检测与热失控风险告警",
+            "rank": -1.88,
+            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
           },
           {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F033",
-            "neighborFunctionId": "",
-            "similarity": 0.8070484399795532,
-            "matchedPattern": "冷却风扇控制直接匹配，action=控制,object=冷却风扇,effect=排出热空气"
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
           }
         ],
-        "evidenceType": "history_only",
+        "evidenceType": "requirement_and_history",
         "fieldCompletionEvidence": [],
-        "reason": "当前control-battery-cooling输出冷却风扇控制指令仅完成决策阶段(Rule 12)，历史模式在两个案例中一致显示冷却风扇控制作为独立执行器功能存在(Rule 8)。action(运转vs控制)和effect(物理排热vs生成指令)与现有功能不等价(Rule 13)。单案例迁移但多pattern一致支持，confidence不超过0.78",
-        "confidence": 0.77
-      },
-      {
-        "id": "execute-coolant-pump-operation",
-        "name": "执行冷却液泵运转",
-        "actor": "冷却液泵驱动器",
-        "action": "运转",
-        "object": "冷却液泵",
-        "effect": "驱动冷却液在回路中循环流动以带走电池热量",
-        "trigger": "接收到冷却液泵控制指令",
-        "condition": "冷却液泵电机正常且管路无堵塞泄漏",
-        "inputs": [
-          "冷却液泵控制指令"
-        ],
-        "outputs": [
-          "泵实际流量",
-          "泵运行状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的冷却液泵控制指令",
-          "冷却液回路阀门已开启"
-        ],
-        "postconditions": [
-          "冷却液泵按指令运行",
-          "冷却液在回路中循环流动"
-        ],
-        "scenario": "电池冷却过程中冷却液泵接收指令驱动冷却液循环散热",
-        "constraint": "泵的流量和压力需满足散热需求，运行噪音需可控",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理作为冷却执行层功能，其邻居包含具体执行器控制"
-          }
-        ],
-        "evidenceType": "history_only",
-        "fieldCompletionEvidence": [],
-        "reason": "当前control-battery-cooling输出冷却液泵控制指令仅完成决策(Rule 12)，历史F041(action=管理,object=电池热状态)为上层协调功能，其下游需独立执行器功能。虽无直接泵执行邻居匹配，但基于Rule 12架构粒度原则和F041液冷管理模式推断需独立泵执行功能。单案例间接推断，confidence较低",
-        "confidence": 0.62
-      },
-      {
-        "id": "execute-battery-heater-operation",
-        "name": "执行电池加热器工作",
-        "actor": "电池加热器驱动器",
-        "action": "加热",
-        "object": "电池加热元件",
-        "effect": "将电能转化为热能对电池包进行物理加热",
-        "trigger": "接收到电池加热器控制指令",
-        "condition": "加热器硬件正常且无短路断路故障",
-        "inputs": [
-          "电池加热器控制指令"
-        ],
-        "outputs": [
-          "加热器实际功率",
-          "加热器工作状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的电池加热器控制指令",
-          "加热器电气连接正常"
-        ],
-        "postconditions": [
-          "电池加热器按指令功率工作",
-          "电池开始吸收热量升温"
-        ],
-        "scenario": "电池加热过程中加热器接收指令执行物理加热动作",
-        "constraint": "加热功率需受控以防止局部过热，绝缘性能需满足高压安全要求",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F080",
-            "neighborFunctionId": "F041",
-            "similarity": 0.837552011013031,
-            "matchedPattern": "低温加热控制输出加热控制信号给下游执行功能"
-          }
-        ],
-        "evidenceType": "history_only",
-        "fieldCompletionEvidence": [],
-        "reason": "当前control-battery-heating输出电池加热器控制指令仅完成决策(Rule 12)，历史F080(action=控制,object=电池加热过程)为控制层功能，其输出加热控制信号指向下游执行。需独立加热器物理执行功能。单案例迁移，confidence不超过0.78",
-        "confidence": 0.72
+        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
+        "confidence": 0.7
       }
     ],
     "relations": [
@@ -3824,70 +833,27 @@
         "reason": ""
       },
       {
-        "source": "control-battery-cooling",
-        "target": "execute-cooling-fan-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却风扇运转",
+        "source": "evaluate-battery-thermal-state",
+        "target": "report-thermal-alarm",
+        "source_name": "判断动力电池热状态",
+        "target_name": "上报电池热异常告警",
         "relation_type": "control_flow",
         "direction": "source_to_target",
-        "flowObject": "冷却风扇控制指令",
-        "confidence": 0.76,
-        "evidence": "上层冷却控制功能输出冷却风扇控制指令，驱动下游风扇执行器运转",
+        "flowObject": "温度异常标志",
+        "confidence": 0.68,
+        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
         "historyEvidence": [
           {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
           }
         ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F041到F033存在control_flow关系，对应当前冷却控制到风扇执行的上下游控制流"
-      },
-      {
-        "source": "control-battery-cooling",
-        "target": "execute-coolant-pump-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却液泵运转",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "冷却液泵控制指令",
-        "confidence": 0.6,
-        "evidence": "上层冷却控制功能输出冷却液泵控制指令，驱动下游泵执行器运转",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "基于Rule 12架构粒度原则和历史F041到执行器的control_flow模式，冷却控制需连接到泵执行功能"
-      },
-      {
-        "source": "control-battery-heating",
-        "target": "execute-battery-heater-operation",
-        "source_name": "执行动力电池加热",
-        "target_name": "执行电池加热器工作",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "电池加热器控制指令",
-        "confidence": 0.7,
-        "evidence": "上层加热控制功能输出电池加热器控制指令，驱动下游加热器执行工作",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F080",
-            "target": "F041",
-            "relation_type": "control_flow",
-            "similarity": 0.837552011013031
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F080到F041存在control_flow关系，对应加热控制到下游执行的控制流模式"
+        "evidenceType": "requirement_and_history",
+        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认"
       }
     ]
   },
@@ -3921,8 +887,8 @@
         ],
         "id": "monitor-battery-temperature",
         "name": "监测动力电池温度",
-        "scenario": "车辆启动后或电池管理系统运行期间，持续监测动力电池包内部各测温点温度",
-        "constraint": "温度传感器采样周期和精度需满足热管理控制要求，通信链路需可靠",
+        "scenario": "车辆运行期间电池管理系统周期采样或车辆启动时实时监测动力电池包温度",
+        "constraint": "温度传感器通信正常且采样数据有效，采样周期满足热管理实时性要求",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -3937,16 +903,17 @@
             "requirementEvidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度",
             "historyEvidence": [
               {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F001",
-                "neighborFunctionId": "",
-                "similarity": 0.8116511702537537,
-                "matchedPattern": "温度采集功能包含scenario和constraint定义"
+                "subgraphId": "SG_BTM_MONITOR_001",
+                "architectureId": "ARCH_BTM_EV_001",
+                "viewId": "VIEW_BTM_CONTROL_001",
+                "title": "动力电池温度监测与热状态判定",
+                "rank": -1.21,
+                "matchedPattern": "电池管理系统周期采集电芯和电池包温度"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求明确要求实时监测电池包温度，历史案例F001也定义了场景和约束字段，据此补全",
-            "confidence": 0.9
+            "reason": "需求明确要求实时监测电池包温度，候选架构描述周期采样场景与约束，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ]
       },
@@ -3982,8 +949,8 @@
         ],
         "id": "evaluate-battery-thermal-state",
         "name": "判断动力电池热状态",
-        "scenario": "获得最新电池温度数据后判断当前热状态并生成冷却、加热或异常标志",
-        "constraint": "热管理阈值参数需预先标定且有效，判定逻辑需覆盖正常、过热、过冷和异常状态",
+        "scenario": "获得最新温度数据后依据冷却、加热和异常阈值判断电池热状态并生成对应需求标志",
+        "constraint": "热管理控制阈值已完成配置且温度数据有效",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -3995,19 +962,20 @@
               "constraint",
               "scenario"
             ],
-            "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热",
+            "requirementEvidence": "根据温度数据判断电池热状态。当电池温度超过冷却阈值时启动冷却；低于加热阈值时启动加热；检测到异常或热失控风险时发送告警",
             "historyEvidence": [
               {
-                "caseId": "CASE001",
-                "matchedFunctionId": "F004",
-                "neighborFunctionId": "",
-                "similarity": 0.8376815319061279,
-                "matchedPattern": "热管理功能包含scenario和constraint定义"
+                "subgraphId": "SG_BTM_MONITOR_001",
+                "architectureId": "ARCH_BTM_EV_001",
+                "viewId": "VIEW_BTM_CONTROL_001",
+                "title": "动力电池温度监测与热状态判定",
+                "rank": -1.21,
+                "matchedPattern": "依据冷却、加热和异常阈值生成热状态、冷却需求、加热需求及温度异常标志"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求描述了基于阈值的判断场景，历史案例F004提供了类似功能的场景和约束参考",
-            "confidence": 0.9
+            "reason": "需求描述了基于阈值的判断逻辑，候选架构明确了阈值判定场景与约束条件，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ]
       },
@@ -4041,8 +1009,8 @@
         ],
         "id": "control-battery-cooling",
         "name": "执行动力电池冷却",
-        "scenario": "电池温度超过冷却阈值时启动冷却系统降低电池温度",
-        "constraint": "冷却系统无禁止运行故障，冷却速率需防止电池温差过大",
+        "scenario": "电池热状态判定为过热或冷却需求有效时驱动冷却液泵和冷却风扇执行冷却",
+        "constraint": "冷却系统不存在禁止运行故障且冷却液回路可用",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -4057,23 +1025,17 @@
             "requirementEvidence": "当电池温度超过冷却阈值时，系统应启动冷却",
             "historyEvidence": [
               {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F041",
-                "neighborFunctionId": "",
-                "similarity": 0.8290574550628662,
-                "matchedPattern": "液冷系统热管理包含scenario和constraint定义"
-              },
-              {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F033",
-                "neighborFunctionId": "",
-                "similarity": 0.8070484399795532,
-                "matchedPattern": "冷却风扇控制包含噪音和功耗约束"
+                "subgraphId": "SG_BTM_COOL_002",
+                "architectureId": "ARCH_BTM_EV_001",
+                "viewId": "VIEW_BTM_FLUID_001",
+                "title": "过温工况下的动力电池液冷控制",
+                "rank": -1.46,
+                "matchedPattern": "当电池最高温度或平均温度超过冷却启动阈值时驱动冷却液泵并根据散热需求联动冷却风扇"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求明确冷却触发场景，历史案例F041和F033提供了冷却相关约束参考",
-            "confidence": 0.9
+            "reason": "需求明确过温启动冷却，候选架构描述了液冷控制场景与系统可用性约束，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ]
       },
@@ -4106,8 +1068,8 @@
         ],
         "id": "control-battery-heating",
         "name": "执行动力电池加热",
-        "scenario": "电池温度低于加热阈值时启动加热系统提升电池温度至适宜范围",
-        "constraint": "加热速率和均匀性需满足安全要求，防止局部过热",
+        "scenario": "电池热状态判定为过冷或加热需求有效时驱动电池加热器执行加热",
+        "constraint": "加热系统不存在禁止运行故障且加热装置可用",
         "requirementEvidence": "",
         "historyEvidence": [],
         "evidenceType": "",
@@ -4122,179 +1084,70 @@
             "requirementEvidence": "当电池温度低于加热阈值时，系统应启动加热",
             "historyEvidence": [
               {
-                "caseId": "CASE002",
-                "matchedFunctionId": "F080",
-                "neighborFunctionId": "",
-                "similarity": 0.837552011013031,
-                "matchedPattern": "低温加热控制包含加热速率和均匀性约束"
+                "subgraphId": "SG_BTM_HEAT_003",
+                "architectureId": "ARCH_BTM_EV_002",
+                "viewId": "VIEW_BTM_MODE_002",
+                "title": "低温工况下的动力电池加热控制",
+                "rank": -1.63,
+                "matchedPattern": "当电池最低温度低于加热启动阈值且加热装置可用时驱动电池加热器提升电池温度"
               }
             ],
             "evidenceType": "requirement_and_history",
-            "reason": "需求描述加热触发场景，历史案例F080明确给出了加热速率和均匀性的安全约束",
-            "confidence": 0.92
+            "reason": "需求明确低温启动加热，候选架构描述了加热控制场景与装置可用性约束，适用于补全scenario和constraint字段",
+            "confidence": 0.7
           }
         ]
-      },
-      {
-        "id": "execute-cooling-fan-operation",
-        "name": "执行冷却风扇运转",
-        "actor": "冷却风扇驱动器",
-        "action": "运转",
-        "object": "冷却风扇",
-        "effect": "驱动风扇旋转排出电池包内热空气以辅助散热",
-        "trigger": "接收到冷却风扇控制指令",
-        "condition": "风扇电机和驱动电路正常且无机械卡滞",
-        "inputs": [
-          "冷却风扇控制指令"
-        ],
-        "outputs": [
-          "风扇实际转速",
-          "风扇运行状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的冷却风扇控制指令",
-          "风扇硬件自检通过"
-        ],
-        "postconditions": [
-          "冷却风扇按指令转速运行",
-          "电池包散热气流建立"
-        ],
-        "scenario": "电池冷却过程中风扇接收控制指令并执行物理转动散热",
-        "constraint": "风扇噪音和功耗需控制在可接受范围内，响应延迟需满足热管理时序要求",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理的邻居冷却风扇控制作为下游执行器功能存在"
-          },
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F033",
-            "neighborFunctionId": "",
-            "similarity": 0.8070484399795532,
-            "matchedPattern": "冷却风扇控制直接匹配，action=控制,object=冷却风扇,effect=排出热空气"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-cooling输出冷却风扇控制指令仅完成决策阶段(Rule 12)，历史模式在两个案例中一致显示冷却风扇控制作为独立执行器功能存在(Rule 8)。action(运转vs控制)和effect(物理排热vs生成指令)与现有功能不等价(Rule 13)。单案例迁移但多pattern一致支持，confidence不超过0.78",
-        "confidence": 0.77
-      },
-      {
-        "id": "execute-coolant-pump-operation",
-        "name": "执行冷却液泵运转",
-        "actor": "冷却液泵驱动器",
-        "action": "运转",
-        "object": "冷却液泵",
-        "effect": "驱动冷却液在回路中循环流动以带走电池热量",
-        "trigger": "接收到冷却液泵控制指令",
-        "condition": "冷却液泵电机正常且管路无堵塞泄漏",
-        "inputs": [
-          "冷却液泵控制指令"
-        ],
-        "outputs": [
-          "泵实际流量",
-          "泵运行状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的冷却液泵控制指令",
-          "冷却液回路阀门已开启"
-        ],
-        "postconditions": [
-          "冷却液泵按指令运行",
-          "冷却液在回路中循环流动"
-        ],
-        "scenario": "电池冷却过程中冷却液泵接收指令驱动冷却液循环散热",
-        "constraint": "泵的流量和压力需满足散热需求，运行噪音需可控",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F041",
-            "neighborFunctionId": "F033",
-            "similarity": 0.8290574550628662,
-            "matchedPattern": "液冷系统热管理作为冷却执行层功能，其邻居包含具体执行器控制"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-cooling输出冷却液泵控制指令仅完成决策(Rule 12)，历史F041(action=管理,object=电池热状态)为上层协调功能，其下游需独立执行器功能。虽无直接泵执行邻居匹配，但基于Rule 12架构粒度原则和F041液冷管理模式推断需独立泵执行功能。单案例间接推断，confidence较低",
-        "confidence": 0.62
-      },
-      {
-        "id": "execute-battery-heater-operation",
-        "name": "执行电池加热器工作",
-        "actor": "电池加热器驱动器",
-        "action": "加热",
-        "object": "电池加热元件",
-        "effect": "将电能转化为热能对电池包进行物理加热",
-        "trigger": "接收到电池加热器控制指令",
-        "condition": "加热器硬件正常且无短路断路故障",
-        "inputs": [
-          "电池加热器控制指令"
-        ],
-        "outputs": [
-          "加热器实际功率",
-          "加热器工作状态反馈"
-        ],
-        "preconditions": [
-          "已收到有效的电池加热器控制指令",
-          "加热器电气连接正常"
-        ],
-        "postconditions": [
-          "电池加热器按指令功率工作",
-          "电池开始吸收热量升温"
-        ],
-        "scenario": "电池加热过程中加热器接收指令执行物理加热动作",
-        "constraint": "加热功率需受控以防止局部过热，绝缘性能需满足高压安全要求",
-        "requirementEvidence": "",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "matchedFunctionId": "F080",
-            "neighborFunctionId": "F041",
-            "similarity": 0.837552011013031,
-            "matchedPattern": "低温加热控制输出加热控制信号给下游执行功能"
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "当前control-battery-heating输出电池加热器控制指令仅完成决策(Rule 12)，历史F080(action=控制,object=电池加热过程)为控制层功能，其输出加热控制信号指向下游执行。需独立加热器物理执行功能。单案例迁移，confidence不超过0.78",
-        "confidence": 0.72
       },
       {
         "id": "report-thermal-alarm",
         "name": "上报电池热异常告警",
         "actor": "电池管理系统",
-        "action": "发送",
-        "object": "热异常告警信息",
-        "effect": "向整车控制器和驾驶员通知电池温度异常或热失控风险",
-        "trigger": "温度异常标志有效或检测到热失控风险",
-        "condition": "告警通信通道可用且电池管理系统正常运行",
+        "action": "上报",
+        "object": "电池温度异常或热失控风险告警信息",
+        "effect": "向整车控制器和驾驶员发送告警信息以触发安全响应",
+        "trigger": "电池热状态判定结果包含温度异常标志或存在热失控风险",
+        "condition": "电池管理系统与整车控制器通信链路正常",
         "inputs": [
           "温度异常标志",
           "电池热状态判定结果",
-          "电池最高温度"
+          "电池最高温度",
+          "电池温差"
         ],
         "outputs": [
-          "发送至整车控制器的告警报文",
-          "驾驶员告警提示信号"
+          "整车控制器告警信息",
+          "驾驶员告警信息"
         ],
         "preconditions": [
-          "已完成动力电池热状态判断",
-          "确认存在温度异常或热失控风险"
+          "已完成动力电池热状态判定",
+          "已识别到温度异常或热失控风险"
         ],
         "postconditions": [
-          "告警信息已成功发送至整车控制器",
-          "驾驶员端已显示或播报告警提示"
+          "告警信息已发送至整车控制器和驾驶员"
         ],
-        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警",
-        "constraint": "告警信息传输延迟需满足功能安全要求，告警等级需准确反映风险程度",
+        "scenario": "检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
+        "constraint": "告警信息须在规定时限内送达，通信链路不可中断",
         "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-        "historyEvidence": [],
-        "evidenceType": "requirement_only",
-        "reason": "需求明确要求在温度异常或热失控风险时发送告警信息给VCU和驾驶员。当前evaluate-battery-thermal-state仅输出温度异常标志(判断阶段)，不包含告警上报动作(Rule 11)。告警上报是独立的架构职责阶段，尚未建模",
-        "confidence": 0.95
+        "historyEvidence": [
+          {
+            "subgraphId": "SG_BTM_FAULT_004",
+            "architectureId": "ARCH_BTM_EV_003",
+            "viewId": "VIEW_BTM_SAFETY_001",
+            "title": "温度异常检测与热失控风险告警",
+            "rank": -1.88,
+            "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时生成温度异常告警并向整车控制器和驾驶员发送告警信息"
+          },
+          {
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "异常标志进入告警与安全控制链形成监测—判断—执行—反馈的闭环关系"
+          }
+        ],
+        "evidenceType": "requirement_and_history",
+        "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警信息，当前设计evaluate-battery-thermal-state仅输出温度异常标志但未建模告警上报功能阶段；候选架构SG_BTM_FAULT_004和SG_BTM_INTERLOCK_005均描述了异常告警上报模式，动作（上报/发送）、对象（告警信息）、效果（通知VCU和驾驶员）与需求一致，但具体告警等级划分和通信协议尚需人工确认",
+        "confidence": 0.7
       }
     ],
     "relations": [
@@ -4327,72 +1180,6 @@
         "reason": ""
       },
       {
-        "source": "control-battery-cooling",
-        "target": "execute-cooling-fan-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却风扇运转",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "冷却风扇控制指令",
-        "evidence": "上层冷却控制功能输出冷却风扇控制指令，驱动下游风扇执行器运转",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F041到F033存在control_flow关系，对应当前冷却控制到风扇执行的上下游控制流",
-        "confidence": 0.76
-      },
-      {
-        "source": "control-battery-cooling",
-        "target": "execute-coolant-pump-operation",
-        "source_name": "执行动力电池冷却",
-        "target_name": "执行冷却液泵运转",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "冷却液泵控制指令",
-        "evidence": "上层冷却控制功能输出冷却液泵控制指令，驱动下游泵执行器运转",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F041",
-            "target": "F033",
-            "relation_type": "control_flow",
-            "similarity": 0.8290574550628662
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "基于Rule 12架构粒度原则和历史F041到执行器的control_flow模式，冷却控制需连接到泵执行功能",
-        "confidence": 0.6
-      },
-      {
-        "source": "control-battery-heating",
-        "target": "execute-battery-heater-operation",
-        "source_name": "执行动力电池加热",
-        "target_name": "执行电池加热器工作",
-        "relation_type": "control_flow",
-        "direction": "source_to_target",
-        "flowObject": "电池加热器控制指令",
-        "evidence": "上层加热控制功能输出电池加热器控制指令，驱动下游加热器执行工作",
-        "historyEvidence": [
-          {
-            "caseId": "CASE002",
-            "source": "F080",
-            "target": "F041",
-            "relation_type": "control_flow",
-            "similarity": 0.837552011013031
-          }
-        ],
-        "evidenceType": "history_only",
-        "reason": "历史CASE002中F080到F041存在control_flow关系，对应加热控制到下游执行的控制流模式",
-        "confidence": 0.7
-      },
-      {
         "source": "evaluate-battery-thermal-state",
         "target": "report-thermal-alarm",
         "source_name": "判断动力电池热状态",
@@ -4400,11 +1187,20 @@
         "relation_type": "control_flow",
         "direction": "source_to_target",
         "flowObject": "温度异常标志",
-        "evidence": "热状态判断产生温度异常标志后触发告警上报流程",
-        "historyEvidence": [],
-        "evidenceType": "requirement_only",
-        "reason": "需求明确当检测到温度异常或热失控风险时发送告警，evaluate-battery-thermal-state输出温度异常标志，应作为report-thermal-alarm的触发源",
-        "confidence": 0.93
+        "evidence": "evaluate-battery-thermal-state输出温度异常标志作为report-thermal-alarm的触发输入",
+        "historyEvidence": [
+          {
+            "subgraphId": "SG_BTM_INTERLOCK_005",
+            "architectureId": "ARCH_BTM_EV_004",
+            "viewId": "VIEW_BTM_DEP_001",
+            "title": "热状态判定与冷却/加热执行联锁关系",
+            "rank": -2.02,
+            "matchedPattern": "evaluate_to_alarm：异常标志进入告警与安全控制链"
+          }
+        ],
+        "evidenceType": "requirement_and_history",
+        "reason": "需求要求检测到温度异常时发送告警，evaluate-battery-thermal-state已输出温度异常标志，report-thermal-alarm需接收该标志触发告警上报；候选架构SG_BTM_INTERLOCK_005中evaluate_to_alarm关系模式支持此控制流映射，但具体信号接口定义尚需人工确认",
+        "confidence": 0.68
       }
     ]
   },
@@ -4419,8 +1215,8 @@
         "success": true,
         "message": "补全结果发布成功",
         "schema_version": "input-compatible-v2",
-        "result_id": "914f5be185a14a38a4b52858664da580",
-        "published_at": "2026-09-29T16:04:42.705159+00:00"
+        "result_id": "b755353a2ebf4244a2e4c5c9bc69a17f",
+        "published_at": "2026-09-30T01:05:36.839032+00:00"
       }
     }
   }

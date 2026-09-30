@@ -32,13 +32,6 @@ def env_to_bool(
 
 
 # ==================================================
-# 历史案例
-# ==================================================
-
-HISTORY_CASE_DIR = "data/history_cases"
-
-
-# ==================================================
 # 当前待补全案例
 # ==================================================
 
@@ -123,26 +116,91 @@ QWEN_BASE_URL = os.getenv(
 
 QWEN_MODEL = "qwen3.8-max"
 
-
-# ==================================================
-# RAG向量知识库
-# ==================================================
-
-VECTOR_DB_DIR = "data/vector_db"
-
-FAISS_INDEX_PATH = (
-    "data/vector_db/faiss.index"
+QWEN_API_TIMEOUT = float(
+    os.getenv(
+        "QWEN_API_TIMEOUT",
+        "120"
+    )
 )
 
-FAISS_METADATA_PATH = (
-    "data/vector_db/metadata.json"
+QWEN_MAX_RETRIES = int(
+    os.getenv(
+        "QWEN_MAX_RETRIES",
+        "0"
+    )
+)
+
+QWEN_EMPTY_RESULT_RECHECK_ENABLED = env_to_bool(
+    "QWEN_EMPTY_RESULT_RECHECK_ENABLED",
+    False
 )
 
 
 # ==================================================
-# BGE Embedding模型
+# 知识库查询API
 # ==================================================
 
-BGE_MODEL_PATH = (
-    "model/bge-small-zh-v1_5"
+KNOWLEDGE_API_URL = os.getenv(
+    "KNOWLEDGE_API_URL",
+    ""
+).strip()
+
+KNOWLEDGE_API_TOKEN = os.getenv(
+    "KNOWLEDGE_API_TOKEN",
+    ""
+)
+
+KNOWLEDGE_API_TIMEOUT = float(
+    os.getenv(
+        "KNOWLEDGE_API_TIMEOUT",
+        "30"
+    )
+)
+
+KNOWLEDGE_API_TOP_K = int(
+    os.getenv(
+        "KNOWLEDGE_API_TOP_K",
+        "10"
+    )
+)
+
+KNOWLEDGE_API_ARCHITECTURE_ID = os.getenv(
+    "KNOWLEDGE_API_ARCHITECTURE_ID",
+    ""
+)
+
+KNOWLEDGE_API_VIEW_TYPE = os.getenv(
+    "KNOWLEDGE_API_VIEW_TYPE",
+    ""
+)
+
+KNOWLEDGE_API_SUBGRAPH_ID = os.getenv(
+    "KNOWLEDGE_API_SUBGRAPH_ID",
+    ""
+)
+
+KNOWLEDGE_API_FUNCTION = os.getenv(
+    "KNOWLEDGE_API_FUNCTION",
+    ""
+)
+
+KNOWLEDGE_API_TAGS = [
+    item.strip()
+    for item in os.getenv(
+        "KNOWLEDGE_API_TAGS",
+        ""
+    ).split(",")
+    if item.strip()
+]
+
+KNOWLEDGE_API_COMPONENT_CATEGORY = os.getenv(
+    "KNOWLEDGE_API_COMPONENT_CATEGORY",
+    ""
+)
+
+KNOWLEDGE_API_MAX_QUERY_CHARS = int(
+    os.getenv(
+        "KNOWLEDGE_API_MAX_QUERY_CHARS",
+        "4000"
+    )
 )

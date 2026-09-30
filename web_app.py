@@ -11,10 +11,6 @@ from service.current_case_service import (
     load_current_case
 )
 
-from service.faiss_service import (
-    FAISSIndex
-)
-
 from service.completion_service import (
     build_confirmed_completion_result,
     completion,
@@ -40,8 +36,8 @@ from utils.json_utils import (
 
 app = FastAPI(
     title="AI辅助汽车系统功能补全Demo",
-    description="基于RAG+BGE+FAISS+Qwen的汽车系统功能点及关联关系补全",
-    version="1.0.0"
+    description="基于知识库API+FTS5+Qwen的汽车系统功能点及关联关系补全",
+    version="2.0.0"
 )
 
 
@@ -63,8 +59,6 @@ app.mount(
 # 程序启动时只加载一次
 # ============================================================
 
-db = None
-
 current_case = None
 
 normalized_case = None
@@ -74,13 +68,12 @@ latest_analysis_result = None
 
 
 # ============================================================
-# 启动时加载知识库和当前案例
+# 启动时加载当前案例
 # ============================================================
 
 @app.on_event("startup")
 def startup_event():
 
-    global db
     global current_case
     global normalized_case
     global latest_analysis_result
@@ -91,24 +84,17 @@ def startup_event():
     print("=" * 60)
 
     # --------------------------------------------------------
-    # 1. 加载FAISS知识库
+    # 1. 检查知识库API配置
     # --------------------------------------------------------
 
-    start = time.perf_counter()
-
-    db = FAISSIndex.load(
-        config.FAISS_INDEX_PATH,
-        config.FAISS_METADATA_PATH
-    )
-
-    elapsed = (
-        time.perf_counter()
-        - start
-    )
+    if not config.KNOWLEDGE_API_URL:
+        raise RuntimeError(
+            "未配置KNOWLEDGE_API_URL"
+        )
 
     print(
-        f"[耗时] FAISS知识库加载："
-        f"{elapsed:.3f}秒"
+        "知识库API："
+        f"{config.KNOWLEDGE_API_URL}"
     )
 
     # --------------------------------------------------------
@@ -201,20 +187,19 @@ def get_current_case():
 @app.post("/api/completion")
 def run_completion():
 
-    global db
     global current_case
     global normalized_case
     global latest_analysis_result
 
     # --------------------------------------------------------
-    # 检查FAISS
+    # 检查知识库API配置
     # --------------------------------------------------------
 
-    if db is None:
+    if not config.KNOWLEDGE_API_URL:
 
         return {
             "success": False,
-            "message": "FAISS知识库尚未加载"
+            "message": "知识库API尚未配置"
         }
 
     # --------------------------------------------------------
@@ -228,10 +213,10 @@ def run_completion():
             "message": "当前案例尚未加载"
         }
 
-    print()
-    print("=" * 60)
-    print("收到前端AI补全请求")
-    print("=" * 60)
+    print(flush=True)
+    print("=" * 60, flush=True)
+    print("收到前端AI补全请求", flush=True)
+    print("=" * 60, flush=True)
 
     start = time.perf_counter()
 
@@ -239,11 +224,17 @@ def run_completion():
     # 1. 调用核心补全算法
     # ========================================================
 
-    result = completion(
-        current_case,
-        db,
-        k=3
-    )
+    try:
+        result = completion(
+            current_case,
+            k=config.KNOWLEDGE_API_TOP_K
+        )
+    except RuntimeError as e:
+        print(f"[AI补全失败] {e}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(e)
+        ) from e
 
     latest_analysis_result = result
 
@@ -770,8 +761,11 @@ def health():
 
         "status": "ok",
 
-        "faiss_loaded":
-        db is not None,
+        "knowledge_api_configured":
+        bool(config.KNOWLEDGE_API_URL),
+
+        "knowledge_api_url":
+        config.KNOWLEDGE_API_URL,
 
         "current_case_loaded":
         current_case is not None,
@@ -783,8 +777,5 @@ def health():
         config.RESULT_API_ENABLED,
 
         "result_api_configured":
-        bool(
-            config.RESULT_API_URL
-            and config.RESULT_API_TOKEN
-        )
+        bool(config.RESULT_API_URL)
     }

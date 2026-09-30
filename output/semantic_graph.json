@@ -156,14 +156,14 @@
       "nodeType": "existing"
     },
     {
-      "id": "send-thermal-alarm",
-      "name": "发送电池热异常告警",
+      "id": "report-thermal-alarm",
+      "name": "上报电池温度异常告警",
       "actor": "电池管理系统",
-      "action": "发送",
-      "object": "热异常告警信息",
+      "action": "上报",
+      "object": "温度异常告警信息",
       "effect": "向整车控制器和驾驶员发送电池温度异常或热失控风险告警信息",
-      "trigger": "检测到电池温度异常或存在热失控风险",
-      "condition": "温度异常标志有效或热失控风险评估结果超出安全阈值",
+      "trigger": "电池热状态判定结果包含温度异常标志或热失控风险标志",
+      "condition": "温度异常标志有效或热失控风险识别结果为真",
       "inputs": [
         "温度异常标志",
         "电池热状态判定结果",
@@ -171,23 +171,41 @@
         "电池温差"
       ],
       "outputs": [
-        "发送至整车控制器的告警报文",
-        "驾驶员告警提示指令"
+        "发送至整车控制器的告警信息",
+        "发送至驾驶员的告警提示"
       ],
       "preconditions": [
-        "已完成动力电池热状态判断",
+        "已完成动力电池热状态判定",
         "通信链路正常"
       ],
       "postconditions": [
-        "告警信息已发送至整车控制器和驾驶员"
+        "整车控制器已接收到温度异常告警",
+        "驾驶员已收到告警提示"
       ],
-      "scenario": "当检测到电池温度异常或存在热失控风险时向整车控制器和驾驶员发送告警信息",
-      "constraint": "告警响应时间需满足功能安全要求，不得漏报或延迟",
+      "scenario": "检测到电池温度异常升高、温差持续扩大或存在热失控风险时触发告警上报，适用于温度异常、热失控风险及故障处置场景",
+      "constraint": "告警信息必须在安全时间窗口内送达整车控制器和驾驶员，告警通道需具备冗余可靠性",
       "requirementEvidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-      "historyEvidence": [],
-      "evidenceType": "requirement_only",
-      "reason": "需求明确要求在温度异常或热失控风险时发送告警信息给整车控制器和驾驶员，当前设计中evaluate-battery-thermal-state虽输出温度异常标志但缺少对应的告警发送功能，actor推断为电池管理系统因其负责电池状态监控与对外通信",
-      "confidence": 0.95,
+      "historyEvidence": [
+        {
+          "subgraphId": "SG_BTM_FAULT_004",
+          "architectureId": "ARCH_BTM_EV_003",
+          "viewId": "VIEW_BTM_SAFETY_001",
+          "title": "温度异常检测与热失控风险告警",
+          "rank": -1.88,
+          "matchedPattern": "当检测到电池局部温度异常升高、温差持续扩大或热失控风险标志时，系统生成温度异常告警，并向整车控制器和驾驶员发送告警信息"
+        },
+        {
+          "subgraphId": "SG_BTM_INTERLOCK_005",
+          "architectureId": "ARCH_BTM_EV_004",
+          "viewId": "VIEW_BTM_DEP_001",
+          "title": "热状态判定与冷却/加热执行联锁关系",
+          "rank": -2.02,
+          "matchedPattern": "异常标志进入告警与安全控制链，形成监测—判断—执行—反馈的闭环关系"
+        }
+      ],
+      "evidenceType": "requirement_and_history",
+      "reason": "需求明确要求在温度异常或热失控风险时向整车控制器和驾驶员发送告警，当前设计仅有监测、判断、冷却和加热功能，缺少告警上报阶段。候选架构order=4和order=5均描述了异常标志触发告警的模式，与需求的动作、对象、效果完全匹配。actor推断为电池管理系统，因其负责热状态判定并具备与整车控制器通信的职责。该候选尚需人工确认告警通道的具体实现方式",
+      "confidence": 0.72,
       "nodeType": "completed"
     }
   ],
@@ -221,40 +239,66 @@
       "reason": ""
     },
     {
-      "source": "evaluate-battery-thermal-state",
-      "target": "send-thermal-alarm",
-      "source_name": "判断动力电池热状态",
-      "target_name": "发送电池热异常告警",
-      "relation_type": "control_flow",
-      "direction": "source_to_target",
-      "flowObject": "温度异常标志",
-      "evidence": "当检测到电池温度异常或存在热失控风险时，系统应向整车控制器和驾驶员发送告警信息",
-      "historyEvidence": [],
-      "evidenceType": "requirement_only",
-      "reason": "需求明确指出温度异常或热失控风险时需发送告警，evaluate-battery-thermal-state输出的温度异常标志是send-thermal-alarm的触发条件，构成控制流关系",
-      "confidence": 0.95
-    },
-    {
       "source": "monitor-battery-temperature",
       "target": "evaluate-battery-thermal-state",
       "source_name": "监测动力电池温度",
       "target_name": "判断动力电池热状态",
       "relation_type": "data_flow",
       "direction": "source_to_target",
-      "flowObject": "电池温度数据",
-      "evidence": "新能源汽车动力电池热管理系统需要实时监测电池包温度，并根据温度数据判断电池热状态",
+      "flowObject": "电池最高温度、电池最低温度、电池平均温度、电池温差",
+      "evidence": "监测功能输出的温度数据作为判断功能的输入，构成监测到判断的数据流链路",
       "historyEvidence": [
         {
-          "caseId": "CASE001",
-          "source": "F002",
-          "target": "F004",
-          "relation_type": "data_flow",
-          "similarity": 0.8376815319061279
+          "subgraphId": "SG_BTM_MONITOR_001",
+          "architectureId": "ARCH_BTM_EV_001",
+          "viewId": "VIEW_BTM_CONTROL_001",
+          "title": "动力电池温度监测与热状态判定",
+          "rank": -1.21,
+          "matchedPattern": "电池管理系统周期采集电芯和电池包温度，计算最高温度、最低温度、平均温度及温差，并依据阈值生成热状态"
+        },
+        {
+          "subgraphId": "SG_BTM_INTERLOCK_005",
+          "architectureId": "ARCH_BTM_EV_004",
+          "viewId": "VIEW_BTM_DEP_001",
+          "title": "热状态判定与冷却/加热执行联锁关系",
+          "rank": -2.02,
+          "matchedPattern": "温度监测结果首先进入热状态判定功能，形成监测—判断—执行—反馈的闭环关系中的monitor_to_evaluate"
         }
       ],
-      "evidenceType": "requirement_and_history",
-      "reason": "需求明确说明先监测温度再根据温度数据判断热状态，且evaluate-battery-thermal-state的trigger为获得最新的动力电池温度信息，两者存在数据流依赖；历史案例中电池状态监测(F002)到热管理(F004)也存在data_flow关系",
-      "confidence": 0.95
+      "evidenceType": "history_only",
+      "reason": "当前设计中monitor-battery-temperature的输出（电池最高温度等）是evaluate-battery-thermal-state的输入，但currentRelations中缺少该数据流关系。候选架构order=1和order=5均描述了监测到判断的数据传递链路，labels.relations中包含monitor_to_evaluate模式。映射到当前实际功能ID生成此关系候选，尚需人工确认",
+      "confidence": 0.7
+    },
+    {
+      "source": "evaluate-battery-thermal-state",
+      "target": "report-thermal-alarm",
+      "source_name": "判断动力电池热状态",
+      "target_name": "上报电池温度异常告警",
+      "relation_type": "control_flow",
+      "direction": "source_to_target",
+      "flowObject": "温度异常标志、电池热状态判定结果",
+      "evidence": "判断功能输出的温度异常标志触发告警上报功能，构成判断到告警的控制流链路",
+      "historyEvidence": [
+        {
+          "subgraphId": "SG_BTM_FAULT_004",
+          "architectureId": "ARCH_BTM_EV_003",
+          "viewId": "VIEW_BTM_SAFETY_001",
+          "title": "温度异常检测与热失控风险告警",
+          "rank": -1.88,
+          "matchedPattern": "当检测到电池局部温度异常升高或热失控风险标志时，系统生成温度异常告警并向整车控制器和驾驶员发送告警信息"
+        },
+        {
+          "subgraphId": "SG_BTM_INTERLOCK_005",
+          "architectureId": "ARCH_BTM_EV_004",
+          "viewId": "VIEW_BTM_DEP_001",
+          "title": "热状态判定与冷却/加热执行联锁关系",
+          "rank": -2.02,
+          "matchedPattern": "异常标志进入告警与安全控制链，labels.relations包含evaluate_to_alarm模式"
+        }
+      ],
+      "evidenceType": "history_only",
+      "reason": "需求要求温度异常时发送告警，当前设计evaluate-battery-thermal-state输出温度异常标志，新增的report-thermal-alarm需要接收该标志以触发告警。候选架构order=4和order=5均描述了异常标志驱动告警的链路，labels.relations中包含evaluate_to_alarm模式。映射到当前实际功能ID和本次missingFunction ID生成此关系候选，尚需人工确认",
+      "confidence": 0.7
     }
   ]
 }

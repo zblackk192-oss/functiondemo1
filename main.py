@@ -18,10 +18,6 @@ from service.current_case_service import (
     load_current_case
 )
 
-from service.faiss_service import (
-    FAISSIndex
-)
-
 from service.completion_service import (
     completion,
     normalize_current_case
@@ -54,18 +50,18 @@ def main():
     print("=" * 60)
 
     # ==================================================
-    # 1. 加载离线向量知识库
+    # 1. 检查知识库API配置
     # ==================================================
 
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【1/8】加载汽车系统案例向量知识库")
+    print("【1/8】检查知识库API配置")
 
-    db = FAISSIndex.load(
-        config.FAISS_INDEX_PATH,
-        config.FAISS_METADATA_PATH
-    )
+    if not config.KNOWLEDGE_API_URL:
+        raise RuntimeError(
+            "未配置KNOWLEDGE_API_URL"
+        )
 
     step_time = (
         time.perf_counter()
@@ -73,7 +69,9 @@ def main():
     )
 
     print(
-        f"[耗时] 加载FAISS知识库："
+        f"知识库API：{config.KNOWLEDGE_API_URL}\n"
+        f"知识库Top-K：{config.KNOWLEDGE_API_TOP_K}\n"
+        f"[耗时] 配置检查："
         f"{step_time:.3f}秒"
     )
 
@@ -118,18 +116,17 @@ def main():
     )
 
     # ==================================================
-    # 3. 在线RAG检索 + Qwen补全
+    # 3. 知识库API检索 + Qwen补全
     # ==================================================
 
     step_start_time = time.perf_counter()
 
     print("\n")
-    print("【3/8】在线RAG检索 + Qwen补全")
+    print("【3/8】知识库API检索 + Qwen补全")
 
     result = completion(
         current_case,
-        db,
-        k=3
+        k=config.KNOWLEDGE_API_TOP_K
     )
 
     step_time = (
@@ -138,7 +135,7 @@ def main():
     )
 
     print(
-        f"\n[耗时] 【3/8】RAG+Qwen总耗时："
+        f"\n[耗时] 【3/8】知识库检索+Qwen总耗时："
         f"{step_time:.3f}秒"
     )
 

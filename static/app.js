@@ -61,6 +61,7 @@ document.addEventListener(
 
 async function loadCurrentCase() {
 
+
     try {
 
         const response =
@@ -683,20 +684,67 @@ async function runCompletion() {
     }
 
 
+    let elapsedSeconds = 0;
+
+
+    const progressTimer =
+        setInterval(
+            function() {
+
+                elapsedSeconds += 1;
+
+                setSystemStatus(
+                    `AI正在分析，已等待 ${elapsedSeconds} 秒`,
+                    "running"
+                );
+
+            },
+            1000
+        );
+
+
+    const controller =
+        new AbortController();
+
+
+    const timeoutTimer =
+        setTimeout(
+            function() {
+
+                controller.abort();
+
+            },
+            150000
+        );
+
+
     try {
 
         const response =
             await fetch(
                 "/api/completion",
                 {
-                    method: "POST"
+                    method: "POST",
+                    cache: "no-store",
+                    signal: controller.signal
                 }
             );
 
 
         if (!response.ok) {
 
+            const errorData =
+                await response.json().catch(
+                    function() {
+
+                        return {};
+
+                    }
+                );
+
             throw new Error(
+                errorData.detail ||
+                errorData.message ||
                 `服务器返回HTTP ${response.status}`
             );
 
@@ -901,7 +949,7 @@ async function runCompletion() {
 
 
         // ----------------------------------------------------
-        // RAG
+        // 知识库API检索结果
         // ----------------------------------------------------
 
         renderRetrieval(
@@ -936,9 +984,15 @@ async function runCompletion() {
         );
 
 
+        const errorMessage =
+            error.name === "AbortError"
+                ? "AI分析超过150秒，已停止等待；请检查后端日志中的Qwen调用状态"
+                : error.message;
+
+
         alert(
             "AI分析失败：" +
-            error.message
+            errorMessage
         );
 
 
@@ -950,6 +1004,15 @@ async function runCompletion() {
     }
 
     finally {
+
+        clearInterval(
+            progressTimer
+        );
+
+
+        clearTimeout(
+            timeoutTimer
+        );
 
         if (button) {
 
@@ -1084,7 +1147,7 @@ function setSystemStatus(
 
 
 // ============================================================
-// RAG结果
+// 知识库API检索结果
 // ============================================================
 
 function renderRetrieval(
@@ -1128,7 +1191,7 @@ function renderRetrieval(
 
         container.innerHTML = `
             <div class="empty-state">
-                暂无RAG检索结果
+                知识库未返回匹配子图
             </div>
         `;
 
@@ -1137,29 +1200,33 @@ function renderRetrieval(
     }
 
 
-    // --------------------------------------------------------
-    // 新retrieval结构：
-    //
-    // [
-    //   {
-    //      score,
-    //      data: {
-    //          caseId,
-    //          function: {...}
-    //      }
-    //   }
-    // ]
-    // --------------------------------------------------------
-
     retrieval.forEach(
         function(item, index) {
 
-            const data =
-                item.data || {};
+            const labels =
+                item &&
+                typeof item.labels === "object" &&
+                item.labels !== null
+                    ? item.labels
+                    : {};
 
 
-            const functionData =
-                data.function || {};
+            const functions =
+                formatArray(
+                    labels.functions || []
+                );
+
+
+            const relations =
+                formatArray(
+                    labels.relations || []
+                );
+
+
+            const scenarios =
+                formatArray(
+                    item.scenarios || []
+                );
 
 
             const div =
@@ -1172,10 +1239,13 @@ function renderRetrieval(
                 "retrieval-item";
 
 
-            const score =
-                Number(
-                    item.score || 0
-                );
+            const rank = Number(item.rank);
+
+
+            const rankText =
+                Number.isFinite(rank)
+                    ? rank.toFixed(4)
+                    : "-";
 
 
             div.innerHTML = `
@@ -1191,11 +1261,9 @@ function renderRetrieval(
                         <strong>
 
                             ${escapeHtml(
-                                functionData.id || ""
-                            )}
-
-                            ${escapeHtml(
-                                functionData.name || ""
+                                item.title ||
+                                item.subgraph_id ||
+                                "未命名知识子图"
                             )}
 
                         </strong>
@@ -1204,8 +1272,8 @@ function renderRetrieval(
 
                     <span class="score">
 
-                        相似度
-                        ${score.toFixed(4)}
+                        FTS5 rank
+                        ${escapeHtml(rankText)}
 
                     </span>
 
@@ -1216,45 +1284,69 @@ function renderRetrieval(
 
                     <div>
                         <strong>
-                            Action：
+                            子图ID：
                         </strong>
 
                         ${escapeHtml(
-                            functionData.action || ""
+                            item.subgraph_id || ""
                         )}
                     </div>
 
                     <div>
                         <strong>
-                            Object：
+                            案例：
                         </strong>
 
                         ${escapeHtml(
-                            functionData.object || ""
+                            item.case_title || ""
                         )}
                     </div>
 
                     <div>
                         <strong>
-                            Effect：
+                            视图：
                         </strong>
 
                         ${escapeHtml(
-                            functionData.effect || ""
+                            [
+                                item.view_type || "",
+                                item.view_title || ""
+                            ].filter(Boolean).join(" / ")
                         )}
                     </div>
 
                     <div class="retrieval-source">
 
                         <strong>
-                            检索依据：
+                            描述：
                         </strong>
 
                         ${escapeHtml(
-                            functionData.rawstatements || ""
+                            item.description || ""
                         )}
 
                     </div>
+
+                    ${functions ? `
+                        <div>
+                            <strong>功能标签：</strong>
+                            ${escapeHtml(functions)}
+                        </div>
+                    ` : ""}
+
+                    ${relations ? `
+                        <div>
+                            <strong>关系标签：</strong>
+                            ${escapeHtml(relations)}
+                        </div>
+                    ` : ""}
+
+                    ${scenarios ? `
+                        <div>
+                            <strong>适用场景：</strong>
+                            ${escapeHtml(scenarios)}
+                        </div>
+                    ` : ""}
 
                 </div>
 

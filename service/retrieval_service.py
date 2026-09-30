@@ -1,1030 +1,406 @@
+import json
 import time
+from typing import Any, Dict, List
 
-from service.signature_service import build_signature
-from service.embedding_service import encode_text
-from service.faiss_service import FAISSIndex
+import requests
+
+import config
 
 
-# ============================================================
-# 工具函数
-# ============================================================
+def _normalize_text(value):
+    if value is None:
+        return ""
+    return str(value).strip()
+
 
 def _normalize_list(value):
-    """
-    保证字段始终为list。
-    """
-
     if value is None:
         return []
-
     if isinstance(value, list):
         return value
-
     return [value]
 
 
-def _compact_function(function):
-    """
-    统一历史功能点结构。
-    """
+def _unique_texts(values):
+    result = []
+    seen = set()
 
-    if not isinstance(function, dict):
-        return {}
+    for value in values:
+        text = _normalize_text(value)
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
 
-    inputs = function.get(
-        "inputs",
-        function.get("input", [])
-    )
-
-    outputs = function.get(
-        "outputs",
-        function.get("output", [])
-    )
-
-    return {
-        "id": function.get(
-            "id",
-            function.get("functionId", "")
-        ),
-
-        "name": function.get(
-            "name",
-            ""
-        ),
-
-        "actor": function.get("actor", ""),
-
-        "action": function.get(
-            "action",
-            ""
-        ),
-
-        "object": function.get(
-            "object",
-            ""
-        ),
-
-        "effect": function.get(
-            "effect",
-            ""
-        ),
-
-        "trigger": function.get(
-            "trigger",
-            ""
-        ),
-
-        "condition": function.get(
-            "condition",
-            ""
-        ),
-
-        "preconditions": _normalize_list(
-            function.get(
-                "preconditions",
-                []
-            )
-        ),
-
-        "postconditions": _normalize_list(
-            function.get(
-                "postconditions",
-                []
-            )
-        ),
-
-        "scenario": function.get(
-            "scenario",
-            ""
-        ),
-
-        "constraint": function.get(
-            "constraint",
-            ""
-        ),
-
-        "inputs": _normalize_list(
-            inputs
-        ),
-
-        "outputs": _normalize_list(
-            outputs
-        )
-    }
+    return result
 
 
-def _compact_relation(relation):
-    """
-    统一历史关系结构。
-    """
+def _parse_json_field(value, default):
+    if isinstance(value, type(default)):
+        return value
+    if not isinstance(value, str) or not value.strip():
+        return default
 
-    if not isinstance(relation, dict):
-        return {}
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return default
 
-    return {
-        "source": relation.get(
-            "source",
-            ""
-        ),
-
-        "target": relation.get(
-            "target",
-            ""
-        ),
-
-        "source_name": relation.get("source_name", ""),
-        "target_name": relation.get("target_name", ""),
-
-        "relation_type": relation.get(
-            "relation_type",
-            relation.get("type", "")
-        ),
-
-        "direction": relation.get("direction", "source_to_target"),
-        "confidence": relation.get("confidence", 0.0),
-        "evidence": relation.get("evidence", ""),
-
-        "flowObject": relation.get(
-            "flowObject",
-            ""
-        )
-    }
+    return parsed if isinstance(parsed, type(default)) else default
 
 
-# ============================================================
-# 离线建库
-# ============================================================
+def _append_function_semantics(parts, item):
+    if not isinstance(item, dict):
+        return
 
-def build_case_vector_database(
-    history_cases
+    event = item.get("event", {})
+    sources = [item]
+    if isinstance(event, dict):
+        sources.append(event)
+
+    for source in sources:
+        for field in (
+            "name", "actor", "action", "object", "effect",
+            "trigger", "condition", "scenario", "constraint"
+        ):
+            parts.append(source.get(field, ""))
+
+        for field in (
+            "inputs", "outputs", "preconditions", "postconditions"
+        ):
+            parts.extend(_normalize_list(source.get(field, [])))
+
+
+def build_knowledge_query_text(current_case: Dict[str, Any]):
+    """优先使用问题原文；没有原文时才从当前模型生成关键词文本。"""
+
+    if not isinstance(current_case, dict):
+        current_case = {}
+
+    max_chars = max(200, int(config.KNOWLEDGE_API_MAX_QUERY_CHARS))
+    raw_text = _normalize_text(current_case.get("raw_text", ""))
+
+    if raw_text:
+        return raw_text[:max_chars]
+
+    parts = [current_case.get("summary", "")]
+    for collection_name in ("functions", "function_points", "events"):
+        collection = current_case.get(collection_name, [])
+        if not isinstance(collection, list):
+            continue
+
+        for item in collection:
+            _append_function_semantics(parts, item)
+
+    relations = current_case.get("relations", [])
+
+    if not isinstance(relations, list):
+        relations = []
+
+    for relation in relations:
+        if not isinstance(relation, dict):
+            continue
+
+        for field in (
+            "source_name", "target_name", "relation_type", "evidence"
+        ):
+            parts.append(relation.get(field, ""))
+
+    query_text = "\n".join(_unique_texts(parts))
+    return query_text[:max_chars]
+
+
+def _clamp_limit(value):
+    try:
+        limit = int(value)
+    except (TypeError, ValueError):
+        limit = 20
+    return max(1, min(100, limit))
+
+
+def _get_query_option(current_case, field_name, default=""):
+    if not isinstance(current_case, dict):
+        current_case = {}
+
+    query_options = current_case.get("knowledge_query", {})
+    if not isinstance(query_options, dict):
+        query_options = {}
+
+    value = query_options.get(field_name)
+    if value in (None, "", []):
+        value = current_case.get(field_name)
+    if value in (None, "", []):
+        value = default
+    return value
+
+
+def build_knowledge_query_payload(
+    current_case: Dict[str, Any],
+    query_text: str,
+    limit: int
 ):
     """
-    离线构建汽车系统功能案例向量数据库。
+    构造POST /api/query请求体。
 
-    每一个历史功能点仍然作为一个FAISS向量。
-
-    与旧版本相比，metadata中增加：
-
-        caseFunctions
-        caseRelations
-
-    这样在线检索命中某个历史功能以后，
-    可以恢复该功能所在案例的局部功能结构。
-
-    metadata：
-
-    {
-        "caseId": "...",
-        "projectName": "...",
-
-        "function": {...},
-
-        "signature": "...",
-
-        "caseFunctions": [...],
-
-        "caseRelations": [...]
-    }
+    text负责FTS5关键词召回；其余字段只作为结果过滤条件。
+    不从功能语义中擅自推断过滤条件，避免过度过滤导致漏召回。
     """
 
-    total_start_time = time.perf_counter()
+    payload = {
+        "text": query_text,
+        "limit": _clamp_limit(limit)
+    }
 
-    vectors = []
-    metadata = []
+    optional_fields = {
+        "architecture_id": _get_query_option(
+            current_case,
+            "architecture_id",
+            config.KNOWLEDGE_API_ARCHITECTURE_ID
+        ),
+        "view_type": _get_query_option(
+            current_case,
+            "view_type",
+            config.KNOWLEDGE_API_VIEW_TYPE
+        ),
+        "subgraph_id": _get_query_option(
+            current_case,
+            "subgraph_id",
+            config.KNOWLEDGE_API_SUBGRAPH_ID
+        ),
+        "function": _get_query_option(
+            current_case,
+            "function",
+            config.KNOWLEDGE_API_FUNCTION
+        )
+    }
+
+    for field_name, value in optional_fields.items():
+        text = _normalize_text(value)
+        if text:
+            payload[field_name] = text
+
+    tags = _unique_texts(
+        _normalize_list(
+            _get_query_option(
+                current_case,
+                "tags",
+                config.KNOWLEDGE_API_TAGS
+            )
+        )
+    )
+    if tags:
+        payload["tags"] = tags
+
+    return payload
+
+
+def build_component_query_payload(component_name, category="", limit=10):
+    """构造组件库查询请求；该请求不进入架构补全Prompt。"""
+
+    component_name = _normalize_text(component_name)
+    if not component_name:
+        raise ValueError("component_name不能为空")
+
+    payload = {
+        "component_name": component_name,
+        "limit": _clamp_limit(limit)
+    }
+
+    category = _normalize_text(category)
+    if category:
+        payload["category"] = category
+
+    return payload
+
+
+def _build_headers():
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+
+    token = _normalize_text(config.KNOWLEDGE_API_TOKEN)
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    return headers
+
+
+def _request_knowledge_api(payload):
+    api_url = _normalize_text(config.KNOWLEDGE_API_URL)
+    if not api_url:
+        raise RuntimeError("未配置KNOWLEDGE_API_URL")
+
+    try:
+        response = requests.post(
+            api_url,
+            json=payload,
+            headers=_build_headers(),
+            timeout=config.KNOWLEDGE_API_TIMEOUT
+        )
+        response.raise_for_status()
+    except requests.Timeout as e:
+        raise RuntimeError(f"知识库API请求超时：{api_url}") from e
+    except requests.RequestException as e:
+        response_body = ""
+        if e.response is not None and e.response.text:
+            response_body = e.response.text[:1000]
+        raise RuntimeError(
+            f"知识库API请求失败：{api_url}；"
+            f"错误信息：{e}；响应内容：{response_body}"
+        ) from e
+
+    try:
+        response_data = response.json()
+    except ValueError as e:
+        raise RuntimeError("知识库API响应不是合法JSON") from e
+
+    if not isinstance(response_data, dict):
+        raise RuntimeError("知识库API响应根节点必须是JSON对象")
+
+    return response_data
+
+
+def query_knowledge_components(component_name, category="", limit=10):
+    """
+    查询组件库并返回API原始JSON。
+
+    组件响应结构尚未纳入当前架构补全数据模型，因此不把组件matches
+    直接送入Prompt，避免把组件候选误当成已验证的功能架构方案。
+    """
+
+    payload = build_component_query_payload(
+        component_name=component_name,
+        category=(
+            category
+            or config.KNOWLEDGE_API_COMPONENT_CATEGORY
+        ),
+        limit=limit
+    )
+    return _request_knowledge_api(payload)
+
+
+def _normalize_match(match, response_data, order):
+    labels = _parse_json_field(match.get("labels_json", {}), {})
+    scenarios = _parse_json_field(match.get("scenario_json", []), [])
+
+    try:
+        rank = float(match.get("rank", 0.0))
+    except (TypeError, ValueError):
+        rank = 0.0
+
+    return {
+        "match_order": order,
+        "match_status": _normalize_text(response_data.get("status", "")),
+        "knowledge_scope": _normalize_text(
+            response_data.get("knowledge_scope", "architecture")
+        ),
+        "query_terms": _unique_texts(
+            _normalize_list(response_data.get("terms", []))
+        ),
+        "subgraph_id": _normalize_text(match.get("subgraph_id", "")),
+        "architecture_id": _normalize_text(match.get("architecture_id", "")),
+        "view_id": _normalize_text(match.get("view_id", "")),
+        "view_type": _normalize_text(match.get("view_type", "")),
+        "view_title": _normalize_text(match.get("view_title", "")),
+        "case_title": _normalize_text(match.get("case_title", "")),
+        "title": _normalize_text(match.get("title", "")),
+        "description": _normalize_text(match.get("description", "")),
+        "labels": labels,
+        "scenarios": _unique_texts(scenarios),
+        "source_path": _normalize_text(match.get("source_path", "")),
+        "rank": rank
+    }
+
+
+def retrieve_top_k_cases(current_case, db=None, k=None):
+    """调用知识库POST /api/query并返回标准化matches。"""
+
+    del db  # 兼容旧调用签名；新流程不再使用FAISS实例。
+
+    start = time.perf_counter()
+    top_k = _clamp_limit(
+        k if k is not None else config.KNOWLEDGE_API_TOP_K
+    )
+    query_text = build_knowledge_query_text(current_case)
+
+    if not query_text:
+        print("[知识库API] 当前案例没有可检索文本")
+        return []
 
     print("\n" + "=" * 60)
-    print("开始构建向量数据库")
+    print("开始调用知识库API")
+    print(f"API：{config.KNOWLEDGE_API_URL}")
+    print(f"limit：{top_k}")
+    print(f"查询文本长度：{len(query_text)}")
     print("=" * 60)
 
-    for case in history_cases:
-
-        case_id = case.get(
-            "caseId",
-            ""
-        )
-
-        project_name = case.get(
-            "projectName",
-            ""
-        )
-
-        case_functions = case.get(
-            "functions",
-            []
-        )
-
-        case_relations = case.get(
-            "relations",
-            []
-        )
-
-        if not isinstance(
-            case_functions,
-            list
-        ):
-            case_functions = []
-
-        if not isinstance(
-            case_relations,
-            list
-        ):
-            case_relations = []
-
-        for function in case_functions:
-
-            # --------------------------------------------------
-            # 1. Signature
-            # --------------------------------------------------
-
-            signature_start = (
-                time.perf_counter()
-            )
-
-            signature = build_signature(
-                function
-            )
-
-            signature_time = (
-                time.perf_counter()
-                - signature_start
-            )
-
-            print(
-                f"[建库] 构造Signature："
-                f"{signature_time:.3f}秒"
-            )
-
-            # --------------------------------------------------
-            # 2. BGE编码
-            # --------------------------------------------------
-
-            embedding_start = (
-                time.perf_counter()
-            )
-
-            vector = encode_text(
-                signature
-            )
-
-            embedding_time = (
-                time.perf_counter()
-                - embedding_start
-            )
-
-            print(
-                f"[建库] BGE编码："
-                f"{embedding_time:.3f}秒"
-            )
-
-            vectors.append(
-                vector
-            )
-
-            # --------------------------------------------------
-            # 3. metadata
-            # --------------------------------------------------
-
-            metadata.append({
-                "caseId": case_id,
-
-                "projectName": project_name,
-
-                "function": function,
-
-                "signature": signature,
-
-                # 新增
-                "caseFunctions": (
-                    case_functions
-                ),
-
-                # 新增
-                "caseRelations": (
-                    case_relations
-                )
-            })
-
-    if not vectors:
-        raise ValueError(
-            "历史案例中没有可用于建库的功能数据"
-        )
-
-    # ------------------------------------------------------
-    # 4. 创建FAISS
-    # ------------------------------------------------------
-
-    dimension = len(
-        vectors[0]
-    )
-
-    db = FAISSIndex(
-        dimension
-    )
-
-    db.add(
-        vectors,
-        metadata
-    )
-
-    total_time = (
-        time.perf_counter()
-        - total_start_time
+    payload = build_knowledge_query_payload(
+        current_case,
+        query_text,
+        top_k
     )
 
     print(
-        f"\n[建库] 总耗时："
-        f"{total_time:.3f}秒"
+        "查询过滤："
+        f"{json.dumps({key: value for key, value in payload.items() if key != 'text'}, ensure_ascii=False)}"
     )
 
-    print(
-        f"[建库] 功能向量数量："
-        f"{len(vectors)}"
-    )
+    response_data = _request_knowledge_api(payload)
+    matches = response_data.get("matches", [])
 
-    print("=" * 60)
+    if not isinstance(matches, list):
+        raise RuntimeError("知识库API响应中的matches必须是数组")
 
-    return db
+    results = []
+    seen = set()
 
-
-# ============================================================
-# 历史局部子图提取
-# ============================================================
-
-def _extract_local_subgraph(
-    data
-):
-    """
-    根据FAISS命中的历史功能，
-    从该历史案例中提取：
-
-    1. 命中功能
-    2. 与命中功能直接相关的relations
-    3. relation另一端的邻居功能
-
-    即构造1-hop历史局部功能子图。
-    """
-
-    if not isinstance(
-        data,
-        dict
-    ):
-        return {
-            "neighborFunctions": [],
-            "relatedRelations": []
-        }
-
-    matched_function = data.get(
-        "function",
-        {}
-    )
-
-    if not isinstance(
-        matched_function,
-        dict
-    ):
-        matched_function = {}
-
-    matched_id = matched_function.get(
-        "id",
-        matched_function.get("functionId", "")
-    )
-
-    case_functions = data.get(
-        "caseFunctions",
-        []
-    )
-
-    case_relations = data.get(
-        "caseRelations",
-        []
-    )
-
-    if not isinstance(
-        case_functions,
-        list
-    ):
-        case_functions = []
-
-    if not isinstance(
-        case_relations,
-        list
-    ):
-        case_relations = []
-
-    # id -> function
-    function_map = {}
-
-    for function in case_functions:
-
-        if not isinstance(
-            function,
-            dict
-        ):
+    for order, match in enumerate(matches, start=1):
+        if not isinstance(match, dict):
             continue
 
-        function_id = function.get(
-            "id",
-            function.get("functionId", "")
+        normalized = _normalize_match(match, response_data, order)
+        dedupe_key = normalized.get("subgraph_id") or (
+            normalized.get("architecture_id"),
+            normalized.get("view_id"),
+            normalized.get("title")
         )
 
-        if function_id:
-            function_map[
-                function_id
-            ] = function
-
-    related_relations = []
-
-    neighbor_ids = set()
-
-    # ------------------------------------------------------
-    # 找命中功能的一跳关系
-    # ------------------------------------------------------
-
-    for relation in case_relations:
-
-        if not isinstance(
-            relation,
-            dict
-        ):
+        if dedupe_key in seen:
             continue
 
-        source = relation.get(
-            "source",
-            ""
-        )
+        seen.add(dedupe_key)
+        results.append(normalized)
 
-        target = relation.get(
-            "target",
-            ""
-        )
-
-        if source == matched_id:
-
-            related_relations.append(
-                _compact_relation(
-                    relation
-                )
-            )
-
-            if target:
-                neighbor_ids.add(
-                    target
-                )
-
-        elif target == matched_id:
-
-            related_relations.append(
-                _compact_relation(
-                    relation
-                )
-            )
-
-            if source:
-                neighbor_ids.add(
-                    source
-                )
-
-    # ------------------------------------------------------
-    # 找邻居功能
-    # ------------------------------------------------------
-
-    neighbor_functions = []
-
-    for neighbor_id in neighbor_ids:
-
-        function = function_map.get(
-            neighbor_id
-        )
-
-        if function:
-            neighbor_functions.append(
-                _compact_function(
-                    function
-                )
-            )
-
-    return {
-        "neighborFunctions":
-            neighbor_functions,
-
-        "relatedRelations":
-            related_relations
-    }
-
-
-# ============================================================
-# 格式化检索结果
-# ============================================================
-
-def _format_retrieval_result(
-    item,
-    query_function=None
-):
-    """
-    将FAISS原始结果转换为RAG结果。
-
-    新结构：
-
-    {
-        "score": 0.81,
-
-        "data": {
-
-            "caseId": "CASE001",
-
-            "function": {
-                ...
-            },
-
-            "neighborFunctions": [
-                ...
-            ],
-
-            "relatedRelations": [
-                ...
-            ]
-        }
-    }
-
-    其中：
-
-    function
-        = FAISS直接命中的历史功能
-
-    neighborFunctions
-        = 与命中功能直接连接的历史功能
-
-    relatedRelations
-        = 命中功能对应的一跳历史关系
-    """
-
-    if not isinstance(
-        item,
-        dict
-    ):
-        return None
-
-    score = item.get(
-        "score",
-        0
-    )
-
-    data = item.get(
-        "data",
-        {}
-    )
-
-    if not isinstance(
-        data,
-        dict
-    ):
-        data = {}
-
-    original_function = data.get(
-        "function",
-        {}
-    )
-
-    if not isinstance(
-        original_function,
-        dict
-    ):
-        original_function = {}
-
-    function = _compact_function(
-        original_function
-    )
-
-    # signature仍然作为rawstatements
-    function["rawstatements"] = (
-        data.get(
-            "signature",
-            ""
-        )
-    )
-
-    # ------------------------------------------------------
-    # 提取历史局部子图
-    # ------------------------------------------------------
-
-    local_subgraph = (
-        _extract_local_subgraph(
-            data
-        )
-    )
-
-    return {
-        "score": float(
-            score
-        ),
-
-        "data": {
-            "caseId": data.get(
-                "caseId",
-                ""
-            ),
-
-            "queryFunction": (
-                _compact_function(query_function)
-                if isinstance(query_function, dict)
-                else {}
-            ),
-
-            "function": function,
-
-            "neighborFunctions":
-                local_subgraph[
-                    "neighborFunctions"
-                ],
-
-            "relatedRelations":
-                local_subgraph[
-                    "relatedRelations"
-                ]
-        }
-    }
-
-
-# ============================================================
-# 去重
-# ============================================================
-
-def _retrieval_result_key(
-    item
-):
-    """
-    RAG结果去重键。
-    """
-
-    if not isinstance(
-        item,
-        dict
-    ):
-        return ""
-
-    data = item.get(
-        "data",
-        {}
-    )
-
-    if not isinstance(
-        data,
-        dict
-    ):
-        return ""
-
-    function = data.get(
-        "function",
-        {}
-    )
-
-    if not isinstance(
-        function,
-        dict
-    ):
-        function = {}
-
-    case_id = data.get(
-        "caseId",
-        ""
-    )
-
-    query_function = data.get("queryFunction", {})
-    if not isinstance(query_function, dict):
-        query_function = {}
-    query_function_id = query_function.get("id", "")
-
-    function_id = function.get(
-            "id",
-            function.get("functionId", "")
-        )
-
-    return (
-        f"{query_function_id}::"
-        f"{case_id}::"
-        f"{function_id}"
-    )
-
-
-def _deduplicate_results(
-    results
-):
-    """
-    多个当前功能可能检索到同一个历史功能。
-
-    保留相似度最高的一条。
-    """
-
-    result_map = {}
+        if len(results) >= top_k:
+            break
 
     for item in results:
-
-        key = _retrieval_result_key(
-            item
-        )
-
-        if not key:
-            continue
-
-        old_item = result_map.get(
-            key
-        )
-
-        if old_item is None:
-            result_map[key] = item
-            continue
-
-        old_score = old_item.get(
-            "score",
-            0
-        )
-
-        new_score = item.get(
-            "score",
-            0
-        )
-
-        if new_score > old_score:
-            result_map[key] = item
-
-    deduplicated = list(
-        result_map.values()
-    )
-
-    deduplicated.sort(
-        key=lambda x: x.get(
-            "score",
-            0
-        ),
-        reverse=True
-    )
-
-    return deduplicated
-
-
-# ============================================================
-# 在线RAG检索
-# ============================================================
-
-def retrieve_top_k_cases(
-    current_case,
-    db,
-    k=3
-):
-    """
-    在线RAG检索。
-
-    注意：
-
-    k=3表示：
-
-        每一个当前功能
-        分别进行Top-3检索。
-
-    例如当前有3个功能：
-
-        F001 -> Top-3
-        F002 -> Top-3
-        F003 -> Top-3
-
-    原始结果最多9条。
-
-    最后对重复历史功能进行去重。
-
-    每一个命中的历史功能都会附带：
-
-        neighborFunctions
-        relatedRelations
-
-    从而让Qwen不仅看到历史功能，
-    还能看到历史功能之间的结构关系。
-    """
-
-    total_start_time = (
-        time.perf_counter()
-    )
-
-    all_results = []
-
-    print(
-        "\n" + "=" * 60
-    )
-
-    print(
-        "开始在线RAG检索"
-    )
-
-    print(
-        f"单功能Top-K：{k}"
-    )
-
-    print(
-        "=" * 60
-    )
-
-    current_functions = (
-        current_case.get(
-            "functions",
-            []
-        )
-    )
-
-    if not isinstance(
-        current_functions,
-        list
-    ):
-        current_functions = []
-
-    for function in current_functions:
-
-        if not isinstance(
-            function,
-            dict
-        ):
-            continue
-
-        function_id = function.get(
-            "id",
-            function.get("functionId", "")
-        )
-
-        function_name = function.get(
-            "name",
-            ""
-        )
-
         print(
-            f"\n检索功能："
-            f"{function_id} "
-            f"{function_name}"
+            "[知识库命中] "
+            f"Top-{item.get('match_order', '')} | "
+            f"{item.get('subgraph_id', '')} | "
+            f"{item.get('title', '')} | "
+            f"rank={item.get('rank', 0.0)}"
         )
-
-        # --------------------------------------------------
-        # 1. Signature
-        # --------------------------------------------------
-
-        signature_start = (
-            time.perf_counter()
-        )
-
-        signature = build_signature(
-            function
-        )
-
-        signature_time = (
-            time.perf_counter()
-            - signature_start
-        )
-
-        print(
-            f"[耗时] Signature构造："
-            f"{signature_time:.3f}秒"
-        )
-
-        # --------------------------------------------------
-        # 2. BGE
-        # --------------------------------------------------
-
-        embedding_start = (
-            time.perf_counter()
-        )
-
-        vector = encode_text(
-            signature
-        )
-
-        embedding_time = (
-            time.perf_counter()
-            - embedding_start
-        )
-
-        print(
-            f"[耗时] BGE编码："
-            f"{embedding_time:.3f}秒"
-        )
-
-        # --------------------------------------------------
-        # 3. FAISS Top-K
-        # --------------------------------------------------
-
-        search_start = (
-            time.perf_counter()
-        )
-
-        results = db.search(
-            vector,
-            k
-        )
-
-        search_time = (
-            time.perf_counter()
-            - search_start
-        )
-
-        print(
-            f"[耗时] FAISS Top-{k}检索："
-            f"{search_time:.3f}秒"
-        )
-
-        # --------------------------------------------------
-        # 4. 格式化
-        # --------------------------------------------------
-
-        for item in results:
-
-            formatted_item = (
-                _format_retrieval_result(
-                    item,
-                    query_function=function
-                )
-            )
-
-            if formatted_item is None:
-                continue
-
-            all_results.append(
-                formatted_item
-            )
-
-    # ------------------------------------------------------
-    # 5. 去重
-    # ------------------------------------------------------
-
-    before_count = len(
-        all_results
-    )
-
-    all_results = (
-        _deduplicate_results(
-            all_results
-        )
-    )
-
-    after_count = len(
-        all_results
-    )
 
     print(
-        f"\n[RAG] 去重前："
-        f"{before_count}"
+        "[知识库API] "
+        f"status={response_data.get('status', '')}，"
+        f"scope={response_data.get('knowledge_scope', '')}，"
+        f"terms={response_data.get('terms', [])}，"
+        f"matches={len(results)}"
     )
+    print(f"[耗时] 知识库API检索：{time.perf_counter() - start:.3f}秒")
 
-    print(
-        f"[RAG] 去重后："
-        f"{after_count}"
+    return results
+
+
+def build_case_vector_database(history_cases: List[Dict[str, Any]]):
+    """兼容旧导入路径；本地JSON/BGE/FAISS建库已经停用。"""
+
+    del history_cases
+    raise RuntimeError(
+        "本地历史JSON/BGE/FAISS建库流程已停用，"
+        "请使用KNOWLEDGE_API_URL配置的知识库API"
     )
-
-    # ------------------------------------------------------
-    # 6. 打印历史结构信息
-    # ------------------------------------------------------
-
-    for index, item in enumerate(
-        all_results,
-        start=1
-    ):
-
-        data = item.get(
-            "data",
-            {}
-        )
-
-        function = data.get(
-            "function",
-            {}
-        )
-
-        neighbors = data.get(
-            "neighborFunctions",
-            []
-        )
-
-        relations = data.get(
-            "relatedRelations",
-            []
-        )
-
-        print(
-            f"[RAG-{index}] "
-            f"{data.get('caseId', '')} | "
-            f"{function.get('id', '')} "
-            f"{function.get('name', '')} | "
-            f"score={item.get('score', 0):.4f} | "
-            f"邻居={len(neighbors)} | "
-            f"关系={len(relations)}"
-        )
-
-    total_time = (
-        time.perf_counter()
-        - total_start_time
-    )
-
-    print(
-        f"\n[RAG] 在线检索总耗时："
-        f"{total_time:.3f}秒"
-    )
-
-    print(
-        "=" * 60
-    )
-
-    return all_results
